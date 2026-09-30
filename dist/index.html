@@ -70,15 +70,17 @@
           <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả trạm để sắp xếp. Chọn một trạm để chỉnh sửa.</p><p id="layoutCapacityNote" class="capacity-note"></p></div>
           <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot neck"></i>Neck time</span><span><i class="dot auto"></i>Tự động</span></div>
         </div>
+        <div class="canvas-viewport" tabindex="0" aria-label="Cuộn để xem toàn bộ vị trí công đoạn">
         <div id="layoutCanvas" class="layout-canvas" aria-label="Sơ đồ layout dây chuyền">
           <div id="meterRuler" class="meter-ruler"></div>
           <div class="belt-label">BĂNG CHUYỀN · 27 M</div>
           <div class="flow-line"></div>
         </div>
+        </div>
       </div>
     </section>
 
-    <aside class="inspector">
+    <aside class="inspector" id="inspector">
       <div class="inspector-title"><div><span id="stationBadge">SỬA THỦ CÔNG · TRẠM —</span><h2 id="stationTitle">Chọn một trạm</h2></div><button id="closeInspector" class="icon-btn">×</button></div>
       <form id="editForm" class="edit-form">
         <label>Tên công đoạn<textarea id="nameInput" rows="3"></textarea></label>
