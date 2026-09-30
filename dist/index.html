@@ -22,17 +22,22 @@
     </div>
   </header>
 
-  <main class="app-shell">
+  <nav class="view-tabs" aria-label="Chế độ xem">
+    <button class="view-tab active" data-view="overview" type="button"><span>1</span> Tổng quan layout</button>
+    <button class="view-tab" data-view="processes" type="button"><span>2</span> LOB từng công đoạn</button>
+  </nav>
+
+  <main class="app-shell" id="overviewView">
     <aside class="sidebar">
       <label class="field-label" for="modelSelect">Model / phiên bản</label>
       <select id="modelSelect" class="select"></select>
       <button id="duplicateBtn" class="btn full">Nhân bản layout</button>
 
       <div class="import-box">
-        <b>Cập nhật bằng Excel</b>
-        <p>Tải biểu mẫu CSV, sửa bằng Excel rồi nhập lại.</p>
-        <button id="templateBtn" class="btn full">Tải biểu mẫu</button>
-        <button id="importBtn" class="btn full">Nhập dữ liệu</button>
+        <b>Cập nhật hàng loạt bằng Excel</b>
+        <p>Tải mẫu của model đang chọn, sửa nhiều công đoạn trong Excel rồi nhập lại.</p>
+        <button id="templateBtn" class="btn full">1. Tải biểu mẫu Excel (CSV)</button>
+        <button id="importBtn" class="btn full">2. Nhập biểu mẫu đã sửa</button>
         <input id="fileInput" type="file" accept=".csv,text/csv" hidden>
       </div>
 
@@ -54,16 +59,15 @@
         <article><span>Công đoạn</span><strong id="metricCount">—</strong><small id="metricMp">— nhân lực</small></article>
       </div>
 
-      <div class="line-specs">
-        <div><span>BĂNG CHUYỀN</span><b>27 m</b></div>
-        <div><span>KÍCH THƯỚC BÀN</span><b>0,8 × 0,5 m</b></div>
-        <div><span>KHOẢNG CÁCH</span><b>0,5 m</b></div>
-        <div><span>SỨC CHỨA THAM CHIẾU</span><b id="capacityText">—</b></div>
+      <div class="domain-overview">
+        <div class="domain-tabs"><button class="domain-tab active" data-panel="workforcePanel" type="button"><i class="human-mark"></i> Thông tin nhân lực sản xuất</button><button class="domain-tab" data-panel="equipmentPanel" type="button">⌁ Thông tin Jig & setup · EQM</button></div>
+        <div id="workforcePanel" class="domain-panel active"><div class="workforce-scroll"><table class="workforce-table"><thead><tr><th>Model</th><th>Type</th><th>Line</th><th>Leader</th><th>ĐKN</th><th>Support</th><th>MP</th><th>IQC</th><th>Vision Laser</th><th>Vision cuối chuyền</th><th>OQC</th><th>PQC</th><th>Total</th></tr></thead><tbody id="workforceBody"></tbody></table></div></div>
+        <div id="equipmentPanel" class="domain-panel"><div id="equipmentStats" class="equipment-stats"></div></div>
       </div>
 
       <div class="canvas-card">
         <div class="canvas-toolbar">
-          <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả trạm để sắp xếp. Chọn một trạm để chỉnh sửa.</p></div>
+          <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả trạm để sắp xếp. Chọn một trạm để chỉnh sửa.</p><p id="layoutCapacityNote" class="capacity-note"></p></div>
           <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot neck"></i>Neck time</span><span><i class="dot auto"></i>Tự động</span></div>
         </div>
         <div id="layoutCanvas" class="layout-canvas" aria-label="Sơ đồ layout dây chuyền">
@@ -75,12 +79,13 @@
     </section>
 
     <aside class="inspector">
-      <div class="inspector-title"><div><span id="stationBadge">TRẠM —</span><h2 id="stationTitle">Chọn một trạm</h2></div><button id="closeInspector" class="icon-btn">×</button></div>
+      <div class="inspector-title"><div><span id="stationBadge">SỬA THỦ CÔNG · TRẠM —</span><h2 id="stationTitle">Chọn một trạm</h2></div><button id="closeInspector" class="icon-btn">×</button></div>
       <form id="editForm" class="edit-form">
         <label>Tên công đoạn<textarea id="nameInput" rows="3"></textarea></label>
         <div class="field-grid"><label>T/T (giây)<input id="timeInput" type="number" min="0" step="0.01"></label><label>Nhân lực<input id="mpInput" type="number" min="0" step="1"></label></div>
         <label>Danh mục<select id="categoryInput"><option>DÁN & ÉP</option><option>METAL SHEET</option><option>TEST/KIỂM TRA</option><option>TEST TÍNH NĂNG</option><option>GẮN MẠCH</option><option>GẮN TAY</option><option>KIỂM TRA ĐẦU VÀO</option><option>KIỂM TRA ĐẦU RA</option><option>AIRVENT</option><option>AGING</option><option>SUPPORT</option></select></label>
-        <div class="v2-fields"><div class="v2-title"><b>Thông tin Jig & setup</b><span>VER 2</span></div><label>Tên Jig<input id="jigInput" placeholder="Ví dụ: Press Jig V3"></label><label>Thời gian setup (phút)<input id="setupInput" type="number" min="0" step="0.1"></label></div>
+        <div class="station-flags"><label><input id="criticalInput" type="checkbox"><span><b>Vị trí trọng điểm</b><small>Làm nổi bật trên layout</small></span></label><label><input id="skill25Input" type="checkbox"><span><b>Đa kỹ năng 25%</b><small>Nhân sự có thể hỗ trợ</small></span></label><label><input id="skill40Input" type="checkbox"><span><b>Đa kỹ năng 40%</b><small>Mức linh hoạt cao</small></span></label></div>
+        <div class="v2-fields"><div class="v2-title"><b>Danh sách Jig & setup</b><button id="addJigBtn" class="mini-add" type="button">＋ Thêm Jig</button></div><p class="v2-help" id="jigSummary">Chưa có dữ liệu Jig hoặc setup cho công đoạn này.</p><div id="jigList" class="jig-list"></div></div>
         <label class="switch-row"><span><b>Trạm tự động</b><small>Không tính nhân lực trực tiếp</small></span><input id="autoInput" type="checkbox"></label>
         <button class="btn primary full" type="submit">Áp dụng thay đổi</button>
         <button class="btn danger full" id="deleteBtn" type="button">Xóa công đoạn</button>
@@ -90,6 +95,19 @@
       <div class="version-panel"><div class="nav-heading"><span>Lịch sử phiên bản</span></div><div id="versionList"></div></div>
     </aside>
   </main>
+
+  <section class="process-view" id="processView" hidden>
+    <div class="process-view-head">
+      <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time để nhận biết công đoạn cần cân bằng. Nhấn một dòng để mở chi tiết Jig và setup.</p></div>
+      <div class="process-summary" id="processSummary"></div>
+    </div>
+    <div class="process-table-wrap">
+      <table class="process-table">
+        <thead><tr><th>STT</th><th>Công đoạn</th><th>Danh mục</th><th>T/T</th><th>MP</th><th>Tỷ lệ neck</th><th>Đa kỹ năng</th><th>Jig</th><th>Setup</th><th>Trạng thái</th></tr></thead>
+        <tbody id="processTableBody"></tbody>
+      </table>
+    </div>
+  </section>
 
   <div id="toast" class="toast" role="status"></div>
   <dialog id="versionDialog"><form method="dialog" id="versionForm"><h2>Lưu phiên bản</h2><p>Ghi lại lý do để dễ so sánh và khôi phục sau này.</p><label>Tên phiên bản<input id="versionName" required placeholder="Ví dụ: Ver 0.4"></label><label>Nội dung thay đổi<textarea id="versionNote" rows="3" placeholder="Đã cân bằng lại vị trí neck time..."></textarea></label><div class="dialog-actions"><button value="cancel" class="btn ghost">Hủy</button><button value="default" class="btn primary" id="confirmVersion">Lưu phiên bản</button></div></form></dialog>
