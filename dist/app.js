@@ -4,6 +4,14 @@ const s948Names=[['LASER WELDING',14.94,'HÀN LASER'],['C-CLIP',12.41,'C-CLIP'],
 const b3Names=[['IQC',14.01,'KIỂM TRA ĐẦU VÀO'],['CLEANING + LOCKER SPEN',11.25,'LÀM SẠCH'],['SIDE KEY FPCB_BRK ASSY',12.28,'GẮN MẠCH'],['SIDE KEY ATTACH',10.69,'GẮN TAY'],['GẮN/ÉP + WATER LABEL + MARKING',10.11],['GẮN PHÍM + ROLLING',13.87,'ROLLING'],['RUBBER S PEN HOLDER + CHỐT SIM',11.65],['S PEN COVER + DINO SIM PIN',15.58],['SPONGE MESH MIC TOP + VT CAM',13],['AIR VENT ASSY / PRESS',12.3,'AIRVENT'],['UW CAM CONN + WIDE CAM BTM',13.53],['REMOVE LINER + LẮP TRAY SIM',11.03,'GẮN TAY'],['WPT TEST',16.22,'TEST TÍNH NĂNG'],['TEST SPEN + THÁO TRAY SIM',8.43,'TEST TÍNH NĂNG'],['WLT TEST',15.98,'TEST TÍNH NĂNG'],['VSWR TEST + CHECK VISION',15.26,'TEST TÍNH NĂNG'],['OQC',15.22,'KIỂM TRA ĐẦU RA']];
 function buildModel(name,version,rows,prefix){const processes=rows.map((r,i)=>p(prefix+(i+1),r[0],r[1],/WLT|VSWR|C-CLIP/.test(r[0])?0:1,r[2]||'DÁN & ÉP',/WLT|VSWR|C-CLIP/.test(r[0])));const model={name,version,processes,note:'Dữ liệu khởi tạo từ file IST layout Product.xlsm'};arrange(model);return model}
 const seed={models:{s948:buildModel('S948','Ver 0.3',s948Names,'s'),s948b3:buildModel('S948 Block 3','Ver 0.3',b3Names,'b')},versions:[]};
+for(const [catalogName,rows] of Object.entries(window.LOB_CATALOG||{})){
+  const normalized=catalogName.replaceAll('*','').trim().toLowerCase();
+  const exists=Object.values(seed.models).some(m=>m.name.toLowerCase()===normalized||m.name.toLowerCase()===catalogName.toLowerCase());
+  if(exists)continue;
+  const key='catalog-'+catalogName.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  seed.models[key]=buildModel(catalogName,'Imported',rows.map(r=>[r.name,0,r.category]),key+'-');
+  seed.models[key].note='Tên công đoạn lấy từ sheet Thông tin công đoạn từng model; cần nhập T/T.';
+}
 function arrange(model){model.processes.forEach((s,i)=>{const physical=i*(LINE.tableLength+LINE.gap),lane=Math.floor(physical/LINE.length),meter=physical%LINE.length;s.x=Math.round(meter*LINE.pxPerMeter);s.y=60+lane*94;});}
 let state=structuredClone(seed),currentKey='s948',selectedId=null,history=[],session={role:'viewer',email:''},saveTimer=null;
 const $=id=>document.getElementById(id),canEdit=()=>['owner','editor'].includes(session.role),model=()=>state.models[currentKey];
