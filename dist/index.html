@@ -7,13 +7,16 @@
   <meta name="description" content="Môi trường chỉnh sửa layout dây chuyền, T/T, nhân lực và chỉ số LOB.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d2633'/%3E%3Cpath d='M14 42h36M18 33h8v9h-8zm10-12h8v21h-8zm10 6h8v15h-8z' fill='%2334d399'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./overrides.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand"><span class="mark">IST</span><div><strong>LOB Studio</strong><small>Line Layout Editor</small></div></div>
     <div class="top-actions">
-      <span id="saveState" class="save-state"><i></i>Đã lưu trên thiết bị</span>
+      <span id="roleBadge" class="role-badge">Đang kiểm tra quyền…</span>
+      <span id="saveState" class="save-state"><i></i>Đã đồng bộ</span>
       <button class="btn ghost" id="undoBtn" title="Hoàn tác (Ctrl+Z)">↶ Hoàn tác</button>
+      <button class="btn ghost" id="editorsBtn" hidden>Phân quyền</button>
       <button class="btn ghost" id="printBtn">In layout</button>
       <button class="btn primary" id="saveVersionBtn">Lưu phiên bản</button>
     </div>
@@ -24,6 +27,14 @@
       <label class="field-label" for="modelSelect">Model / phiên bản</label>
       <select id="modelSelect" class="select"></select>
       <button id="duplicateBtn" class="btn full">Nhân bản layout</button>
+
+      <div class="import-box">
+        <b>Cập nhật bằng Excel</b>
+        <p>Tải biểu mẫu CSV, sửa bằng Excel rồi nhập lại.</p>
+        <button id="templateBtn" class="btn full">Tải biểu mẫu</button>
+        <button id="importBtn" class="btn full">Nhập dữ liệu</button>
+        <input id="fileInput" type="file" accept=".csv,text/csv" hidden>
+      </div>
 
       <div class="nav-heading"><span>Công đoạn</span><button id="addBtn" class="icon-btn" title="Thêm công đoạn">＋</button></div>
       <div class="search-wrap"><span>⌕</span><input id="searchInput" placeholder="Tìm công đoạn"></div>
@@ -43,12 +54,21 @@
         <article><span>Công đoạn</span><strong id="metricCount">—</strong><small id="metricMp">— nhân lực</small></article>
       </div>
 
+      <div class="line-specs">
+        <div><span>BĂNG CHUYỀN</span><b>27 m</b></div>
+        <div><span>KÍCH THƯỚC BÀN</span><b>0,8 × 0,5 m</b></div>
+        <div><span>KHOẢNG CÁCH</span><b>0,5 m</b></div>
+        <div><span>SỨC CHỨA THAM CHIẾU</span><b id="capacityText">—</b></div>
+      </div>
+
       <div class="canvas-card">
         <div class="canvas-toolbar">
           <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả trạm để sắp xếp. Chọn một trạm để chỉnh sửa.</p></div>
           <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot neck"></i>Neck time</span><span><i class="dot auto"></i>Tự động</span></div>
         </div>
         <div id="layoutCanvas" class="layout-canvas" aria-label="Sơ đồ layout dây chuyền">
+          <div id="meterRuler" class="meter-ruler"></div>
+          <div class="belt-label">BĂNG CHUYỀN · 27 M</div>
           <div class="flow-line"></div>
         </div>
       </div>
@@ -60,6 +80,7 @@
         <label>Tên công đoạn<textarea id="nameInput" rows="3"></textarea></label>
         <div class="field-grid"><label>T/T (giây)<input id="timeInput" type="number" min="0" step="0.01"></label><label>Nhân lực<input id="mpInput" type="number" min="0" step="1"></label></div>
         <label>Danh mục<select id="categoryInput"><option>DÁN & ÉP</option><option>METAL SHEET</option><option>TEST/KIỂM TRA</option><option>TEST TÍNH NĂNG</option><option>GẮN MẠCH</option><option>GẮN TAY</option><option>KIỂM TRA ĐẦU VÀO</option><option>KIỂM TRA ĐẦU RA</option><option>AIRVENT</option><option>AGING</option><option>SUPPORT</option></select></label>
+        <div class="v2-fields"><div class="v2-title"><b>Thông tin Jig & setup</b><span>VER 2</span></div><label>Tên Jig<input id="jigInput" placeholder="Ví dụ: Press Jig V3"></label><label>Thời gian setup (phút)<input id="setupInput" type="number" min="0" step="0.1"></label></div>
         <label class="switch-row"><span><b>Trạm tự động</b><small>Không tính nhân lực trực tiếp</small></span><input id="autoInput" type="checkbox"></label>
         <button class="btn primary full" type="submit">Áp dụng thay đổi</button>
         <button class="btn danger full" id="deleteBtn" type="button">Xóa công đoạn</button>
@@ -72,6 +93,7 @@
 
   <div id="toast" class="toast" role="status"></div>
   <dialog id="versionDialog"><form method="dialog" id="versionForm"><h2>Lưu phiên bản</h2><p>Ghi lại lý do để dễ so sánh và khôi phục sau này.</p><label>Tên phiên bản<input id="versionName" required placeholder="Ví dụ: Ver 0.4"></label><label>Nội dung thay đổi<textarea id="versionNote" rows="3" placeholder="Đã cân bằng lại vị trí neck time..."></textarea></label><div class="dialog-actions"><button value="cancel" class="btn ghost">Hủy</button><button value="default" class="btn primary" id="confirmVersion">Lưu phiên bản</button></div></form></dialog>
+  <dialog id="editorsDialog"><form method="dialog" id="editorsForm"><h2>Phân quyền chỉnh sửa</h2><p>Mọi người đều có thể xem. Chỉ email trong danh sách này mới có thể thay đổi layout.</p><label>Email người chỉnh sửa<input id="editorEmail" type="email" required placeholder="ten@congty.com"></label><button class="btn primary full" id="addEditorBtn" type="submit">Thêm quyền chỉnh sửa</button><div id="editorsList" class="editors-list"></div><div class="dialog-actions"><button value="cancel" class="btn ghost">Đóng</button></div></form></dialog>
   <script src="./app.js"></script>
 </body>
 </html>
