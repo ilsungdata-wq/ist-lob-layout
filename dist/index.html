@@ -25,13 +25,14 @@
   <nav class="view-tabs" aria-label="Chế độ xem">
     <button class="view-tab active" data-view="overview" type="button"><span>1</span> Tổng quan layout</button>
     <button class="view-tab" data-view="processes" type="button"><span>2</span> LOB từng công đoạn</button>
+    <button class="view-tab" data-view="jigs" type="button"><span>3</span> Danh sách Jig</button>
   </nav>
 
   <main class="app-shell" id="overviewView">
     <aside class="sidebar">
       <label class="field-label" for="modelSelect">Model / phiên bản</label>
       <select id="modelSelect" class="select"></select>
-      <button id="duplicateBtn" class="btn full">Nhân bản layout</button>
+      <div class="model-meta"><label>Line<input id="lineMeta" type="number" min="1" step="1" value="1"></label><label>Type<select id="typeMeta"><option value="normal">Normal</option><option value="block">Block</option></select></label><button id="saveMetaBtn" class="btn full" type="button">Lưu thông tin model</button></div><button id="duplicateBtn" class="btn full">Nhân bản layout</button>
 
       <div class="import-box">
         <b>Cập nhật hàng loạt bằng Excel</b>
@@ -47,7 +48,7 @@
 
       <div class="side-foot">
         <button id="resetBtn" class="text-btn">Khôi phục dữ liệu mẫu</button>
-        <small>Dữ liệu bản thử được lưu trong trình duyệt này.</small>
+        <small>Dữ liệu lưu trên webapp. Lịch sử ghi nhận các lần lưu.</small>
       </div>
     </aside>
 
@@ -67,9 +68,12 @@
 
       <div class="canvas-card">
         <div class="canvas-toolbar">
-          <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả trạm để sắp xếp. Chọn một trạm để chỉnh sửa.</p><p id="layoutCapacityNote" class="capacity-note"></p></div>
-          <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot neck"></i>Neck time</span><span><i class="dot auto"></i>Tự động</span></div>
+          <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả người, bàn, máy và Jig. Chọn công đoạn để khai báo.</p><p id="layoutCapacityNote" class="capacity-note"></p></div>
+          <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot auto"></i>Tự động</span></div>
         </div>
+        <div class="equipment-diagram-head"><b>Vùng sản xuất 33 m · Băng tải 27 m</b><span>V3: Jig Press · ATT: Jig Attach · Kéo bàn sẽ di chuyển Jig trên bàn</span><label>Thu phóng <select id="layoutZoom"><option value="1">100%</option><option value="0.75">75%</option><option value="0.5">50%</option><option value="fit">Vừa màn hình</option></select></label></div>
+        <div id="equipmentDiagram" class="equipment-diagram" tabindex="0" aria-label="Sơ đồ bàn, nhân lực và Jig theo công đoạn"></div>
+        <div class="legacy-layout" hidden><div class="equipment-diagram-head"><b>Vị trí công đoạn</b></div>
         <div class="canvas-viewport" tabindex="0" aria-label="Cuộn để xem toàn bộ vị trí công đoạn">
         <div id="layoutCanvas" class="layout-canvas" aria-label="Sơ đồ layout dây chuyền">
           <div id="meterRuler" class="meter-ruler"></div>
@@ -78,7 +82,7 @@
         </div>
         </div>
       </div>
-    </section>
+    </div></section>
 
     <aside class="inspector" id="inspector">
       <div class="inspector-title"><div><span id="stationBadge">SỬA THỦ CÔNG · TRẠM —</span><h2 id="stationTitle">Chọn một trạm</h2></div><button id="closeInspector" class="icon-btn">×</button></div>
@@ -86,7 +90,9 @@
         <label>Tên công đoạn<textarea id="nameInput" rows="3"></textarea></label>
         <div class="field-grid"><label>T/T (giây)<input id="timeInput" type="number" min="0" step="0.01"></label><label>Nhân lực<input id="mpInput" type="number" min="0" step="1"></label></div>
         <label>Danh mục<select id="categoryInput"><option>DÁN & ÉP</option><option>METAL SHEET</option><option>TEST/KIỂM TRA</option><option>TEST TÍNH NĂNG</option><option>GẮN MẠCH</option><option>GẮN TAY</option><option>KIỂM TRA ĐẦU VÀO</option><option>KIỂM TRA ĐẦU RA</option><option>AIRVENT</option><option>AGING</option><option>SUPPORT</option></select></label>
-        <div class="station-flags"><label><input id="criticalInput" type="checkbox"><span><b>Vị trí trọng điểm</b><small>Làm nổi bật trên layout</small></span></label><label><input id="skill25Input" type="checkbox"><span><b>Đa kỹ năng 25%</b><small>Nhân sự có thể hỗ trợ</small></span></label><label><input id="skill40Input" type="checkbox"><span><b>Đa kỹ năng 40%</b><small>Mức linh hoạt cao</small></span></label></div>
+        <button id="addCategoryBtn" type="button" class="btn full">＋ Thêm danh mục công đoạn</button><div class="extra-flags"><div class="v2-title"><b>Nhãn vị trí</b><button id="addFlagBtn" type="button" class="mini-add">＋ Thêm nhãn</button></div><div id="flagOptions" class="station-flags"></div></div>
+        <div class="station-flags"><label><input id="criticalInput" type="checkbox"><span><b>Vị trí trọng điểm</b><small>Làm nổi bật trên layout</small></span></label></div>
+        <div class="skills-panel"><div class="v2-title"><b>Đa kỹ năng</b><button id="addSkillBtn" class="mini-add" type="button">＋ Thêm mức</button></div><div id="skillOptions" class="station-flags"></div><div id="newSkillRow" hidden><label>Mức đa kỹ năng (%)<input id="newSkillPercent" type="number" min="1" max="100" step="1" placeholder="Ví dụ: 50"></label><button id="confirmSkillBtn" type="button" class="btn">Thêm</button><span id="skillError" role="status"></span></div></div>
         <div class="v2-fields"><div class="v2-title"><b>Danh sách Jig & setup</b><button id="addJigBtn" class="mini-add" type="button">＋ Thêm Jig</button></div><p class="v2-help" id="jigSummary">Chưa có dữ liệu Jig hoặc setup cho công đoạn này.</p><div id="jigList" class="jig-list"></div></div>
         <label class="switch-row"><span><b>Trạm tự động</b><small>Không tính nhân lực trực tiếp</small></span><input id="autoInput" type="checkbox"></label>
         <button class="btn primary full" type="submit">Áp dụng thay đổi</button>
@@ -94,7 +100,7 @@
       </form>
       <div class="empty-inspector" id="emptyInspector"><div>⌁</div><p>Chọn một trạm trên sơ đồ hoặc trong danh sách để xem chi tiết.</p></div>
 
-      <div class="version-panel"><div class="nav-heading"><span>Lịch sử phiên bản</span></div><div id="versionList"></div></div>
+      <div class="version-panel"><div class="nav-heading"><span>Lịch sử phiên bản</span></div><button id="historyBtn" class="btn full" type="button">Xem lịch sử lưu & khôi phục</button><div id="versionList"></div></div>
     </aside>
   </main>
 
@@ -103,6 +109,7 @@
       <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time để nhận biết công đoạn cần cân bằng. Nhấn một dòng để mở chi tiết Jig và setup.</p></div>
       <div class="process-summary" id="processSummary"></div>
     </div>
+    <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
     <div class="process-table-wrap">
       <table class="process-table">
         <thead><tr><th>STT</th><th>Công đoạn</th><th>Danh mục</th><th>T/T</th><th>MP</th><th>Tỷ lệ neck</th><th>Đa kỹ năng</th><th>Jig</th><th>Setup</th><th>Trạng thái</th></tr></thead>
@@ -111,10 +118,14 @@
     </div>
   </section>
 
+  <section id="jigView" class="process-view" hidden><div class="process-view-head"><div><span class="eyebrow">TAB 3 · EQM</span><h1 id="jigViewTitle">Danh sách Jig theo model</h1><p>Một dòng cho mỗi Jig đã khai báo tại công đoạn. In để chuẩn bị setup.</p></div><button id="printJigsBtn" class="btn primary">In danh sách Jig</button></div><div id="jigInventorySummary" class="process-summary"></div><div class="process-table-wrap"><table class="process-table"><thead><tr><th>STT</th><th>Công đoạn</th><th>Tên công đoạn</th><th>Loại Jig</th><th>Tên Jig</th><th>Setup (phút)</th></tr></thead><tbody id="jigInventoryBody"></tbody></table></div></section>
+  <dialog id="historyDialog"><div class="history-head"><h2>Lịch sử lưu</h2><button id="closeHistoryBtn" class="btn">Đóng</button></div><p>Bản lưu nằm trong cơ sở dữ liệu của webapp. Khôi phục tạo một phiên bản mới, không xóa bản cũ.</p><div id="historyList"></div><button id="moreHistoryBtn" class="btn" hidden>Xem thêm</button></dialog>
+  <section id="printReport" class="print-report"></section>
   <div id="toast" class="toast" role="status"></div>
   <dialog id="versionDialog"><form method="dialog" id="versionForm"><h2>Lưu phiên bản</h2><p>Ghi lại lý do để dễ so sánh và khôi phục sau này.</p><label>Tên phiên bản<input id="versionName" required placeholder="Ví dụ: Ver 0.4"></label><label>Nội dung thay đổi<textarea id="versionNote" rows="3" placeholder="Đã cân bằng lại vị trí neck time..."></textarea></label><div class="dialog-actions"><button value="cancel" class="btn ghost">Hủy</button><button value="default" class="btn primary" id="confirmVersion">Lưu phiên bản</button></div></form></dialog>
   <dialog id="editorsDialog"><form method="dialog" id="editorsForm"><h2>Phân quyền chỉnh sửa</h2><p>Mọi người đều có thể xem. Chỉ email trong danh sách này mới có thể thay đổi layout.</p><label>Email người chỉnh sửa<input id="editorEmail" type="email" required placeholder="ten@congty.com"></label><button class="btn primary full" id="addEditorBtn" type="submit">Thêm quyền chỉnh sửa</button><div id="editorsList" class="editors-list"></div><div class="dialog-actions"><button value="cancel" class="btn ghost">Đóng</button></div></form></dialog>
   <script src="./catalog.js"></script>
+  <script src="./studio.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

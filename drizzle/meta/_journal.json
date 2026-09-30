@@ -1,5 +1,5 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "entries": [{"idx":0,"version":"6","when":1790740800000,"tag":"0000_lob_layouts","breakpoints":true}]
+  "entries": [{"idx":0,"version":"6","when":1790740800000,"tag":"0000_lob_layouts","breakpoints":true},{"idx":1,"version":"6","when":1790755200000,"tag":"0001_layout_history","breakpoints":true}]
 }
