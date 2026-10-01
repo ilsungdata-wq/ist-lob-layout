@@ -37,9 +37,9 @@
       <div class="import-box">
         <b>Cập nhật hàng loạt bằng Excel</b>
         <p>Nhập CSV mẫu hoặc file XLSX/XLSM gốc. Mọi sheet bắt đầu bằng “Layout” sẽ cập nhật model tương ứng.</p>
-        <button id="templateBtn" class="btn full">1. Tải biểu mẫu Excel (CSV)</button>
-        <button id="importBtn" class="btn full">2. Nhập CSV / Excel gốc</button>
-        <input id="fileInput" type="file" accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" hidden>
+        <button id="templateBtn" class="btn full">1. Tải biểu mẫu Excel (.XLSX)</button>
+        <button id="importBtn" class="btn full">2. Nhập Excel gốc</button>
+        <input id="fileInput" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" hidden>
       </div>
 
       <div class="nav-heading"><span>Công đoạn</span><button id="addBtn" class="icon-btn" title="Thêm công đoạn">＋</button></div>
@@ -115,7 +115,7 @@
   <section class="process-view" id="processView" hidden>
     <div class="process-view-head">
       <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time để nhận biết công đoạn cần cân bằng. Nhấn một dòng để mở chi tiết Jig và setup.</p></div>
-      <div class="process-summary" id="processSummary"></div>
+      <div class="process-head-actions"><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><div class="process-summary" id="processSummary"></div></div>
     </div>
     <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
     <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
@@ -134,6 +134,7 @@
   <dialog id="versionDialog"><form method="dialog" id="versionForm"><h2>Lưu phiên bản</h2><p>Ghi lại lý do để dễ so sánh và khôi phục sau này.</p><label>Tên phiên bản<input id="versionName" required placeholder="Ví dụ: Ver 0.4"></label><label>Nội dung thay đổi<textarea id="versionNote" rows="3" placeholder="Đã cân bằng lại vị trí neck time..."></textarea></label><div class="dialog-actions"><button value="cancel" class="btn ghost">Hủy</button><button value="default" class="btn primary" id="confirmVersion">Lưu phiên bản</button></div></form></dialog>
   <dialog id="editorsDialog"><form method="dialog" id="editorsForm"><h2>Phân quyền chỉnh sửa</h2><p>Mọi người đều có thể xem. Chỉ email trong danh sách này mới có thể thay đổi layout.</p><label>Email người chỉnh sửa<input id="editorEmail" type="email" required placeholder="ten@congty.com"></label><button class="btn primary full" id="addEditorBtn" type="submit">Thêm quyền chỉnh sửa</button><div id="editorsList" class="editors-list"></div><div class="dialog-actions"><button value="cancel" class="btn ghost">Đóng</button></div></form></dialog>
   <dialog id="importConflictDialog" class="import-conflict-dialog"><div class="import-conflict-content"><span class="eyebrow">IMPORT EXCEL · QUẢN LÝ PHIÊN BẢN</span><h2>Model đã có dữ liệu trên hệ thống</h2><p>So sánh dữ liệu hiện tại với dữ liệu mới trước khi chọn cách cập nhật.</p><div class="conflict-preview-wrap"><table class="conflict-preview"><thead><tr><th>Model</th><th>Trạm cũ → mới</th><th>Neck cũ → mới</th><th>LOB cũ → mới</th></tr></thead><tbody id="importConflictBody"></tbody></table></div><div class="conflict-actions"><button id="overwriteImportBtn" class="btn danger" type="button"><b>Ghi đè phiên bản hiện tại</b><small>Cập nhật trực tiếp dữ liệu Model</small></button><button id="newVersionImportBtn" class="btn primary" type="button"><b>Giữ bản cũ & tạo bản mới</b><small>Tạo version mới để đối chiếu/khôi phục</small></button><button id="cancelImportBtn" class="btn" type="button">Hủy Import</button></div></div></dialog>
+  <dialog id="printChoiceDialog" class="print-choice-dialog"><div><span class="eyebrow">IN LAYOUT</span><h2>Chọn phiên bản cần in</h2><p>Bản ảnh giữ nguyên hình Excel. Bản convert sử dụng dữ liệu và vị trí đang chỉnh sửa trên webapp.</p><div class="print-choice-actions"><button id="printExcelVersionBtn" class="btn primary" type="button"><b>In bản ảnh Excel</b><small>Giữ nguyên mẫu trong file Excel</small></button><button id="printConvertedVersionBtn" class="btn" type="button"><b>In bản convert</b><small>Layout tương tác của webapp</small></button><button id="cancelPrintChoiceBtn" class="btn ghost" type="button">Hủy</button></div></div></dialog>
   <script src="./xlsx.full.min.js"></script>
   <script src="./catalog.js"></script>
   <script src="./studio.js"></script>
