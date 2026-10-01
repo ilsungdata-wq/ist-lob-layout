@@ -6,6 +6,8 @@ const overrides = fs.readFileSync("dist/overrides.css", "utf8");
 const catalog = fs.readFileSync("dist/catalog.js", "utf8");
 const app = fs.readFileSync("dist/app.js", "utf8");
 const studio = fs.readFileSync("dist/studio.js", "utf8");
+const xlsx = fs.readFileSync("dist/xlsx.full.min.js", "utf8");
+const xlsxLicense = fs.readFileSync("dist/xlsx.LICENSE", "utf8");
 const owner = "huyquynhtran96@gmail.com";
 
 const runtime = String.raw`
@@ -55,9 +57,9 @@ async function api(request,env,url){
   }
   return json({error:"Không tìm thấy."},404);
 }
-export default {async fetch(request,env){try{const url=new URL(request.url);if(url.pathname.startsWith("/api/"))return await api(request,env,url);if(url.pathname==="/styles.css")return asset(CSS,"text/css; charset=utf-8");if(url.pathname==="/overrides.css")return asset(OVERRIDES,"text/css; charset=utf-8");if(url.pathname==="/catalog.js")return asset(CATALOG,"text/javascript; charset=utf-8");if(url.pathname==="/studio.js")return asset(STUDIO,"text/javascript; charset=utf-8");if(url.pathname==="/app.js")return asset(APP,"text/javascript; charset=utf-8");if(url.pathname==="/"||url.pathname==="/index.html")return asset(HTML,"text/html; charset=utf-8");return new Response("Not found",{status:404});}catch(error){console.error(error);return json({error:"Dịch vụ tạm thời không khả dụng."},500);}}};
+export default {async fetch(request,env){try{const url=new URL(request.url);if(url.pathname.startsWith("/api/"))return await api(request,env,url);if(url.pathname==="/styles.css")return asset(CSS,"text/css; charset=utf-8");if(url.pathname==="/overrides.css")return asset(OVERRIDES,"text/css; charset=utf-8");if(url.pathname==="/xlsx.full.min.js")return asset(XLSX_LIB,"text/javascript; charset=utf-8");if(url.pathname==="/xlsx.LICENSE")return asset(XLSX_LICENSE,"text/plain; charset=utf-8");if(url.pathname==="/catalog.js")return asset(CATALOG,"text/javascript; charset=utf-8");if(url.pathname==="/studio.js")return asset(STUDIO,"text/javascript; charset=utf-8");if(url.pathname==="/app.js")return asset(APP,"text/javascript; charset=utf-8");if(url.pathname==="/"||url.pathname==="/index.html")return asset(HTML,"text/html; charset=utf-8");return new Response("Not found",{status:404});}catch(error){console.error(error);return json({error:"Dịch vụ tạm thời không khả dụng."},500);}}};
 `;
 
-const output = `const HTML=${JSON.stringify(html)};\nconst CSS=${JSON.stringify(css)};\nconst OVERRIDES=${JSON.stringify(overrides)};\nconst CATALOG=${JSON.stringify(catalog)};\nconst APP=${JSON.stringify(app)};\nconst STUDIO=${JSON.stringify(studio)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime}`;
+const output = `const HTML=${JSON.stringify(html)};\nconst CSS=${JSON.stringify(css)};\nconst OVERRIDES=${JSON.stringify(overrides)};\nconst XLSX_LIB=${JSON.stringify(xlsx)};\nconst XLSX_LICENSE=${JSON.stringify(xlsxLicense)};\nconst CATALOG=${JSON.stringify(catalog)};\nconst APP=${JSON.stringify(app)};\nconst STUDIO=${JSON.stringify(studio)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime}`;
 fs.mkdirSync("dist/server", { recursive: true });
 fs.writeFileSync("dist/server/index.js", output);

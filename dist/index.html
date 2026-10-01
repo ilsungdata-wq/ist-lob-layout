@@ -36,10 +36,10 @@
 
       <div class="import-box">
         <b>Cập nhật hàng loạt bằng Excel</b>
-        <p>Tải mẫu của model đang chọn, sửa nhiều công đoạn trong Excel rồi nhập lại.</p>
+        <p>Nhập CSV mẫu hoặc file XLSX/XLSM gốc. Mọi sheet bắt đầu bằng “Layout” sẽ cập nhật model tương ứng.</p>
         <button id="templateBtn" class="btn full">1. Tải biểu mẫu Excel (CSV)</button>
-        <button id="importBtn" class="btn full">2. Nhập biểu mẫu đã sửa</button>
-        <input id="fileInput" type="file" accept=".csv,text/csv" hidden>
+        <button id="importBtn" class="btn full">2. Nhập CSV / Excel gốc</button>
+        <input id="fileInput" type="file" accept=".csv,.xlsx,.xlsm,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" hidden>
       </div>
 
       <div class="nav-heading"><span>Công đoạn</span><button id="addBtn" class="icon-btn" title="Thêm công đoạn">＋</button></div>
@@ -77,6 +77,7 @@
           <button id="rotateObjectBtn" type="button" class="btn" disabled>Xoay 90°</button><button id="duplicateObjectBtn" type="button" class="btn" disabled>Nhân bản</button><button id="copyObjectBtn" type="button" class="btn" disabled>Sao chép</button><button id="pasteObjectBtn" type="button" class="btn" disabled>Dán</button><button id="snapObjectBtn" type="button" class="btn" disabled>Căn lưới</button><button id="deleteObjectBtn" type="button" class="btn danger" disabled>Xóa bản sao</button>
         </div>
         <div id="equipmentDiagram" class="equipment-diagram" tabindex="0" aria-label="Sơ đồ bàn, nhân lực và Jig theo công đoạn"></div>
+        <section class="excel-form-section" aria-labelledby="excelFormTitle"><div class="excel-form-head"><div><span class="eyebrow">FORM CÔNG ĐOẠN THEO EXCEL</span><h2 id="excelFormTitle">Công đoạn, T/T, MP và Jig</h2></div><span>Nhấn công đoạn để chỉnh sửa hoặc thêm Jig</span></div><div id="equipmentLegend" class="equipment-legend"></div><div id="excelProcessGrid" class="excel-process-grid"></div></section>
         <div class="legacy-layout" hidden><div class="equipment-diagram-head"><b>Vị trí công đoạn</b></div>
         <div class="canvas-viewport" tabindex="0" aria-label="Cuộn để xem toàn bộ vị trí công đoạn">
         <div id="layoutCanvas" class="layout-canvas" aria-label="Sơ đồ layout dây chuyền">
@@ -128,6 +129,7 @@
   <div id="toast" class="toast" role="status"></div>
   <dialog id="versionDialog"><form method="dialog" id="versionForm"><h2>Lưu phiên bản</h2><p>Ghi lại lý do để dễ so sánh và khôi phục sau này.</p><label>Tên phiên bản<input id="versionName" required placeholder="Ví dụ: Ver 0.4"></label><label>Nội dung thay đổi<textarea id="versionNote" rows="3" placeholder="Đã cân bằng lại vị trí neck time..."></textarea></label><div class="dialog-actions"><button value="cancel" class="btn ghost">Hủy</button><button value="default" class="btn primary" id="confirmVersion">Lưu phiên bản</button></div></form></dialog>
   <dialog id="editorsDialog"><form method="dialog" id="editorsForm"><h2>Phân quyền chỉnh sửa</h2><p>Mọi người đều có thể xem. Chỉ email trong danh sách này mới có thể thay đổi layout.</p><label>Email người chỉnh sửa<input id="editorEmail" type="email" required placeholder="ten@congty.com"></label><button class="btn primary full" id="addEditorBtn" type="submit">Thêm quyền chỉnh sửa</button><div id="editorsList" class="editors-list"></div><div class="dialog-actions"><button value="cancel" class="btn ghost">Đóng</button></div></form></dialog>
+  <script src="./xlsx.full.min.js"></script>
   <script src="./catalog.js"></script>
   <script src="./studio.js"></script>
   <script src="./app.js"></script>
