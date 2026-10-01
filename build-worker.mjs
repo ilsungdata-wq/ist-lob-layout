@@ -8,11 +8,13 @@ const app = fs.readFileSync("dist/app.js", "utf8");
 const studio = fs.readFileSync("dist/studio.js", "utf8");
 const xlsx = fs.readFileSync("dist/xlsx.full.min.js", "utf8");
 const xlsxLicense = fs.readFileSync("dist/xlsx.LICENSE", "utf8");
+const layoutImages = Object.fromEntries(fs.readdirSync("dist/layout-reference").filter(name => name.endsWith(".png")).map(name => [`/layout-reference/${name}`, fs.readFileSync(`dist/layout-reference/${name}`).toString("base64")]));
 const owner = "huyquynhtran96@gmail.com";
 
 const runtime = String.raw`
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}});
 const asset=(value,type)=>new Response(value,{headers:{"content-type":type,"cache-control":"public, max-age=300"}});
+const binaryAsset=(value,type)=>{const raw=atob(value),bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));return new Response(bytes,{headers:{"content-type":type,"cache-control":"public, max-age=86400"}})};
 const emailOf=r=>(r.headers.get("oai-authenticated-user-email")||"").trim().toLowerCase();
 async function roleOf(r,env){const email=emailOf(r);if(email===OWNER)return{role:"owner",email};if(!email)return{role:"viewer",email:""};const row=await env.DB.prepare("SELECT email FROM editors WHERE email = ?").bind(email).first();return{role:row?"editor":"viewer",email};}
 async function api(request,env,url){
@@ -57,9 +59,9 @@ async function api(request,env,url){
   }
   return json({error:"Không tìm thấy."},404);
 }
-export default {async fetch(request,env){try{const url=new URL(request.url);if(url.pathname.startsWith("/api/"))return await api(request,env,url);if(url.pathname.startsWith("/layout-reference/")&&env.ASSETS)return env.ASSETS.fetch(request);if(url.pathname==="/styles.css")return asset(CSS,"text/css; charset=utf-8");if(url.pathname==="/overrides.css")return asset(OVERRIDES,"text/css; charset=utf-8");if(url.pathname==="/xlsx.full.min.js")return asset(XLSX_LIB,"text/javascript; charset=utf-8");if(url.pathname==="/xlsx.LICENSE")return asset(XLSX_LICENSE,"text/plain; charset=utf-8");if(url.pathname==="/catalog.js")return asset(CATALOG,"text/javascript; charset=utf-8");if(url.pathname==="/studio.js")return asset(STUDIO,"text/javascript; charset=utf-8");if(url.pathname==="/app.js")return asset(APP,"text/javascript; charset=utf-8");if(url.pathname==="/"||url.pathname==="/index.html")return asset(HTML,"text/html; charset=utf-8");return new Response("Not found",{status:404});}catch(error){console.error(error);return json({error:"Dịch vụ tạm thời không khả dụng."},500);}}};
+export default {async fetch(request,env){try{const url=new URL(request.url);if(url.pathname.startsWith("/api/"))return await api(request,env,url);if(LAYOUT_IMAGES[url.pathname])return binaryAsset(LAYOUT_IMAGES[url.pathname],"image/png");if(url.pathname.startsWith("/layout-reference/")&&env.ASSETS)return env.ASSETS.fetch(request);if(url.pathname==="/styles.css")return asset(CSS,"text/css; charset=utf-8");if(url.pathname==="/overrides.css")return asset(OVERRIDES,"text/css; charset=utf-8");if(url.pathname==="/xlsx.full.min.js")return asset(XLSX_LIB,"text/javascript; charset=utf-8");if(url.pathname==="/xlsx.LICENSE")return asset(XLSX_LICENSE,"text/plain; charset=utf-8");if(url.pathname==="/catalog.js")return asset(CATALOG,"text/javascript; charset=utf-8");if(url.pathname==="/studio.js")return asset(STUDIO,"text/javascript; charset=utf-8");if(url.pathname==="/app.js")return asset(APP,"text/javascript; charset=utf-8");if(url.pathname==="/"||url.pathname==="/index.html")return asset(HTML,"text/html; charset=utf-8");return new Response("Not found",{status:404});}catch(error){console.error(error);return json({error:"Dịch vụ tạm thời không khả dụng."},500);}}};
 `;
 
-const output = `const HTML=${JSON.stringify(html)};\nconst CSS=${JSON.stringify(css)};\nconst OVERRIDES=${JSON.stringify(overrides)};\nconst XLSX_LIB=${JSON.stringify(xlsx)};\nconst XLSX_LICENSE=${JSON.stringify(xlsxLicense)};\nconst CATALOG=${JSON.stringify(catalog)};\nconst APP=${JSON.stringify(app)};\nconst STUDIO=${JSON.stringify(studio)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime}`;
+const output = `const HTML=${JSON.stringify(html)};\nconst CSS=${JSON.stringify(css)};\nconst OVERRIDES=${JSON.stringify(overrides)};\nconst XLSX_LIB=${JSON.stringify(xlsx)};\nconst XLSX_LICENSE=${JSON.stringify(xlsxLicense)};\nconst CATALOG=${JSON.stringify(catalog)};\nconst APP=${JSON.stringify(app)};\nconst STUDIO=${JSON.stringify(studio)};\nconst LAYOUT_IMAGES=${JSON.stringify(layoutImages)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime}`;
 fs.mkdirSync("dist/server", { recursive: true });
 fs.writeFileSync("dist/server/index.js", output);
