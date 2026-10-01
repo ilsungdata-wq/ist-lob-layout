@@ -51,3 +51,27 @@ body.readonly .edit-form button,body.readonly #addBtn,body.readonly #duplicateBt
  #printReport .layout-object{cursor:default}#printReport .object-label text{font-weight:600}#printReport .object-label rect{fill:#fff!important;stroke:#8da49b!important}
  #printReport .excel-form-section{break-before:page;padding:0;border:0}#printReport .excel-form-head>span,#printReport .excel-add-jig{display:none!important}#printReport .equipment-legend{grid-template-columns:repeat(8,1fr);break-inside:avoid}#printReport .excel-process-lane{display:block;break-inside:avoid;margin-bottom:3mm}#printReport .excel-lane-label{writing-mode:horizontal-tb;transform:none;display:block;padding:1mm}#printReport .excel-process-row{overflow:visible;display:grid;grid-template-columns:repeat(12,1fr)}#printReport .excel-process-card{min-width:0;min-height:38mm;display:grid;flex:none;border-right:1px solid #82958e}#printReport .excel-process-card>strong{font-size:6.5pt}#printReport .excel-process-jigs{min-height:0}
 }
+
+/* Version 9: keep the layout as the main surface and align the LOB workspace. */
+.equipment-diagram{min-height:430px;max-height:calc(100vh - 300px)}
+.canvas-card{box-shadow:0 8px 24px rgba(21,48,61,.08)}
+.layout-summary{position:sticky;left:0;z-index:2;align-items:center;background:#edf6f0}
+.process-view{padding:18px 20px}
+.process-view-head,.lob-analysis,.process-table-wrap{width:100%;max-width:none}
+.process-view-head{align-items:center;margin-bottom:12px}
+.lob-analysis{grid-template-columns:minmax(0,1fr);grid-template-areas:"stats" "chart";gap:12px;margin:0 0 12px}
+.lob-chart-panel{grid-area:chart;padding:16px 18px;overflow:hidden}
+.lob-chart-panel h2{font-size:17px}.lob-chart-panel p{min-height:18px;margin:4px 0 10px}
+.lob-chart{display:flex;align-items:center;width:100%;min-height:300px;overflow-x:auto;overflow-y:hidden}
+.lob-chart svg{display:block;width:100%;min-width:980px;height:300px;max-width:none}
+.lob-stats{grid-area:stats;display:grid;grid-template-columns:repeat(9,minmax(110px,1fr));padding:0;overflow:hidden}
+.lob-stats article{min-width:0;padding:11px 13px;border-right:1px solid #d8e3e6}
+.lob-stats article:last-child{border-right:0}.lob-stats span,.lob-stats strong{display:block}
+.lob-stats span{min-height:24px;color:#6c828b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.lob-stats strong{margin-top:3px;color:#102f3c;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.process-table-wrap{border-radius:10px}.process-table{min-width:1320px;font-size:13px;table-layout:fixed}
+.process-table th{padding:11px 10px}.process-table td{height:52px;padding:10px;line-height:1.3}
+.process-table th:nth-child(1){width:48px}.process-table th:nth-child(2){width:270px}.process-table th:nth-child(3){width:160px}.process-table th:nth-child(4){width:72px}.process-table th:nth-child(5){width:68px}.process-table th:nth-child(6){width:140px}.process-table th:nth-child(7){width:110px}.process-table th:nth-child(8){width:150px}.process-table th:nth-child(9){width:90px}.process-table th:nth-child(10){width:110px}
+.skill-option{position:relative}.skill-option label{padding-right:38px}.skill-remove{position:absolute;right:7px;top:50%;width:24px;height:24px;transform:translateY(-50%);border:0;border-radius:6px;background:#ffe8e4;color:#aa352b;font-size:17px;font-weight:900;line-height:1;cursor:pointer}.skill-remove:hover{background:#ffd7d1}
+@media(max-width:1350px){.lob-stats{grid-template-columns:repeat(5,minmax(120px,1fr))}.lob-stats article{border-bottom:1px solid #d8e3e6}.lob-chart svg{min-width:1050px}}
+@media(max-width:720px){.process-view{padding:10px}.lob-stats{grid-template-columns:repeat(3,minmax(105px,1fr));overflow-x:auto}.lob-chart-panel{padding:12px}.lob-chart svg{min-width:940px}.equipment-diagram{min-height:360px;max-height:68vh}}
