@@ -62,7 +62,7 @@
 
       <div class="domain-overview">
         <div class="domain-tabs"><button class="domain-tab active" data-panel="workforcePanel" type="button"><i class="human-mark"></i> Thông tin nhân lực sản xuất</button><button class="domain-tab" data-panel="equipmentPanel" type="button">⌁ Thông tin Jig & setup · EQM</button></div>
-        <div id="workforcePanel" class="domain-panel active"><div class="workforce-scroll"><table class="workforce-table"><thead><tr><th>Model</th><th>Type</th><th>Line</th><th>Leader</th><th>ĐKN</th><th>Support</th><th>MP</th><th>IQC</th><th>Vision Laser</th><th>Vision cuối chuyền</th><th>OQC</th><th>PQC</th><th>Total</th></tr></thead><tbody id="workforceBody"></tbody></table></div></div>
+        <div id="workforcePanel" class="domain-panel active"><div class="workforce-compact" id="workforceCompact"></div><button id="workforceToggle" class="workforce-toggle" type="button" aria-expanded="false">Xem chi tiết nhân lực</button><div class="workforce-scroll"><table class="workforce-table"><thead><tr><th>Model</th><th>Type</th><th>Line</th><th>Leader</th><th>ĐKN</th><th>Support</th><th>MP</th><th>IQC</th><th>Vision Laser</th><th>Vision cuối chuyền</th><th>OQC</th><th>PQC</th><th>Total</th></tr></thead><tbody id="workforceBody"></tbody></table></div></div>
         <div id="equipmentPanel" class="domain-panel"><div id="equipmentStats" class="equipment-stats"></div></div>
       </div>
 
@@ -71,7 +71,11 @@
           <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả người, bàn, máy và Jig. Chọn công đoạn để khai báo.</p><p id="layoutCapacityNote" class="capacity-note"></p></div>
           <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot auto"></i>Tự động</span></div>
         </div>
-        <div class="equipment-diagram-head"><b>Vùng sản xuất 33 m · Băng tải 27 m</b><span>V3: Jig Press · ATT: Jig Attach · Kéo bàn sẽ di chuyển Jig trên bàn</span><label>Thu phóng <select id="layoutZoom"><option value="1">100%</option><option value="0.75">75%</option><option value="0.5">50%</option><option value="fit">Vừa màn hình</option></select></label></div>
+        <div class="equipment-diagram-head"><b>Layout 33 m · Băng tải 27 m</b><span>V3: Jig Press · A: Jig Attach · T: Tool</span><label>Thu phóng <select id="layoutZoom"><option value="1">100%</option><option value="0.75">75%</option><option value="0.5">50%</option><option value="fit">Vừa màn hình</option></select></label></div>
+        <div id="layoutEditorToolbar" class="layout-editor-toolbar" aria-label="Công cụ chỉnh bố cục">
+          <button id="layoutLockBtn" type="button" class="btn active">Đang chỉnh sửa</button><span id="selectedObjectName">Chọn người, bàn, máy hoặc băng tải</span>
+          <button id="rotateObjectBtn" type="button" class="btn" disabled>Xoay 90°</button><button id="duplicateObjectBtn" type="button" class="btn" disabled>Nhân bản</button><button id="copyObjectBtn" type="button" class="btn" disabled>Sao chép</button><button id="pasteObjectBtn" type="button" class="btn" disabled>Dán</button><button id="snapObjectBtn" type="button" class="btn" disabled>Căn lưới</button><button id="deleteObjectBtn" type="button" class="btn danger" disabled>Xóa bản sao</button>
+        </div>
         <div id="equipmentDiagram" class="equipment-diagram" tabindex="0" aria-label="Sơ đồ bàn, nhân lực và Jig theo công đoạn"></div>
         <div class="legacy-layout" hidden><div class="equipment-diagram-head"><b>Vị trí công đoạn</b></div>
         <div class="canvas-viewport" tabindex="0" aria-label="Cuộn để xem toàn bộ vị trí công đoạn">
