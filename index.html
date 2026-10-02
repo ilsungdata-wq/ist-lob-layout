@@ -25,7 +25,7 @@
   <nav class="view-tabs" aria-label="Chế độ xem">
     <button class="view-tab active" data-view="overview" type="button"><span>1</span> Tổng quan layout</button>
     <button class="view-tab" data-view="processes" type="button"><span>2</span> <b id="processTabLabel">LOB theo model</b></button>
-    <button class="view-tab" data-view="jigs" type="button"><span>3</span> Danh sách Jig</button>
+    <button class="view-tab" data-view="jigs" type="button"><span>3</span> Danh sách thiết bị</button>
   </nav>
 
   <main class="app-shell" id="overviewView">
@@ -97,7 +97,7 @@
         <button id="addCategoryBtn" type="button" class="btn full">＋ Thêm danh mục công đoạn</button><div class="extra-flags"><div class="v2-title"><b>Nhãn vị trí</b><button id="addFlagBtn" type="button" class="mini-add">＋ Thêm nhãn</button></div><div id="flagOptions" class="station-flags"></div></div>
         <div class="station-flags"><label><input id="criticalInput" type="checkbox"><span><b>Vị trí trọng điểm</b><small>Làm nổi bật trên layout</small></span></label></div>
         <div class="skills-panel"><div class="v2-title"><b>Đa kỹ năng</b><button id="addSkillBtn" class="mini-add" type="button">＋ Thêm mức</button></div><div id="skillOptions" class="station-flags"></div><div id="newSkillRow" hidden><label>Mức đa kỹ năng (%)<input id="newSkillPercent" type="number" min="1" max="100" step="1" placeholder="Ví dụ: 50"></label><button id="confirmSkillBtn" type="button" class="btn">Thêm</button><span id="skillError" role="status"></span></div></div>
-        <div class="v2-fields"><div class="v2-title"><b>Danh sách Jig & setup</b><button id="addJigBtn" class="mini-add" type="button">＋ Thêm Jig</button></div><p class="v2-help" id="jigSummary">Chưa có dữ liệu Jig hoặc setup cho công đoạn này.</p><div id="jigList" class="jig-list"></div></div>
+        <div class="v2-fields"><div class="v2-title"><b>Danh sách thiết bị & setup</b><button id="addJigBtn" class="mini-add" type="button">＋ Thêm Jig</button></div><p class="v2-help" id="jigSummary">Chưa có dữ liệu Jig hoặc setup cho công đoạn này.</p><div id="jigList" class="jig-list"></div></div>
         <label class="switch-row"><span><b>Trạm tự động</b><small>Không tính nhân lực trực tiếp</small></span><input id="autoInput" type="checkbox"></label>
         <button class="btn primary full" type="submit">Áp dụng thay đổi</button>
         <button class="btn danger full" id="deleteBtn" type="button">Xóa công đoạn</button>
@@ -113,17 +113,17 @@
       <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time và chỉnh trực tiếp dữ liệu của từng công đoạn.</p></div>
       <div class="process-head-actions"><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><div class="process-summary" id="processSummary"></div></div>
     </div>
-    <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
-    <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
+    <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobAddProcessBtn" class="btn" type="button" onclick="addLobProcess()">＋ Công đoạn</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
+    <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T (Avg.) & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
     <div class="process-table-wrap">
       <table class="process-table">
-        <thead><tr><th>STT</th><th>Công đoạn</th><th>T/T</th><th>MP</th><th>Tỷ lệ neck</th><th>ĐKN</th><th>Jig / Setup</th><th>Tổng setup</th><th>Trạng thái</th></tr></thead>
+        <thead><tr><th>STT</th><th>Công đoạn</th><th>T/T (Avg.)</th><th>MP</th><th>Auto</th><th>Tỷ lệ Necktime</th><th>ĐKN</th><th>Jig / Setup</th><th>Tổng setup</th><th>Trạng thái</th></tr></thead>
         <tbody id="processTableBody"></tbody>
       </table>
     </div>
   </section>
 
-  <section id="jigView" class="process-view" hidden><div class="process-view-head"><div><span class="eyebrow">TAB 3 · EQM</span><h1 id="jigViewTitle">Danh sách Jig theo model</h1><p>Một dòng cho mỗi Jig đã khai báo tại công đoạn. Có thể sửa trực tiếp và in để chuẩn bị setup.</p></div><button id="printJigsBtn" class="btn primary">In danh sách Jig</button></div><div class="tab-file-actions"><b>Dữ liệu Jig · <span id="jigDataModel"></span></b><button id="jigXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel Jig</button><button id="jigXlsxImportBtn" class="btn" type="button">Nhập Excel Jig</button><button id="jigSaveBtn" class="btn primary" type="button">Lưu Jig</button><input id="jigXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div><div class="jig-add-bar"><label>Chọn công đoạn<select id="jigStationSelect"></select></label><button id="addInventoryJigBtn" class="btn primary" type="button">＋ Thêm Jig</button></div><div id="jigInventorySummary" class="process-summary"></div><div class="process-table-wrap"><table class="process-table jig-inventory-table"><thead><tr><th>STT</th><th>Công đoạn</th><th>Tên công đoạn</th><th>Loại Jig</th><th>Mã/Tên Jig</th><th>Setup (phút)</th><th></th></tr></thead><tbody id="jigInventoryBody"></tbody></table></div></section>
+  <section id="jigView" class="process-view" hidden><div class="process-view-head"><div><span class="eyebrow">TAB 3 · EQM</span><h1 id="jigViewTitle">Danh sách thiết bị theo model</h1><p>Một dòng cho mỗi Jig đã khai báo tại công đoạn. Có thể sửa trực tiếp và in để chuẩn bị setup.</p></div><button id="printJigsBtn" class="btn primary">In danh sách Jig</button></div><div class="tab-file-actions"><b>Dữ liệu Jig · <span id="jigDataModel"></span></b><button id="jigXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel Jig</button><button id="jigXlsxImportBtn" class="btn" type="button">Nhập Excel Jig</button><button id="jigSaveBtn" class="btn primary" type="button">Lưu Jig</button><input id="jigXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div><div class="jig-add-bar"><label>Chọn công đoạn<select id="jigStationSelect"></select></label><button id="addInventoryJigBtn" class="btn primary" type="button">＋ Thêm Jig</button></div><div id="jigInventorySummary" class="process-summary"></div><div class="process-table-wrap"><table class="process-table jig-inventory-table"><thead><tr><th>STT</th><th>Công đoạn</th><th>Tên công đoạn</th><th>Loại Jig</th><th>Mã/Tên Jig</th><th>Setup (phút)</th><th></th></tr></thead><tbody id="jigInventoryBody"></tbody></table></div></section>
   <dialog id="historyDialog"><div class="history-head"><h2>Lịch sử lưu</h2><button id="closeHistoryBtn" class="btn">Đóng</button></div><p>Bản lưu nằm trong cơ sở dữ liệu của webapp. Khôi phục tạo một phiên bản mới, không xóa bản cũ.</p><div id="historyList"></div><button id="moreHistoryBtn" class="btn" hidden>Xem thêm</button></dialog>
   <section id="printReport" class="print-report"></section>
   <div id="toast" class="toast" role="status"></div>

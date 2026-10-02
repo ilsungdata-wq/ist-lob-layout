@@ -99,3 +99,22 @@ body.readonly .edit-form button,body.readonly #addBtn,body.readonly #duplicateBt
 @media(max-width:720px){.company-logo{width:34px;height:34px}.brand{gap:8px}.brand strong{font-size:15px}.sidebar{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px}.sidebar .field-label{margin:0;font-size:10px}.sidebar .version-label{margin:0}.sidebar .select{padding:8px;font-size:12px}.sidebar .model-meta,.sidebar #duplicateBtn,.sidebar .nav-heading,.sidebar .search-wrap,.sidebar .process-list,.sidebar .side-foot{display:none!important}.metric-row,.domain-overview{display:none}.workspace{padding:6px}.canvas-toolbar{height:46px;padding:8px 10px}.canvas-toolbar h1{font-size:16px}.tab-file-actions{padding:6px}.tab-file-actions .btn{padding:6px 8px;font-size:10px}.excel-reference-scroll{padding:3px;max-height:calc(100vh - 250px)}.excel-reference-scroll img{width:1200px}.inspector{width:min(92vw,360px)}.inspector-collapsed .app-shell{display:block}.app-shell{height:auto}.canvas-card{border-radius:8px}}
 /* The generated report is the only printable surface. Keep the layout overview on one sheet. */
 @media print{body>*:not(#printReport){display:none!important}#printReport{display:block!important}#printReport .excel-reference-scroll{overflow:hidden!important;max-height:245mm!important;padding:0!important}#printReport .excel-reference-scroll img{display:block!important;width:100%!important;height:auto!important;max-height:225mm!important;object-fit:contain!important;box-shadow:none!important}#printReport .layout-summary{break-inside:avoid}#printReport>p{margin:2mm 0}}
+/* LOB editing surface */
+#processView .process-table{min-width:1500px;table-layout:auto}
+#processView .process-table th:nth-child(1){width:65px}
+#processView .process-table th:nth-child(2){width:24%}
+#processView .process-table th:nth-child(3){width:100px}
+#processView .process-table th:nth-child(4){width:80px}
+#processView .process-table th:nth-child(5),#processView .process-table th:nth-child(7){width:65px}
+#processView .process-table th:nth-child(6){width:220px}
+#processView .process-table th:nth-child(8){width:360px}
+#processView .process-table th:nth-child(9){width:100px}
+#processView .process-table th:nth-child(10){width:110px}
+#processView .ratio{width:calc(100% - 42px);min-width:130px;height:8px}
+#processView input[type=checkbox]{min-width:18px;width:18px;height:18px;accent-color:#0b8979}
+#processView .grid-tt,#processView .grid-mp{max-width:100px}
+#processView .grid-name{width:100%;min-width:200px}
+#processView .lob-jig-edit{grid-template-columns:100px minmax(110px,1fr) 70px 26px}
+.order-buttons{display:flex;gap:4px;margin-top:5px}.order-buttons button{border:1px solid #c3d5d8;border-radius:4px;background:#fff;padding:3px 7px;cursor:pointer}.order-buttons button:disabled{opacity:.35;cursor:default}
+.readonly #lobAddProcessBtn{display:none}
+@media print{.order-buttons,.grid-jig-add,.grid-jig-remove{display:none!important}}
