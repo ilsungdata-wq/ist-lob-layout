@@ -9,9 +9,9 @@
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./overrides.css">
 </head>
-<body>
+<body class="inspector-collapsed">
   <header class="topbar">
-    <div class="brand"><span class="mark">IST</span><div><strong>LOB Studio</strong><small>Line Layout Editor</small></div></div>
+    <div class="brand"><img class="company-logo" src="./logo.png" alt="IL-SUNG"><div><strong>LOB Studio</strong><small>Line Layout Editor</small></div></div>
     <div class="top-actions">
       <span id="roleBadge" class="role-badge">Đang kiểm tra quyền…</span>
       <span id="saveState" class="save-state"><i></i>Đã đồng bộ</span>
@@ -30,17 +30,14 @@
 
   <main class="app-shell" id="overviewView">
     <aside class="sidebar">
-      <label class="field-label" for="modelSelect">Model / phiên bản</label>
+      <label class="field-label" for="modelSelect">Model</label>
       <select id="modelSelect" class="select"></select>
+      <label class="field-label version-label" for="versionSelect">Phiên bản</label>
+      <select id="versionSelect" class="select"></select>
       <div class="model-meta"><label>Line<input id="lineMeta" type="number" min="1" step="1" value="1"></label><label>Type<select id="typeMeta"><option value="normal">Normal</option><option value="block">Block</option></select></label><button id="saveMetaBtn" class="btn full" type="button">Lưu thông tin model</button></div><button id="duplicateBtn" class="btn full">Nhân bản layout</button>
 
-      <div class="import-box">
-        <b>Cập nhật hàng loạt bằng Excel</b>
-        <p>Nhập CSV mẫu hoặc file XLSX/XLSM gốc. Mọi sheet bắt đầu bằng “Layout” sẽ cập nhật model tương ứng.</p>
-        <button id="templateBtn" class="btn full">1. Tải biểu mẫu Excel (.XLSX)</button>
-        <button id="importBtn" class="btn full">2. Nhập Excel gốc</button>
-        <input id="fileInput" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" hidden>
-      </div>
+      <input id="fileInput" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" hidden>
+      <button id="templateBtn" type="button" hidden>Tải mẫu XLSX</button><button id="importBtn" type="button" hidden>Nhập Excel</button>
 
       <div class="nav-heading"><span>Công đoạn</span><button id="addBtn" class="icon-btn" title="Thêm công đoạn">＋</button></div>
       <div class="search-wrap"><span>⌕</span><input id="searchInput" placeholder="Tìm công đoạn"></div>
@@ -68,17 +65,17 @@
 
       <div class="canvas-card">
         <div class="canvas-toolbar">
-          <div><h1 id="layoutTitle">Layout</h1><p>Kéo thả người, bàn, máy và Jig. Chọn công đoạn để khai báo.</p><p id="layoutCapacityNote" class="capacity-note"></p></div>
+          <div><h1 id="layoutTitle">Layout</h1></div>
           <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot auto"></i>Tự động</span></div>
         </div>
-        <div class="equipment-diagram-head"><b>Layout 33 m · Băng tải 27 m</b><span>V3: Jig Press · A: Jig Attach · T: Tool</span><div class="layout-view-switch"><button id="excelLayoutModeBtn" class="btn active" type="button">Bản Excel</button><button id="interactiveLayoutModeBtn" class="btn" type="button">Chỉnh sửa tương tác</button></div><label>Thu phóng <select id="layoutZoom"><option value="1">100%</option><option value="0.75">75%</option><option value="0.5">50%</option><option value="fit">Vừa màn hình</option></select></label></div>
-        <div class="tab-file-actions"><b>Dữ liệu Layout · <span id="layoutDataModel"></span></b><button id="layoutXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel Layout</button><button id="layoutXlsxImportBtn" class="btn" type="button">Nhập Excel Layout</button><button id="layoutSaveBtn" class="btn primary" type="button">Lưu Layout</button><input id="layoutXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
+        <div class="tab-file-actions"><button id="layoutXlsxTemplateBtn" class="btn" type="button">Tải mẫu XLSX</button><button id="layoutXlsxImportBtn" class="btn" type="button">Nhập Excel</button><button id="layoutSaveBtn" class="btn primary" type="button">Lưu</button><input id="layoutXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
+        <select id="layoutZoom" hidden><option value="fit" selected>Vừa màn hình</option></select><button id="excelLayoutModeBtn" hidden type="button">Bản Excel</button><button id="interactiveLayoutModeBtn" hidden type="button">Chỉnh sửa tương tác</button>
         <div id="layoutEditorToolbar" class="layout-editor-toolbar" aria-label="Công cụ chỉnh bố cục">
           <button id="layoutLockBtn" type="button" class="btn active">Đang chỉnh sửa</button><span id="selectedObjectName">Chọn người, bàn, máy hoặc băng tải</span>
           <button id="rotateObjectBtn" type="button" class="btn" disabled>Xoay 90°</button><button id="duplicateObjectBtn" type="button" class="btn" disabled>Nhân bản</button><button id="copyObjectBtn" type="button" class="btn" disabled>Sao chép</button><button id="pasteObjectBtn" type="button" class="btn" disabled>Dán</button><button id="snapObjectBtn" type="button" class="btn" disabled>Căn lưới</button><button id="deleteObjectBtn" type="button" class="btn danger" disabled>Xóa bản sao</button>
         </div>
         <div id="slotControlPanel" class="slot-control-panel" aria-label="Bật tắt 27 vị trí bàn mỗi phía"></div>
-        <div id="excelLayoutReference" class="excel-layout-reference" tabindex="0"><div class="excel-reference-note"><b>Bản layout gốc từ Excel</b><span id="excelReferenceName"></span><button id="replaceReferenceBtn" class="btn" type="button">Cập nhật ảnh từ Excel</button><input id="referenceImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div class="excel-reference-scroll"><img id="excelReferenceImage" alt="Bản layout gốc từ Excel"></div></div>
+        <div id="excelLayoutReference" class="excel-layout-reference" tabindex="0"><div class="excel-reference-note"><span id="excelReferenceName" hidden></span><button id="replaceReferenceBtn" class="btn" type="button">Thay ảnh layout</button><input id="referenceImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div class="excel-reference-scroll"><img id="excelReferenceImage" alt="Layout Excel"></div></div>
         <div id="equipmentDiagram" class="equipment-diagram" tabindex="0" aria-label="Sơ đồ bàn, nhân lực và Jig theo công đoạn" hidden></div>
         <div class="legacy-layout" hidden><div class="equipment-diagram-head"><b>Vị trí công đoạn</b></div>
         <div class="canvas-viewport" tabindex="0" aria-label="Cuộn để xem toàn bộ vị trí công đoạn">

@@ -8,7 +8,7 @@ const app = fs.readFileSync("dist/app.js", "utf8");
 const studio = fs.readFileSync("dist/studio.js", "utf8");
 const xlsx = fs.readFileSync("dist/xlsx.full.min.js", "utf8");
 const xlsxLicense = fs.readFileSync("dist/xlsx.LICENSE", "utf8");
-const layoutImages = Object.fromEntries(fs.readdirSync("dist/layout-reference").filter(name => name.endsWith(".png")).map(name => [`/layout-reference/${name}`, fs.readFileSync(`dist/layout-reference/${name}`).toString("base64")]));
+const layoutImages = Object.fromEntries([["/logo.png",fs.readFileSync("dist/logo.png").toString("base64")],...fs.readdirSync("dist/layout-reference").filter(name => name.endsWith(".png")).map(name => [`/layout-reference/${name}`, fs.readFileSync(`dist/layout-reference/${name}`).toString("base64")])]);
 const owner = "huyquynhtran96@gmail.com";
 
 const runtime = String.raw`
