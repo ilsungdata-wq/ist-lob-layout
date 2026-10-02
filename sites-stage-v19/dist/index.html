@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LOB IL-SUNGTECH</title>
+  <meta name="description" content="Môi trường chỉnh sửa layout dây chuyền, T/T, nhân lực và chỉ số LOB.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d2633'/%3E%3Cpath d='M14 42h36M18 33h8v9h-8zm10-12h8v21h-8zm10 6h8v15h-8z' fill='%2334d399'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./overrides.css">
+</head>
+<body class="inspector-collapsed">
+  <header class="topbar">
+    <div class="brand"><img class="company-logo" src="./logo.png" alt="IL-SUNGTECH"><div><strong>LOB IL-SUNGTECH</strong></div></div>
+    <div class="top-actions">
+      <span id="roleBadge" class="role-badge">Đang kiểm tra quyền…</span>
+      <span id="saveState" class="save-state"><i></i>Đã đồng bộ</span>
+      <button class="btn ghost" id="undoBtn" title="Hoàn tác (Ctrl+Z)">↶ Hoàn tác</button>
+      <button class="btn ghost" id="editorsBtn" hidden>Phân quyền</button>
+      <button class="btn ghost" id="printBtn">In layout</button>
+      <button class="btn primary" id="saveVersionBtn">Lưu phiên bản</button>
+    </div>
+  </header>
+
+  <nav class="view-tabs" aria-label="Chế độ xem">
+    <button class="view-tab active" data-view="overview" type="button"><span>1</span> Tổng quan layout</button>
+    <button class="view-tab" data-view="processes" type="button"><span>2</span> <b id="processTabLabel">LOB theo model</b></button>
+    <button class="view-tab" data-view="jigs" type="button"><span>3</span> Danh sách Jig</button>
+  </nav>
+
+  <main class="app-shell" id="overviewView">
+    <aside class="sidebar">
+      <label class="field-label" for="modelSelect">Model</label>
+      <select id="modelSelect" class="select"></select>
+      <label class="field-label version-label" for="versionSelect">Phiên bản</label>
+      <select id="versionSelect" class="select"></select>
+      <div class="model-meta"><label>Line<input id="lineMeta" type="number" min="1" step="1" value="1"></label><label>Type<select id="typeMeta"><option value="normal">Normal</option><option value="block">Block</option></select></label><button id="saveMetaBtn" class="btn full" type="button">Lưu thông tin model</button></div><button id="duplicateBtn" class="btn full">Nhân bản layout</button>
+
+      <input id="fileInput" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" hidden>
+      <button id="templateBtn" type="button" hidden>Tải mẫu XLSX</button><button id="importBtn" type="button" hidden>Nhập Excel</button>
+
+      <div class="nav-heading"><span>Công đoạn</span><button id="addBtn" class="icon-btn" title="Thêm công đoạn">＋</button></div>
+      <div class="search-wrap"><span>⌕</span><input id="searchInput" placeholder="Tìm công đoạn"></div>
+      <div id="processList" class="process-list"></div>
+
+      <div class="side-foot">
+        <button id="resetBtn" class="text-btn">Khôi phục dữ liệu mẫu</button>
+        <small>Dữ liệu lưu trên webapp. Lịch sử ghi nhận các lần lưu.</small>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="metric-row">
+        <article><span>LOB</span><strong id="metricLob">—</strong><small>Hiệu suất cân bằng</small></article>
+        <article><span>Neck time</span><strong id="metricNeck">—</strong><small>giây / sản phẩm</small></article>
+        <article><span>UPH</span><strong id="metricUph">—</strong><small>sản phẩm / giờ</small></article>
+        <article><span>Công đoạn</span><strong id="metricCount">—</strong><small id="metricMp">— nhân lực</small></article>
+      </div>
+
+      <div class="domain-overview">
+        <div class="domain-tabs"><button class="domain-tab active" data-panel="workforcePanel" type="button"><i class="human-mark"></i> Thông tin nhân lực sản xuất</button><button class="domain-tab" data-panel="equipmentPanel" type="button">⌁ Thông tin Jig & setup · EQM</button></div>
+        <div id="workforcePanel" class="domain-panel active"><div class="workforce-compact" id="workforceCompact"></div><button id="workforceToggle" class="workforce-toggle" type="button" aria-expanded="false">Xem chi tiết nhân lực</button><div class="workforce-scroll"><table class="workforce-table"><thead><tr><th>Model</th><th>Type</th><th>Line</th><th>Leader</th><th>ĐKN</th><th>Support</th><th>MP</th><th>IQC</th><th>Vision Laser</th><th>Vision cuối chuyền</th><th>OQC</th><th>PQC</th><th>Total</th></tr></thead><tbody id="workforceBody"></tbody></table></div></div>
+        <div id="equipmentPanel" class="domain-panel"><div id="equipmentStats" class="equipment-stats"></div></div>
+      </div>
+
+      <div class="canvas-card">
+        <div class="canvas-toolbar">
+          <div><h1 id="layoutTitle">Layout</h1></div>
+          <div class="legend"><span><i class="dot normal"></i>Bình thường</span><span><i class="dot auto"></i>Tự động</span></div>
+        </div>
+        <div class="tab-file-actions"><button id="layoutXlsxTemplateBtn" class="btn" type="button">Tải mẫu XLSX</button><button id="layoutXlsxImportBtn" class="btn" type="button">Nhập Excel</button><button id="layoutSaveBtn" class="btn primary" type="button">Lưu</button><input id="layoutXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
+        <select id="layoutZoom" hidden><option value="fit" selected>Vừa màn hình</option></select><button id="excelLayoutModeBtn" hidden type="button">Bản Excel</button><button id="interactiveLayoutModeBtn" hidden type="button">Chỉnh sửa tương tác</button>
+        <div id="layoutEditorToolbar" class="layout-editor-toolbar" aria-label="Công cụ chỉnh bố cục">
+          <button id="layoutLockBtn" type="button" class="btn active">Đang chỉnh sửa</button><span id="selectedObjectName">Chọn người, bàn, máy hoặc băng tải</span>
+          <button id="rotateObjectBtn" type="button" class="btn" disabled>Xoay 90°</button><button id="duplicateObjectBtn" type="button" class="btn" disabled>Nhân bản</button><button id="copyObjectBtn" type="button" class="btn" disabled>Sao chép</button><button id="pasteObjectBtn" type="button" class="btn" disabled>Dán</button><button id="snapObjectBtn" type="button" class="btn" disabled>Căn lưới</button><button id="deleteObjectBtn" type="button" class="btn danger" disabled>Xóa bản sao</button>
+        </div>
+        <div id="slotControlPanel" class="slot-control-panel" aria-label="Bật tắt 27 vị trí bàn mỗi phía"></div>
+        <div id="excelLayoutReference" class="excel-layout-reference" tabindex="0"><div class="excel-reference-note"><span id="excelReferenceName" hidden></span><button id="replaceReferenceBtn" class="btn" type="button">Thay ảnh layout</button><input id="referenceImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div class="excel-reference-scroll"><img id="excelReferenceImage" alt="Layout Excel"></div></div>
+        <div id="equipmentDiagram" class="equipment-diagram" tabindex="0" aria-label="Sơ đồ bàn, nhân lực và Jig theo công đoạn" hidden></div>
+        <div class="legacy-layout" hidden><div class="equipment-diagram-head"><b>Vị trí công đoạn</b></div>
+        <div class="canvas-viewport" tabindex="0" aria-label="Cuộn để xem toàn bộ vị trí công đoạn">
+        <div id="layoutCanvas" class="layout-canvas" aria-label="Sơ đồ layout dây chuyền">
+          <div id="meterRuler" class="meter-ruler"></div>
+          <div class="belt-label">BĂNG CHUYỀN · 27 M</div>
+          <div class="flow-line"></div>
+        </div>
+        </div>
+      </div>
+    </div></section>
+
+    <aside class="inspector" id="inspector">
+      <div class="inspector-title"><div><span id="stationBadge">SỬA THỦ CÔNG · TRẠM —</span><h2 id="stationTitle">Chọn một trạm</h2></div><button id="closeInspector" class="icon-btn">×</button></div>
+      <form id="editForm" class="edit-form">
+        <label>Tên công đoạn<textarea id="nameInput" rows="3"></textarea></label>
+        <div class="field-grid"><label>T/T (giây)<input id="timeInput" type="number" min="0" step="0.01"></label><label>Nhân lực<input id="mpInput" type="number" min="0" step="1"></label></div>
+        <label>Danh mục<select id="categoryInput"><option>DÁN & ÉP</option><option>METAL SHEET</option><option>TEST/KIỂM TRA</option><option>TEST TÍNH NĂNG</option><option>GẮN MẠCH</option><option>GẮN TAY</option><option>KIỂM TRA ĐẦU VÀO</option><option>KIỂM TRA ĐẦU RA</option><option>AIRVENT</option><option>AGING</option><option>SUPPORT</option></select></label>
+        <button id="addCategoryBtn" type="button" class="btn full">＋ Thêm danh mục công đoạn</button><div class="extra-flags"><div class="v2-title"><b>Nhãn vị trí</b><button id="addFlagBtn" type="button" class="mini-add">＋ Thêm nhãn</button></div><div id="flagOptions" class="station-flags"></div></div>
+        <div class="station-flags"><label><input id="criticalInput" type="checkbox"><span><b>Vị trí trọng điểm</b><small>Làm nổi bật trên layout</small></span></label></div>
+        <div class="skills-panel"><div class="v2-title"><b>Đa kỹ năng</b><button id="addSkillBtn" class="mini-add" type="button">＋ Thêm mức</button></div><div id="skillOptions" class="station-flags"></div><div id="newSkillRow" hidden><label>Mức đa kỹ năng (%)<input id="newSkillPercent" type="number" min="1" max="100" step="1" placeholder="Ví dụ: 50"></label><button id="confirmSkillBtn" type="button" class="btn">Thêm</button><span id="skillError" role="status"></span></div></div>
+        <div class="v2-fields"><div class="v2-title"><b>Danh sách Jig & setup</b><button id="addJigBtn" class="mini-add" type="button">＋ Thêm Jig</button></div><p class="v2-help" id="jigSummary">Chưa có dữ liệu Jig hoặc setup cho công đoạn này.</p><div id="jigList" class="jig-list"></div></div>
+        <label class="switch-row"><span><b>Trạm tự động</b><small>Không tính nhân lực trực tiếp</small></span><input id="autoInput" type="checkbox"></label>
+        <button class="btn primary full" type="submit">Áp dụng thay đổi</button>
+        <button class="btn danger full" id="deleteBtn" type="button">Xóa công đoạn</button>
+      </form>
+      <div class="empty-inspector" id="emptyInspector"><div>⌁</div><p>Chọn một trạm trên sơ đồ hoặc trong danh sách để xem chi tiết.</p></div>
+
+      <div class="version-panel"><div class="nav-heading"><span>Lịch sử phiên bản</span></div><button id="historyBtn" class="btn full" type="button">Xem lịch sử lưu & khôi phục</button><div id="versionList"></div></div>
+    </aside>
+  </main>
+
+  <section class="process-view" id="processView" hidden>
+    <div class="process-view-head">
+      <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time để nhận biết công đoạn cần cân bằng. Nhấn một dòng để mở chi tiết Jig và setup.</p></div>
+      <div class="process-head-actions"><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><div class="process-summary" id="processSummary"></div></div>
+    </div>
+    <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
+    <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
+    <div class="process-table-wrap">
+      <table class="process-table">
+        <thead><tr><th>STT</th><th>Công đoạn</th><th>Danh mục</th><th>T/T</th><th>MP</th><th>Tỷ lệ neck</th><th>Đa kỹ năng</th><th>Jig</th><th>Setup</th><th>Trạng thái</th></tr></thead>
+        <tbody id="processTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="jigView" class="process-view" hidden><div class="process-view-head"><div><span class="eyebrow">TAB 3 · EQM</span><h1 id="jigViewTitle">Danh sách Jig theo model</h1><p>Một dòng cho mỗi Jig đã khai báo tại công đoạn. Có thể sửa trực tiếp và in để chuẩn bị setup.</p></div><button id="printJigsBtn" class="btn primary">In danh sách Jig</button></div><div class="tab-file-actions"><b>Dữ liệu Jig · <span id="jigDataModel"></span></b><button id="jigXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel Jig</button><button id="jigXlsxImportBtn" class="btn" type="button">Nhập Excel Jig</button><button id="jigSaveBtn" class="btn primary" type="button">Lưu Jig</button><input id="jigXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div><div class="jig-add-bar"><label>Chọn công đoạn<select id="jigStationSelect"></select></label><button id="addInventoryJigBtn" class="btn primary" type="button">＋ Thêm Jig</button></div><div id="jigInventorySummary" class="process-summary"></div><div class="process-table-wrap"><table class="process-table jig-inventory-table"><thead><tr><th>STT</th><th>Công đoạn</th><th>Tên công đoạn</th><th>Loại Jig</th><th>Mã/Tên Jig</th><th>Setup (phút)</th><th></th></tr></thead><tbody id="jigInventoryBody"></tbody></table></div></section>
+  <dialog id="historyDialog"><div class="history-head"><h2>Lịch sử lưu</h2><button id="closeHistoryBtn" class="btn">Đóng</button></div><p>Bản lưu nằm trong cơ sở dữ liệu của webapp. Khôi phục tạo một phiên bản mới, không xóa bản cũ.</p><div id="historyList"></div><button id="moreHistoryBtn" class="btn" hidden>Xem thêm</button></dialog>
+  <section id="printReport" class="print-report"></section>
+  <div id="toast" class="toast" role="status"></div>
+  <dialog id="versionDialog"><form method="dialog" id="versionForm"><h2>Lưu phiên bản</h2><p>Ghi lại lý do để dễ so sánh và khôi phục sau này.</p><label>Tên phiên bản<input id="versionName" required placeholder="Ví dụ: Ver 0.4"></label><label>Nội dung thay đổi<textarea id="versionNote" rows="3" placeholder="Đã cân bằng lại vị trí neck time..."></textarea></label><div class="dialog-actions"><button value="cancel" class="btn ghost">Hủy</button><button value="default" class="btn primary" id="confirmVersion">Lưu phiên bản</button></div></form></dialog>
+  <dialog id="editorsDialog"><form method="dialog" id="editorsForm"><h2>Phân quyền chỉnh sửa</h2><p>Mọi người đều có thể xem. Chỉ email trong danh sách này mới có thể thay đổi layout.</p><label>Email người chỉnh sửa<input id="editorEmail" type="email" required placeholder="ten@congty.com"></label><button class="btn primary full" id="addEditorBtn" type="submit">Thêm quyền chỉnh sửa</button><div id="editorsList" class="editors-list"></div><div class="dialog-actions"><button value="cancel" class="btn ghost">Đóng</button></div></form></dialog>
+  <dialog id="importConflictDialog" class="import-conflict-dialog"><div class="import-conflict-content"><span class="eyebrow">IMPORT EXCEL · QUẢN LÝ PHIÊN BẢN</span><h2>Model đã có dữ liệu trên hệ thống</h2><p>So sánh dữ liệu hiện tại với dữ liệu mới trước khi chọn cách cập nhật.</p><div class="conflict-preview-wrap"><table class="conflict-preview"><thead><tr><th>Model</th><th>Trạm cũ → mới</th><th>Neck cũ → mới</th><th>LOB cũ → mới</th></tr></thead><tbody id="importConflictBody"></tbody></table></div><div class="conflict-actions"><button id="overwriteImportBtn" class="btn danger" type="button"><b>Ghi đè phiên bản hiện tại</b><small>Cập nhật trực tiếp dữ liệu Model</small></button><button id="newVersionImportBtn" class="btn primary" type="button"><b>Giữ bản cũ & tạo bản mới</b><small>Tạo version mới để đối chiếu/khôi phục</small></button><button id="cancelImportBtn" class="btn" type="button">Hủy Import</button></div></div></dialog>
+  <dialog id="printChoiceDialog" class="print-choice-dialog"><div><span class="eyebrow">IN LAYOUT</span><h2>Chọn phiên bản cần in</h2><p>Bản ảnh giữ nguyên hình Excel. Bản convert sử dụng dữ liệu và vị trí đang chỉnh sửa trên webapp.</p><div class="print-choice-actions"><button id="printExcelVersionBtn" class="btn primary" type="button"><b>In bản ảnh Excel</b><small>Giữ nguyên mẫu trong file Excel</small></button><button id="printConvertedVersionBtn" class="btn" type="button"><b>In bản convert</b><small>Layout tương tác của webapp</small></button><button id="cancelPrintChoiceBtn" class="btn ghost" type="button">Hủy</button></div></div></dialog>
+  <script src="./xlsx.full.min.js"></script>
+  <script src="./catalog.js"></script>
+  <script src="./studio.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
