@@ -177,18 +177,18 @@ function layoutPositions(rows){
   return positions;
 }
 function renderLobChart(){
-  const rows=model().processes,m=metrics(),measured=rows.filter(s=>Number(s.time)>0),missing=rows.length-measured.length;
+  const rows=model().processes,m=metrics(),measured=rows.filter(s=>stationTime(s)>0),missing=rows.length-measured.length;
   $('chartModel').textContent=model().name;
   $('chartDataNote').textContent=missing?`${missing}/${rows.length} công đoạn chưa có T/T. Chỉ số hiện tại là tạm tính; màu xám: chưa đo.`:'T/T theo số thứ tự công đoạn · Đỏ: neck time · Xanh: các công đoạn còn lại.';
-  const available=Math.max(860,window.innerWidth-320),step=Math.max(27,Math.min(52,(available-90)/Math.max(1,rows.length))),w=Math.max(780,rows.length*step+80),h=292,left=48,top=26,bottom=246,range=Math.max(1,Math.ceil(Math.max(m.neck,...rows.map(s=>+s.time||0))*1.12)),barWidth=Math.max(17,Math.min(30,step-12));
+  const available=Math.max(860,window.innerWidth-320),step=Math.max(27,Math.min(52,(available-90)/Math.max(1,rows.length))),w=Math.max(780,rows.length*step+80),h=292,left=48,top=26,bottom=246,range=Math.max(1,Math.ceil(Math.max(m.neck,...rows.map(stationTime))*1.12)),barWidth=Math.max(17,Math.min(30,step-12));
   let parts=[];
   for(let i=0;i<=4;i++){const value=range*i/4,y=bottom-(bottom-top)*i/4;parts.push(`<line x1="${left}" x2="${w-12}" y1="${y}" y2="${y}" stroke="#dce5e8"/><text x="${left-8}" y="${y+4}" text-anchor="end" fill="#6c8089" font-size="11">${value.toFixed(1)}</text>`)}
   if(m.neck){const neckY=bottom-(bottom-top)*m.neck/range;parts.push(`<line x1="${left}" x2="${w-12}" y1="${neckY}" y2="${neckY}" stroke="#e9342b" stroke-width="2" stroke-dasharray="8 6"/><text x="${w-16}" y="${neckY-6}" text-anchor="end" fill="#c72e25" font-size="10" font-weight="bold">NECK ${m.neck.toFixed(2)}s</text>`)}
-  rows.forEach((s,i)=>{const time=Math.max(0,+s.time||0),bh=(bottom-top)*time/range,x=left+14+i*step,y=bottom-bh,isNeck=m.neck>0&&Math.abs(stationCycle(s)-m.neck)<.005;
+  rows.forEach((s,i)=>{const time=stationTime(s),bh=(bottom-top)*time/range,x=left+14+i*step,y=bottom-bh,isNeck=m.neck>0&&Math.abs(stationCycle(s)-m.neck)<.005;
     parts.push(`<g class="lob-bar" data-id="${esc(s.id)}" tabindex="0" role="button" aria-label="${esc((i+1)+'. '+s.name+': '+(time?time+' giây':'chưa có T/T'))}"><title>${esc(s.name)} · ${time?time.toFixed(2)+' giây':'Chưa có T/T'}</title><rect x="${x-5}" y="${top}" width="${step-4}" height="${bottom-top+30}" fill="transparent"/><rect x="${x}" y="${time?y:bottom-3}" width="${barWidth}" height="${time?bh:3}" fill="${!time?'#b1bfc4':isNeck?'#ed352d':'#1b6986'}"/><text x="${x+barWidth/2}" y="${time?y-6:bottom-8}" text-anchor="middle" fill="#34505b" font-size="10">${time?time.toFixed(2):'—'}</text><text x="${x+barWidth/2}" y="${bottom+19}" text-anchor="middle" font-size="11">${i+1}</text></g>`);
   });
   $('lobChart').innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Biểu đồ thời gian công đoạn từ 1 đến ${rows.length}"><text x="8" y="15" font-size="11">Giây</text>${parts.join('')}</svg>`;
-  const avg=rows.length?m.sum/rows.length:0,min=measured.length?Math.min(...measured.map(s=>+s.time)):0;
+  const avg=rows.length?m.sum/rows.length:0,min=measured.length?Math.min(...measured.map(stationTime)):0;
   const stats=[['Model',model().name],['LOB',measured.length?(m.lob*100).toFixed(1)+'%':'—'],['Tổng thời gian',measured.length?m.sum.toFixed(2)+' s':'—'],['Công đoạn',rows.length],['Neck time',m.neck?m.neck.toFixed(2)+' s':'—'],['Trung bình',measured.length?avg.toFixed(2)+' s':'—'],['T/T nhỏ nhất đã đo',min?min.toFixed(2)+' s':'—'],['UPH',m.uph?m.uph.toFixed(0):'—'],['MP',m.mp]];
   $('lobStats').innerHTML=stats.map(([label,value])=>`<article><span>${label}</span><strong>${esc(value)}</strong></article>`).join('');
   $('lobChart').querySelectorAll('.lob-bar').forEach(el=>{const activate=()=>{selectedId=el.dataset.id;renderProcessTable();const row=[...$('processTableBody').querySelectorAll('tr')].find(r=>r.dataset.id===selectedId);row?.classList.add('chart-selected');row?.scrollIntoView({block:'nearest',behavior:'smooth'})};el.onclick=activate;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate()}}});

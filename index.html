@@ -110,14 +110,14 @@
 
   <section class="process-view" id="processView" hidden>
     <div class="process-view-head">
-      <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time để nhận biết công đoạn cần cân bằng. Nhấn một dòng để mở chi tiết Jig và setup.</p></div>
+      <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time và chỉnh trực tiếp dữ liệu của từng công đoạn.</p></div>
       <div class="process-head-actions"><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><div class="process-summary" id="processSummary"></div></div>
     </div>
     <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
     <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
     <div class="process-table-wrap">
       <table class="process-table">
-        <thead><tr><th>STT</th><th>Công đoạn</th><th>Danh mục</th><th>T/T</th><th>MP</th><th>Tỷ lệ neck</th><th>Đa kỹ năng</th><th>Jig</th><th>Setup</th><th>Trạng thái</th></tr></thead>
+        <thead><tr><th>STT</th><th>Công đoạn</th><th>T/T</th><th>MP</th><th>Tỷ lệ neck</th><th>ĐKN</th><th>Jig / Setup</th><th>Tổng setup</th><th>Trạng thái</th></tr></thead>
         <tbody id="processTableBody"></tbody>
       </table>
     </div>
