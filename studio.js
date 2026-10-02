@@ -123,10 +123,7 @@ function printCurrentView(layoutMode=layoutVisualMode){
   if(activeView==='jigs'){content+='<h2>Danh sách Jig & setup</h2>'+$('jigInventorySummary').outerHTML+$('jigInventoryBody').closest('table').outerHTML}
   else if(activeView==='processes'){content+=$('lob-analysis')?.outerHTML||document.querySelector('.lob-analysis').outerHTML;content+=$('processTableBody').closest('table').outerHTML}
   else{
-    const objects=physicalObjects(),byStation=new Map();objects.filter(o=>o.station).forEach(o=>{if(!byStation.has(o.station.id))byStation.set(o.station.id,[]);byStation.get(o.station.id).push(o)});
-    content+=$('layoutSummary').outerHTML+'<p>V3 = Jig Press · A = Jig Attach · T = Tool · ★ = Trọng điểm · ĐKN = Đa kỹ năng. Số trên sơ đồ đối chiếu bảng setup.</p>'+(layoutMode==='excel'?$('excelLayoutReference').outerHTML:$('equipmentDiagram').innerHTML);
-    content+='<h2 class="page-break">Bảng setup công đoạn</h2><table><thead><tr><th>STT</th><th>Công đoạn</th><th>MP</th><th>Thiết bị / vị trí (m)</th><th>ĐKN / trọng điểm</th><th>Jig / setup</th></tr></thead><tbody>'+m.processes.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.name)}</td><td>${s.auto?'AUTO · ':''}${s.mp}</td><td>${(byStation.get(s.id)||[]).map(o=>`${{person:'Người',table:'Bàn',machine:'Máy',welder:'Máy hàn',press:'V3',attach:'Attach',tool:'Tool'}[o.kind]}: x ${((o.x-40)/60).toFixed(2)}, y ${((o.y-30)/60).toFixed(2)} · xoay ${o.rotation||0}°`).join('<br>')}</td><td>${s.critical?'★ Trọng điểm<br>':''}${skillLabel(s)}${(s.tags||[]).map(t=>'<br>'+esc(t)).join('')}</td><td>${getJigs(s).map(j=>`${esc(j.name||jigType(j))} (${jigType(j)}) · ${+j.setup?j.setup+' phút':'chưa đo'}`).join('<br>')||'—'}</td></tr>`).join('')+'</tbody></table><p>Tọa độ x/y tính theo mét, gốc tại góc trên trái layout 33 m. Góc xoay và danh sách Jig giúp người vận hành đặt đúng thiết bị khi setup.</p>';
-    content+='<h2>Nhân lực</h2>'+$('workforceBody').closest('table').outerHTML;
+    content+=$('layoutSummary').outerHTML+'<p>V3 = Jig Press · A = Jig Attach · T = Tool · ★ = Trọng điểm · ĐKN = Đa kỹ năng.</p>'+(layoutMode==='excel'?$('excelLayoutReference').outerHTML:$('equipmentDiagram').innerHTML);
   }
   report.innerHTML=content;window.print();
 }
