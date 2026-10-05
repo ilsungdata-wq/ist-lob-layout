@@ -103,12 +103,17 @@ for model, processes in catalog.items():
         score, col, row, value = ranked[0]
         used.add((col, row))
         time_value = 0
+        station_no = cell_map.get((col, row - 1))
+        try:
+            station_no = int(float(station_no))
+        except (TypeError, ValueError):
+            station_no = 0
         for delta in (1, 2, -1):
             raw = cell_map.get((col, row + delta))
             if isinstance(raw, (int, float)) and 0 < raw < 1000:
                 time_value = round(float(raw), 2)
                 break
-        found.append({"index": index, "col": col, "row": row, "time": time_value, "score": round(score, 2)})
+        found.append({"index": index, "col": col, "row": row, "time": time_value, "stt": station_no, "score": round(score, 2)})
     if not found:
         continue
     row_order = {row: lane for lane, row in enumerate(sorted({item["row"] for item in found}))}
@@ -121,6 +126,7 @@ for model, processes in catalog.items():
             output.append({
                 "index": item["index"],
                 "name": processes[item["index"]]["name"],
+                "stt": item["stt"],
                 "x": sequence * 78,
                 "y": 60 + lane * 94,
                 "time": item["time"],

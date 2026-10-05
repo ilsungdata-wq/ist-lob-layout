@@ -110,6 +110,7 @@ body.readonly .edit-form button,body.readonly #addBtn,body.readonly #duplicateBt
 #processView .process-table th:nth-child(8){width:360px}
 #processView .process-table th:nth-child(9){width:100px}
 #processView .process-table th:nth-child(10){width:110px}
+.drag-handle{display:inline-block;margin-right:4px;color:#0d8178;font-size:16px;cursor:grab;user-select:none}.drag-handle:active{cursor:grabbing}.process-table tr.dragging{opacity:.35}.process-table tr.drag-over{outline:3px solid #18a78e;outline-offset:-3px}.status-cell{display:flex;align-items:center;gap:6px}.grid-status{min-width:150px!important;flex:1}.grid-delete{width:28px;height:28px;border:0;border-radius:6px;background:#ffe5df;color:#ad382c;font-size:18px;font-weight:900;cursor:pointer}.status.ranked{background:#fff0c8;color:#875b00}.lob-add-below{max-width:1500px;margin:12px auto 0;text-align:left}.readonly #lobAddProcessBtn{display:none}
 #processView .ratio{width:calc(100% - 42px);min-width:130px;height:8px}
 #processView input[type=checkbox]{min-width:18px;width:18px;height:18px;accent-color:#0b8979}
 #processView .grid-tt,#processView .grid-mp{max-width:100px}

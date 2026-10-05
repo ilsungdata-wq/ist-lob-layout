@@ -110,10 +110,10 @@
 
   <section class="process-view" id="processView" hidden>
     <div class="process-view-head">
-      <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>So sánh T/T với neck time và chỉnh trực tiếp dữ liệu của từng công đoạn.</p></div>
-      <div class="process-head-actions"><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><div class="process-summary" id="processSummary"></div></div>
+      <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>Bảng phân tích dữ liệu LOB của từng công đoạn.</p></div>
+      <div class="process-head-actions"><div class="process-summary" id="processSummary"></div></div>
     </div>
-    <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobAddProcessBtn" class="btn" type="button" onclick="addLobProcess()">＋ Công đoạn</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
+    <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
     <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T (Avg.) & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
     <div class="process-table-wrap">
       <table class="process-table">
@@ -121,6 +121,8 @@
         <tbody id="processTableBody"></tbody>
       </table>
     </div>
+    <div class="lob-add-below"><button id="lobAddProcessBtn" class="btn primary" type="button" onclick="addLobProcess()">＋ Thêm công đoạn</button></div>
+    <datalist id="processNameSuggestions"></datalist>
   </section>
 
   <section id="jigView" class="process-view" hidden><div class="process-view-head"><div><span class="eyebrow">TAB 3 · EQM</span><h1 id="jigViewTitle">Danh sách thiết bị theo model</h1><p>Một dòng cho mỗi Jig đã khai báo tại công đoạn. Có thể sửa trực tiếp và in để chuẩn bị setup.</p></div><button id="printJigsBtn" class="btn primary">In danh sách Jig</button></div><div class="tab-file-actions"><b>Dữ liệu Jig · <span id="jigDataModel"></span></b><button id="jigXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel Jig</button><button id="jigXlsxImportBtn" class="btn" type="button">Nhập Excel Jig</button><button id="jigSaveBtn" class="btn primary" type="button">Lưu Jig</button><input id="jigXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div><div class="jig-add-bar"><label>Chọn công đoạn<select id="jigStationSelect"></select></label><button id="addInventoryJigBtn" class="btn primary" type="button">＋ Thêm Jig</button></div><div id="jigInventorySummary" class="process-summary"></div><div class="process-table-wrap"><table class="process-table jig-inventory-table"><thead><tr><th>STT</th><th>Công đoạn</th><th>Tên công đoạn</th><th>Loại Jig</th><th>Mã/Tên Jig</th><th>Setup (phút)</th><th></th></tr></thead><tbody id="jigInventoryBody"></tbody></table></div></section>
