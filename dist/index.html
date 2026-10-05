@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LOB IL-SUNGTECH</title>
+  <title>Layout + LOB IL-SUNGTECH</title>
   <meta name="description" content="Môi trường chỉnh sửa layout dây chuyền, T/T, nhân lực và chỉ số LOB.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d2633'/%3E%3Cpath d='M14 42h36M18 33h8v9h-8zm10-12h8v21h-8zm10 6h8v15h-8z' fill='%2334d399'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css">
@@ -11,7 +11,7 @@
 </head>
 <body class="inspector-collapsed">
   <header class="topbar">
-    <div class="brand"><img class="company-logo" src="./logo.png" alt="IL-SUNGTECH"><div><strong>LOB IL-SUNGTECH</strong></div></div>
+    <div class="brand"><img class="company-logo" src="./logo.png" alt="IL-SUNGTECH"><div><strong>Layout + LOB IL-SUNGTECH</strong></div></div>
     <div class="top-actions">
       <span id="roleBadge" class="role-badge">Đang kiểm tra quyền…</span>
       <span id="saveState" class="save-state"><i></i>Đã đồng bộ</span>
@@ -24,7 +24,7 @@
 
   <nav class="view-tabs" aria-label="Chế độ xem">
     <button class="view-tab active" data-view="overview" type="button"><span>1</span> Tổng quan layout</button>
-    <button class="view-tab" data-view="processes" type="button"><span>2</span> <b id="processTabLabel">LOB theo model</b></button>
+    <button class="view-tab" data-view="processes" type="button"><span>2</span> <b id="processTabLabel">Thông tin LOB</b></button>
     <button class="view-tab" data-view="jigs" type="button"><span>3</span> Danh sách thiết bị</button>
   </nav>
 
@@ -54,7 +54,8 @@
         <article><span>LOB</span><strong id="metricLob">—</strong><small>Hiệu suất cân bằng</small></article>
         <article><span>Neck time</span><strong id="metricNeck">—</strong><small>giây / sản phẩm</small></article>
         <article><span>UPH</span><strong id="metricUph">—</strong><small>sản phẩm / giờ</small></article>
-        <article><span>Công đoạn</span><strong id="metricCount">—</strong><small id="metricMp">— nhân lực</small></article>
+        <article><span>Công đoạn</span><strong id="metricCount">—</strong><small>vị trí công đoạn</small></article>
+        <article><span>Số lượng MP</span><strong id="metricMp">—</strong><small>nhân lực trực tiếp</small></article>
       </div>
 
       <div class="domain-overview">
@@ -110,14 +111,15 @@
 
   <section class="process-view" id="processView" hidden>
     <div class="process-view-head">
-      <div><span class="eyebrow">TAB 2 · PHÂN TÍCH LOB</span><h1 id="processViewTitle">LOB từng công đoạn</h1><p>Bảng phân tích dữ liệu LOB của từng công đoạn.</p></div>
+      <div><span class="eyebrow">TAB 2 · THÔNG TIN LOB</span><h1 id="processViewTitle">Thông tin LOB</h1><p>Bảng phân tích dữ liệu LOB của từng công đoạn.</p></div>
       <div class="process-head-actions"><div class="process-summary" id="processSummary"></div></div>
     </div>
+    <div class="lob-model-controls"><label>Model<select id="lobModelSelect"></select></label><label>Phiên bản<select id="lobVersionSelect"></select></label></div>
     <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
     <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T (Avg.) & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
     <div class="process-table-wrap">
       <table class="process-table">
-        <thead><tr><th>STT</th><th>Công đoạn</th><th>T/T (Avg.)</th><th>MP</th><th>Auto</th><th>Tỷ lệ Necktime</th><th>ĐKN</th><th>Jig / Setup</th><th>Tổng setup</th><th>Trạng thái</th></tr></thead>
+        <thead><tr><th>STT</th><th>Công đoạn</th><th>T/T (Avg.)</th><th>MP</th><th>Tỷ lệ Necktime</th><th>ĐKN</th><th>Auto</th><th>Jig / Setup</th><th>Tổng setup</th><th>Trạng thái</th></tr></thead>
         <tbody id="processTableBody"></tbody>
       </table>
     </div>

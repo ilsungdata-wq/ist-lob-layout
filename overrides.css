@@ -105,8 +105,8 @@ body.readonly .edit-form button,body.readonly #addBtn,body.readonly #duplicateBt
 #processView .process-table th:nth-child(2){width:24%}
 #processView .process-table th:nth-child(3){width:100px}
 #processView .process-table th:nth-child(4){width:80px}
-#processView .process-table th:nth-child(5),#processView .process-table th:nth-child(7){width:65px}
-#processView .process-table th:nth-child(6){width:220px}
+#processView .process-table th:nth-child(5){width:220px}
+#processView .process-table th:nth-child(6),#processView .process-table th:nth-child(7){width:65px}
 #processView .process-table th:nth-child(8){width:360px}
 #processView .process-table th:nth-child(9){width:100px}
 #processView .process-table th:nth-child(10){width:110px}
@@ -119,3 +119,8 @@ body.readonly .edit-form button,body.readonly #addBtn,body.readonly #duplicateBt
 .order-buttons{display:flex;gap:4px;margin-top:5px}.order-buttons button{border:1px solid #c3d5d8;border-radius:4px;background:#fff;padding:3px 7px;cursor:pointer}.order-buttons button:disabled{opacity:.35;cursor:default}
 .readonly #lobAddProcessBtn{display:none}
 @media print{.order-buttons,.grid-jig-add,.grid-jig-remove{display:none!important}}
+.metric-row{grid-template-columns:repeat(5,minmax(0,1fr))}.lob-model-controls{display:flex;gap:10px;margin:0 0 10px;padding:12px 14px;border:1px solid #d1dee2;border-radius:10px;background:#fff}.lob-model-controls label{display:grid;grid-template-columns:auto minmax(180px,280px);align-items:center;gap:8px;color:#536c76;font-size:11px;font-weight:900;text-transform:uppercase}.lob-model-controls select{padding:7px 10px;font-size:12px;text-transform:none}.lob-bar text{font-size:12px!important;font-weight:700}.lob-bar text:last-child{font-size:11px!important;font-weight:600}.process-summary>*{box-shadow:0 2px 8px rgba(13,38,51,.05)}
+@media(max-width:1050px){.metric-row{grid-template-columns:repeat(3,minmax(0,1fr))}.lob-model-controls{flex-wrap:wrap}}
+@media(max-width:720px){.metric-row{grid-template-columns:repeat(2,minmax(0,1fr))}.lob-model-controls{display:grid}.lob-model-controls label{grid-template-columns:72px 1fr}}
+@page{size:A4 landscape;margin:5mm}
+@media print{body[data-view="processes"] #printReport{width:287mm;height:200mm;overflow:hidden;font-size:6pt}body[data-view="processes"] #printReport h1{font-size:13pt;margin:0 0 1mm}body[data-view="processes"] #printReport>p{font-size:7pt;margin:0 0 2mm}body[data-view="processes"] #printReport .lob-analysis{display:grid;grid-template-columns:1fr 45mm;gap:2mm;margin:0 0 2mm}body[data-view="processes"] #printReport .lob-chart-panel{padding:2mm}body[data-view="processes"] #printReport .lob-chart-panel h2{font-size:9pt;margin:0}body[data-view="processes"] #printReport .lob-chart-panel p{display:none}body[data-view="processes"] #printReport .lob-chart{min-height:0;height:48mm}body[data-view="processes"] #printReport .lob-chart svg{width:100%!important;height:48mm!important;min-width:0!important}body[data-view="processes"] #printReport .lob-stats{display:grid;grid-template-columns:1fr;padding:1mm}body[data-view="processes"] #printReport .lob-stats article{min-height:0;padding:.5mm;font-size:6pt}body[data-view="processes"] #printReport table{font-size:5.2pt;table-layout:fixed}body[data-view="processes"] #printReport th,body[data-view="processes"] #printReport td{height:auto;padding:.45mm .7mm;line-height:1.05}body[data-view="processes"] #printReport td small{display:none}body[data-view="processes"] #printReport .ratio{width:18mm;height:1.2mm}body[data-view="processes"] #printReport .status{font-size:5pt;padding:.5mm 1mm}}
