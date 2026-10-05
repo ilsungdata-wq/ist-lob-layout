@@ -71,14 +71,27 @@
         </div>
         <div class="tab-file-actions"><button id="layoutXlsxTemplateBtn" class="btn" type="button">Tải mẫu XLSX</button><button id="layoutXlsxImportBtn" class="btn" type="button">Nhập Excel</button><button id="layoutSaveBtn" class="btn primary" type="button">Lưu</button><input id="layoutXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
         <select id="layoutZoom" hidden><option value="fit" selected>Vừa màn hình</option></select><button id="excelLayoutModeBtn" hidden type="button">Bản Excel</button><button id="interactiveLayoutModeBtn" hidden type="button">Chỉnh sửa tương tác</button>
-        <div id="layoutEditorToolbar" class="layout-editor-toolbar" aria-label="Công cụ chỉnh bố cục">
-          <button id="layoutLockBtn" type="button" class="btn active">Đang chỉnh sửa</button><span id="selectedObjectName">Chọn người, bàn, máy hoặc băng tải</span>
-          <button id="rotateObjectBtn" type="button" class="btn" disabled>Xoay 90°</button><button id="duplicateObjectBtn" type="button" class="btn" disabled>Nhân bản</button><button id="copyObjectBtn" type="button" class="btn" disabled>Sao chép</button><button id="pasteObjectBtn" type="button" class="btn" disabled>Dán</button><button id="snapObjectBtn" type="button" class="btn" disabled>Căn lưới</button><button id="deleteObjectBtn" type="button" class="btn danger" disabled>Xóa bản sao</button>
+        <div id="layoutEditorToolbar" class="layout-editor-toolbar legacy-editor-controls" hidden>
+          <button id="layoutLockBtn" type="button" class="btn active">Đang chỉnh sửa</button><span id="selectedObjectName">Chọn đối tượng</span>
+          <button id="rotateObjectBtn" type="button" class="btn" disabled>Xoay 90°</button><button id="duplicateObjectBtn" type="button" class="btn" disabled>Nhân bản</button><button id="copyObjectBtn" type="button" class="btn" disabled>Sao chép</button><button id="pasteObjectBtn" type="button" class="btn" disabled>Dán</button><button id="snapObjectBtn" type="button" class="btn" disabled>Căn lưới</button><button id="deleteObjectBtn" type="button" class="btn danger" disabled>Xóa</button>
         </div>
-        <div id="slotControlPanel" class="slot-control-panel" aria-label="Bật tắt 27 vị trí bàn mỗi phía"></div>
-        <div id="excelLayoutReference" class="excel-layout-reference" tabindex="0"><div class="excel-reference-note"><span id="excelReferenceName" hidden></span><button id="replaceReferenceBtn" class="btn" type="button">Thay ảnh layout</button><input id="referenceImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div class="excel-reference-scroll"><img id="excelReferenceImage" alt="Layout Excel"></div></div>
-        <div id="equipmentDiagram" class="equipment-diagram" tabindex="0" aria-label="Sơ đồ bàn, nhân lực và Jig theo công đoạn" hidden></div>
-        <div class="legacy-layout" hidden><div class="equipment-diagram-head"><b>Vị trí công đoạn</b></div>
+        <div id="slotControlPanel" class="slot-control-panel" hidden></div>
+        <section class="tab1-zone reference-zone" aria-labelledby="referenceZoneTitle">
+          <div class="zone-heading"><div><span>PHÂN KHU 1</span><h2 id="referenceZoneTitle">Thông tin nhân lực sản xuất · Excel gốc</h2><p>Bản tham chiếu nguyên gốc để đối chiếu công đoạn, MP và T/T.</p></div><button id="replaceReferenceBtn" class="btn" type="button">Thay ảnh Excel</button></div>
+          <input id="referenceImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <div id="excelLayoutReference" class="excel-layout-reference" tabindex="0"><div class="excel-reference-note"><span id="excelReferenceName" hidden></span></div><div class="excel-reference-scroll"><img id="excelReferenceImage" alt="Layout Excel gốc"></div></div>
+        </section>
+        <section class="tab1-zone shapes-zone" aria-labelledby="shapesZoneTitle">
+          <div class="zone-heading"><div><span>PHÂN KHU 2</span><h2 id="shapesZoneTitle">Thông tin layout và setup · Shapes Canvas</h2><p>Chèn, kéo thả và định dạng bàn, máy, công nhân và Jig độc lập theo model.</p></div><div class="canvas-state"><span id="shapeObjectCount">0 đối tượng</span><label class="snap-toggle"><input id="shapeSnapToggle" type="checkbox" checked> Bắt lưới</label></div></div>
+          <div id="shapeToolbar" class="shape-toolbar" aria-label="Thanh công cụ chèn hình">
+            <div class="shape-tool-group"><b>Hình cơ bản</b><button data-shape="rectangle" type="button">▭ Bàn / Máy</button><button data-shape="circle" type="button">○ Tròn</button><button data-shape="line" type="button">╱ Đường</button><button data-shape="arrow" type="button">→ Mũi tên</button><button data-shape="text" type="button">T Văn bản</button></div>
+            <div class="shape-tool-group"><b>Sản xuất</b><button data-shape="worker" type="button">♟ Công nhân</button><button data-shape="star" type="button">★ ĐKN</button><button data-shape="jig-v3" type="button">V3 Press</button><button data-shape="jig-attach" type="button">A Attach</button><button data-shape="jig-cclip" type="button">C C-Clip</button><button data-shape="jig-dino" type="button">D Dino</button><button data-shape="jig-tester" type="button">T Tester</button><button data-shape="auto" type="button">AUTO</button></div>
+          </div>
+          <div id="shapeProperties" class="shape-properties" aria-label="Thuộc tính đối tượng">
+            <span id="shapeSelectionName">Chưa chọn đối tượng</span><label>Nội dung<input id="shapeTextInput" type="text" placeholder="Tên bàn, máy hoặc Jig"></label><label>Màu nền<input id="shapeFillInput" type="color" value="#dff5e4"></label><label>Màu viền<input id="shapeStrokeInput" type="color" value="#087a65"></label><button id="shapeRotateBtn" class="btn" type="button">Xoay 15°</button><button id="shapeDuplicateBtn" class="btn" type="button">Nhân bản</button><button id="shapeDeleteBtn" class="btn danger" type="button">Xóa</button>
+          </div>
+          <div class="shapes-canvas-scroll"><div id="equipmentDiagram" class="equipment-diagram shapes-canvas" tabindex="0" aria-label="Canvas vẽ layout tự do"></div></div>
+        </section>        <div class="legacy-layout" hidden><div class="equipment-diagram-head"><b>Vị trí công đoạn</b></div>
         <div class="canvas-viewport" tabindex="0" aria-label="Cuộn để xem toàn bộ vị trí công đoạn">
         <div id="layoutCanvas" class="layout-canvas" aria-label="Sơ đồ layout dây chuyền">
           <div id="meterRuler" class="meter-ruler"></div>
