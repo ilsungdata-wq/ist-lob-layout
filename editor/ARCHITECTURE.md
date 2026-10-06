@@ -15,3 +15,6 @@ Each object contains geometry and visual properties plus `metadata`, which may c
 
 ## Migration
 On load, existing `layoutObjects` are normalized in place and assigned to `layoutDocument.objects`. The compatibility property `layoutObjects` points to the same array. No existing layouts are discarded.
+
+## Real-world scale
+Schema v2 stores canonical object geometry in `object.world` using meters. Legacy pixel geometry remains synchronized for backward compatibility. `canvas.pixelsPerMeter` is a rendering calibration only; zoom changes the Fabric viewport and never mutates `object.world`. The default area is 33 m × 12 m and can be changed through Area Setup. Rulers, grid, dimensions, status and measure tools use the same conversion service.
