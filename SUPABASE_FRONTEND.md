@@ -19,6 +19,15 @@ node scripts/generate-supabase-config.mjs
 
 The generated `supabase-config.js` must be deployed beside `index.html`. It is intentionally ignored by Git. The committed `supabase-config.example.js` documents its shape.
 
+## GitHub Pages
+
+The Pages workflow generates `supabase-config.js` inside the deployment artifact. Configure these repository settings before running it:
+
+- Repository variable `SUPABASE_URL`
+- Repository secret `SUPABASE_PUBLISHABLE_KEY`
+
+In **Settings → Pages**, set **Source** to **GitHub Actions**. The runtime file is then deployed beside `index.html` without committing `.env` or the publishable key to the repository.
+
 ## Authentication and access
 
 1. Open the application and choose **Đăng nhập**.
