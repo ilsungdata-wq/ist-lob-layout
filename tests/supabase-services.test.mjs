@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+const memory=new Map();
+globalThis.localStorage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,value),removeItem:key=>memory.delete(key)};
+globalThis.IST_LOB_CONFIG={supabase:{url:'https://test.supabase.co',anonKey:'anon-test-key-with-more-than-twenty-characters'}};
+
+const {auth}=await import('../services/supabase/auth.js');
+const {versionsApi,RevisionConflictError}=await import('../services/supabase/versions.js');
+
+test('email/password login stores the Supabase session and uses only the anon key',async()=>{
+ let request;
+ globalThis.fetch=async(url,options)=>{request={url,options};return new Response(JSON.stringify({access_token:'access',refresh_token:'refresh',expires_at:9999999999,user:{id:'u1'}}),{status:200,headers:{'content-type':'application/json'}})};
+ const session=await auth.signInWithPassword('admin@example.com','password');
+ assert.equal(session.user.id,'u1');
+ assert.equal(request.options.headers.apikey,globalThis.IST_LOB_CONFIG.supabase.anonKey);
+ assert.equal(request.options.headers.Authorization,undefined);
+ assert.equal(auth.session().access_token,'access');
+});
+
+test('save layout sends the expected revision and maps a revision conflict',async()=>{
+ let body;
+ globalThis.fetch=async(_url,options)=>{body=JSON.parse(options.body);return new Response(JSON.stringify([{id:'v1',revision:6,status:'DRAFT'}]),{status:200,headers:{'content-type':'application/json'}})};
+ const saved=await versionsApi.save({versionId:'v1',expectedRevision:5,layoutData:{objects:[]}});
+ assert.equal(body.p_expected_revision,5);
+ assert.equal(saved.revision,6);
+
+ globalThis.fetch=async()=>new Response(JSON.stringify({code:'40001',message:'revision_conflict'}),{status:409,headers:{'content-type':'application/json'}});
+ await assert.rejects(()=>versionsApi.save({versionId:'v1',expectedRevision:5,layoutData:{}}),RevisionConflictError);
+});
