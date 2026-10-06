@@ -1,0 +1,6 @@
+.env
+.env.*
+!.env.example
+supabase-config.js
+.supabase/
+node_modules/

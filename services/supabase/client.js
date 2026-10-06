@@ -1,0 +1,8 @@
+const runtimeConfig=()=>globalThis.IST_LOB_CONFIG?.supabase||{};
+const SESSION_KEY='ist-lob-supabase-session-v1';
+export function getSupabaseConfig(){const {url,publishableKey}=runtimeConfig();return{url:String(url||'').replace(/\/$/,''),publishableKey:String(publishableKey||'')}}
+export function isSupabaseConfigured(){const c=getSupabaseConfig();return /^https:\/\/.+\.supabase\.co$/.test(c.url)&&c.publishableKey.length>20}
+export function getStoredSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch{return null}}
+export function storeSession(value){value?localStorage.setItem(SESSION_KEY,JSON.stringify(value)):localStorage.removeItem(SESSION_KEY)}
+export async function supabaseRequest(path,{method='GET',body,headers={},auth=true,signal}={}){const c=getSupabaseConfig();if(!isSupabaseConfigured())throw new Error('SUPABASE_NOT_CONFIGURED');const token=auth?getStoredSession()?.access_token:null,res=await fetch(c.url+path,{method,signal,headers:{apikey:c.publishableKey,Authorization:`Bearer ${token||c.publishableKey}`,'Content-Type':'application/json',...headers},body:body===undefined?undefined:JSON.stringify(body)});const text=await res.text(),data=text?JSON.parse(text):null;if(!res.ok){const e=new Error(data?.message||data?.error_description||data?.hint||`Supabase ${res.status}`);e.status=res.status;e.code=data?.code;e.details=data;throw e}return{data,status:res.status,headers:res.headers}}
+export async function rpc(name,args={}){return(await supabaseRequest(`/rest/v1/rpc/${encodeURIComponent(name)}`,{method:'POST',body:args,headers:{Prefer:'return=representation'}})).data}

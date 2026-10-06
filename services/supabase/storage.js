@@ -1,0 +1,7 @@
+import{getStoredSession,getSupabaseConfig,rpc,supabaseRequest}from'./client.js';
+const allowed=new Set(['image/svg+xml','image/png','image/jpeg']);
+export const storageApi={
+ async upload(modelId,file,{path=`${crypto.randomUUID()}-${file.name.replace(/[^a-z0-9._-]/gi,'_')}`,upsert=false}={}){if(!allowed.has(file.type))throw new Error('UNSUPPORTED_ASSET_TYPE');if(file.size>10*1024*1024)throw new Error('ASSET_TOO_LARGE');const c=getSupabaseConfig(),storagePath=`${modelId}/${path}`,res=await fetch(`${c.url}/storage/v1/object/factory-assets/${storagePath}`,{method:'POST',headers:{apikey:c.publishableKey,Authorization:`Bearer ${getStoredSession()?.access_token}`,'Content-Type':file.type,'x-upsert':String(upsert)},body:file});const data=await res.json();if(!res.ok)throw Object.assign(new Error(data.message||'Upload failed'),{details:data});const record=await rpc('register_asset',{p_model_id:modelId,p_storage_path:storagePath,p_file_name:file.name,p_mime_type:file.type,p_byte_size:file.size,p_checksum_sha256:null});return{storage:data,record:Array.isArray(record)?record[0]:record,path:storagePath}},
+ async signedUrl(path,expiresIn=3600){return(await supabaseRequest(`/storage/v1/object/sign/factory-assets/${path}`,{method:'POST',body:{expiresIn}})).data},
+ async remove(assetId,path){const result=(await supabaseRequest('/storage/v1/object/factory-assets',{method:'DELETE',body:{prefixes:[path]}})).data;await rpc('delete_asset_record',{p_asset_id:assetId});return result}
+};
