@@ -94,10 +94,11 @@ async function archive(document){const id=document._remote?.versionId;if(!id)thr
 async function reload(document){await loadWorkspace(document?._remote?.versionId)}
 async function history(document){return layoutService.listHistory(document._remote.versionId)}
 async function restoreHistory(document,historyId){const saved=await layoutService.restoreHistory(historyId,document._remote.revision);await loadWorkspace(saved.id);return saved}
-async function renameModel(document,name){await layoutService.renameModel(document._remote.modelId,name);await loadWorkspace(document._remote.versionId)}
-async function deleteModel(document){await layoutService.deleteModel(document._remote.modelId);await loadWorkspace()}
-async function renameVersion(document,name){await layoutService.renameVersion(document._remote.versionId,name);await loadWorkspace(document._remote.versionId)}
-async function deleteVersion(document){await layoutService.deleteVersion(document._remote.versionId);await loadWorkspace()}
+function requireRemoteId(document,key,label){const value=document?._remote?.[key];if(!value)throw new Error(`${label} hiện tại chưa tồn tại trên Supabase.`);return value}
+async function renameModel(document,name){const modelId=requireRemoteId(document,'modelId','Model');await layoutService.renameModel(modelId,name);await loadWorkspace(document._remote.versionId)}
+async function deleteModel(document){const modelId=requireRemoteId(document,'modelId','Model');await layoutService.deleteModel(modelId);await loadWorkspace()}
+async function renameVersion(document,name){const versionId=requireRemoteId(document,'versionId','Version');await layoutService.renameVersion(versionId,name);await loadWorkspace(versionId)}
+async function deleteVersion(document){const versionId=requireRemoteId(document,'versionId','Version');await layoutService.deleteVersion(versionId);await loadWorkspace()}
 async function permissionData(){return{profiles:await layoutService.listProfiles(),grants:await layoutService.listCapabilityGrants()}}
 async function setCapability({userId,modelId,versionId,capability,active}){return layoutService.setCapability(userId,modelId||null,versionId||null,capability,active)}
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}

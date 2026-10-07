@@ -76,7 +76,32 @@ test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office 
  assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
  assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
  assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
- assert.match(html,/office-page-editor\.js\?v=20261007-2a2/);
+ assert.match(html,/office-page-editor\.js\?v=20261007-2a3/);
+});
+test('phase 2A.3 uses capabilities for empty-workspace creation and real Excel import',()=>{
+ const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
+ assert.match(studio,/openNewModelDialog\(\).*can\('model\.create'\)/);
+ assert.doesNotMatch(studio,/openNewModelDialog\(\).*canEdit\(\)/);
+ assert.match(app,/import:'importBtn'/);
+ assert.match(app,/importExcelWorkbook\(file\).*can\('excel\.import'\)/s);
+ assert.match(app,/hasRemoteModel=.*_remote\?\.modelId/);
+ assert.match(app,/hasRemoteVersion=.*_remote\?\.versionId/);
+});
+test('phase 2A.3 permission management resolves an existing profile by email only',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(html,/id="permissionEmail" type="email"/);
+ assert.match(html,/id="permissionEmailOptions"/);
+ assert.match(app,/function resolvePermissionEmail\(\)/);
+ assert.match(app,/Tài khoản này chưa tồn tại trên hệ thống/);
+ assert.match(app,/This account does not exist in the system yet/);
+ assert.doesNotMatch(app,/createUser|signUp.*permission/i);
+});
+test('model and version management guard EMPTY workspace before exact RPC contracts',()=>{
+ assert.match(integration,/function requireRemoteId\(document,key,label\)/);
+ assert.match(integration,/renameModel\(document,name\).*requireRemoteId\(document,'modelId','Model'\)/);
+ assert.match(integration,/renameVersion\(document,name\).*requireRemoteId\(document,'versionId','Version'\)/);
+ assert.match(integration,/deleteModel\(document\).*requireRemoteId\(document,'modelId','Model'\)/);
+ assert.match(integration,/deleteVersion\(document\).*requireRemoteId\(document,'versionId','Version'\)/);
 });
 test('save remains in the same version and creates recoverable revision history',()=>{
  assert.match(integration,/saveRevision\(/);

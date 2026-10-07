@@ -20,6 +20,9 @@ test('MANAGE receives model/version management without global permission managem
 test('ADMIN receives every declared capability',()=>{
  c.configure({globalRole:'ADMIN',modelPermission:null,capabilities:[],authenticated:true,profileActive:true});
  for(const capability of c.mappings.ADMIN)assert.equal(c.can(capability),true,capability);
+ assert.equal(c.can('model.create'),true);
+ assert.equal(c.can('excel.import'),true);
+ assert.equal(c.can('permission.manage'),true);
 });
 test('scoped capability grants do not become hard-coded roles',()=>{
  c.configure({globalRole:'USER',modelPermission:null,capabilities:['layout.view','layout.edit'],authenticated:true,profileActive:true});
