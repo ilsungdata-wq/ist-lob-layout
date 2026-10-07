@@ -76,7 +76,7 @@ test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office 
  assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
  assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
  assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
- assert.match(html,/office-page-editor\.js\?v=20261007-2b/);
+ assert.match(html,/office-page-editor\.js\?v=20261007-2bp/);
 });
 test('phase 2A.3 uses capabilities for empty-workspace creation and real Excel import',()=>{
  const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
@@ -145,4 +145,38 @@ test('legacy admin PIN authorization is absent',()=>{
  const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
  assert.doesNotMatch(studio,/ADMIN_PIN_HASH|Mã PIN Admin/);
  assert.match(studio,/mật khẩu mã hóa file backup/);
+});
+
+test('phase 2B+ keeps fixed-page geometry and persists real Fabric resize transforms',()=>{
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
+ const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
+ assert.match(professional,/widthMeters:33,heightMeters:8/);
+ assert.match(office,/object\.width\|\|1\)\*Math\.abs\(transform\.scaleX/);
+ assert.match(office,/object\.height\|\|1\)\*Math\.abs\(transform\.scaleY/);
+ assert.doesNotMatch(fabric,/obj\.scaleX=1;obj\.scaleY=1/);
+ assert.match(professional,/opt\.e\.ctrlKey\|\|opt\.e\.metaKey/);
+ assert.match(professional,/opt\.e\.button===1/);
+ assert.match(office,/o\.clipPath=null/);
+});
+test('phase 2B+ smart process stations remain LOB-linked and duplicate-safe',()=>{
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ for(const contract of ['officeProcessFor','officeProcessFacts','officeStationLabel','generateProcessStations'])assert.match(office,new RegExp(`function ${contract}\\(`));
+ assert.match(office,/row\.metadata\?\.processId/);
+ assert.match(office,/model\(\)\.processes\.find/);
+ assert.match(office,/existing=new Set/);
+ assert.match(office,/filter\(process=>!existing\.has\(process\.id\)\)/);
+ assert.match(office,/facts\?\.dkn/);
+ assert.match(office,/data-station-process/);
+ assert.match(office,/data-station-display/);
+});
+test('phase 2B+ localizes the Office workspace and prints only layout plus KPI',()=>{
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(office,/function localizeOffice\(/);
+ assert.match(office,/ist-language-change/);
+ assert.match(office,/officePrintSheet/);
+ assert.match(office,/shapeSummaryCards/);
+ assert.match(css,/body\.office-print #officePrintSheet/);
+ assert.match(css,/grid-template-columns:repeat\(9,1fr\)/);
 });

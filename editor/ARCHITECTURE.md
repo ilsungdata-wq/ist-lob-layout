@@ -18,3 +18,6 @@ On load, existing `layoutObjects` are normalized in place and assigned to `layou
 
 ## Real-world scale
 Schema v2 stores canonical object geometry in `object.world` using meters. Legacy pixel geometry remains synchronized for backward compatibility. `canvas.pixelsPerMeter` is a rendering calibration only; zoom changes the Fabric viewport and never mutates `object.world`. The default area is 33 m × 12 m and can be changed through Area Setup. Rulers, grid, dimensions, status and measure tools use the same conversion service.
+
+## Phase 2B+ smart process stations
+`process-station` objects store geometry/style and a stable `metadata.processId`; LOB remains authoritative for process name, T/T, MP, equipment/Jig, Auto and ĐKN. Rendering resolves the current process on every redraw, so business-data changes never disturb layout geometry. The Office page remains a fixed meter-based artboard; objects may exist in the surrounding gray workspace without resizing the page.
