@@ -46,21 +46,25 @@ jobs:
           test -n "$region" || (echo "Supabase project region is unavailable" && exit 1)
           pooler_host="aws-0-${region}.pooler.supabase.com"
           getent hosts "$pooler_host" >/dev/null || (echo "Supabase IPv4 pooler DNS lookup failed" && exit 1)
-          echo "SUPABASE_DB_URL=postgresql://postgres.${SUPABASE_PROJECT_REF}@${pooler_host}:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
+          encoded_password="$(jq -rn --arg value "$SUPABASE_DB_PASSWORD" '$value | @uri')"
+          db_url="postgresql://postgres.${SUPABASE_PROJECT_REF}:${encoded_password}@${pooler_host}:5432/postgres?sslmode=require"
+          echo "::add-mask::$encoded_password"
+          echo "::add-mask::$db_url"
+          echo "SUPABASE_DB_URL=$db_url" >> "$GITHUB_ENV"
       - name: Reconcile manually-applied foundation migration
         continue-on-error: true
-        run: supabase migration repair 20261006000100 --db-url "$SUPABASE_DB_URL" --status applied --password "$SUPABASE_DB_PASSWORD"
+        run: supabase migration repair 20261006000100 --db-url "$SUPABASE_DB_URL" --status applied
       - name: Reconcile manually-applied anonymous policy migration
         continue-on-error: true
-        run: supabase migration repair 20261006000200 --db-url "$SUPABASE_DB_URL" --status applied --password "$SUPABASE_DB_PASSWORD"
+        run: supabase migration repair 20261006000200 --db-url "$SUPABASE_DB_URL" --status applied
       - name: Inspect migration history
-        run: supabase migration list --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD"
+        run: supabase migration list --db-url "$SUPABASE_DB_URL"
       - name: Preview pending migrations
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run --password "$SUPABASE_DB_PASSWORD"
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
       - name: Apply pending migrations
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD"
+        run: supabase db push --db-url "$SUPABASE_DB_URL"
       - name: Lint production schema
-        run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error --password "$SUPABASE_DB_PASSWORD"
+        run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error
       - name: Verify production workflow schema
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
