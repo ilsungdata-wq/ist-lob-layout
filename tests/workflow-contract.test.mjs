@@ -40,7 +40,7 @@ test('phase 2A uses one Fabric Office editor with real-world geometry and dedica
  const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
  const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
  const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
- assert.match(app,/applyRole\(\);if\(layoutEditing&&typeof initProfessionalLayoutEditor/);
+ assert.match(app,/renderAll\(\);if\(layoutEditing&&typeof mountAuthoritativeOfficeEditor/);
  assert.match(professional,/pixelsPerMeter/);assert.match(professional,/proSyncWorld/);
  assert.match(professional,/new fabric\.ActiveSelection/);assert.match(professional,/Ctrl|ctrlKey/);
  assert.match(office,/LAYOUT &amp; LOB IL-SUNGTECH/);
@@ -64,6 +64,19 @@ test('phase 2A.1 persists transforms from existing Fabric objects and keeps lega
  assert.match(office,/scheduleSave\(\)/);
  assert.match(css,/body\.layout-editing \.shape-toolbar/);
  assert.match(css,/\.upper-canvas\{z-index:2;pointer-events:auto!important/);
+});
+test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office canvas',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ assert.match(app,/enterEditMode\(module\).*mountAuthoritativeOfficeEditor/);
+ assert.match(office,/function mountAuthoritativeOfficeEditor\(\)/);
+ assert.match(office,/function officeEditorRuntimeState\(\)/);
+ assert.match(office,/interactiveCanvasCount!==1/);
+ assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
+ assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
+ assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
+ assert.match(html,/office-page-editor\.js\?v=20261007-2a2/);
 });
 test('save remains in the same version and creates recoverable revision history',()=>{
  assert.match(integration,/saveRevision\(/);
