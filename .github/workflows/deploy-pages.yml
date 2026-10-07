@@ -36,26 +36,36 @@ jobs:
           version: latest
       - name: Link production project
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+      - name: Resolve Supabase IPv4 pooler
+        shell: bash
+        run: |
+          pooler_json="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/database/pooler")"
+          db_host="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_host // .[0].db_host // empty' <<< "$pooler_json")"
+          db_port="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_port // .[0].db_port // 5432' <<< "$pooler_json")"
+          db_user="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_user // .[0].db_user // empty' <<< "$pooler_json")"
+          db_name="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_name // .[0].db_name // "postgres"' <<< "$pooler_json")"
+          test -n "$db_host" && test -n "$db_user" || (echo "Supabase pooler metadata is incomplete" && exit 1)
+          echo "SUPABASE_DB_URL=postgresql://${db_user}@${db_host}:${db_port}/${db_name}?sslmode=require" >> "$GITHUB_ENV"
       - name: Reconcile manually-applied foundation migration
         continue-on-error: true
-        run: supabase migration repair 20261006000100 --linked --status applied --password "$SUPABASE_DB_PASSWORD"
+        run: supabase migration repair 20261006000100 --db-url "$SUPABASE_DB_URL" --status applied --password "$SUPABASE_DB_PASSWORD"
       - name: Reconcile manually-applied anonymous policy migration
         continue-on-error: true
-        run: supabase migration repair 20261006000200 --linked --status applied --password "$SUPABASE_DB_PASSWORD"
+        run: supabase migration repair 20261006000200 --db-url "$SUPABASE_DB_URL" --status applied --password "$SUPABASE_DB_PASSWORD"
       - name: Inspect migration history
-        run: supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
+        run: supabase migration list --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD"
       - name: Preview pending migrations
-        run: supabase db push --linked --dry-run --password "$SUPABASE_DB_PASSWORD"
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run --password "$SUPABASE_DB_PASSWORD"
       - name: Apply pending migrations
-        run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD"
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --password "$SUPABASE_DB_PASSWORD"
       - name: Lint production schema
-        run: supabase db lint --linked --level error --fail-on error --password "$SUPABASE_DB_PASSWORD"
+        run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error --password "$SUPABASE_DB_PASSWORD"
       - name: Verify production workflow schema
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          test -s supabase/.temp/pooler-url || (echo "Supabase IPv4 pooler configuration is unavailable" && exit 1)
-          psql "$(cat supabase/.temp/pooler-url)" --no-psqlrc --set=ON_ERROR_STOP=1 --file=supabase/verify_deployment_gate.sql
+        run: psql "$SUPABASE_DB_URL" --no-psqlrc --set=ON_ERROR_STOP=1 --file=supabase/verify_deployment_gate.sql
 
   test:
     name: Test application
