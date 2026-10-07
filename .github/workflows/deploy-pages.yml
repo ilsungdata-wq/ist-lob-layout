@@ -38,18 +38,18 @@ jobs:
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
       - name: Reconcile manually-applied foundation migration
         continue-on-error: true
-        run: supabase migration repair 20261006000100 --linked --status applied
+        run: supabase migration repair 20261006000100 --linked --status applied --password "$SUPABASE_DB_PASSWORD"
       - name: Reconcile manually-applied anonymous policy migration
         continue-on-error: true
-        run: supabase migration repair 20261006000200 --linked --status applied
+        run: supabase migration repair 20261006000200 --linked --status applied --password "$SUPABASE_DB_PASSWORD"
       - name: Inspect migration history
-        run: supabase migration list --linked
+        run: supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
       - name: Preview pending migrations
-        run: supabase db push --linked --dry-run
+        run: supabase db push --linked --dry-run --password "$SUPABASE_DB_PASSWORD"
       - name: Apply pending migrations
-        run: supabase db push --linked
+        run: supabase db push --linked --password "$SUPABASE_DB_PASSWORD"
       - name: Lint production schema
-        run: supabase db lint --linked --level error --fail-on error
+        run: supabase db lint --linked --level error --fail-on error --password "$SUPABASE_DB_PASSWORD"
       - name: Verify production workflow schema
         env:
           PGHOST: db.${{ vars.SUPABASE_PROJECT_REF }}.supabase.co
