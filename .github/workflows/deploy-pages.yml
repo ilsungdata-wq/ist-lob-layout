@@ -39,15 +39,14 @@ jobs:
       - name: Resolve Supabase IPv4 pooler
         shell: bash
         run: |
-          pooler_json="$(curl --fail --silent --show-error \
+          project_json="$(curl --fail --silent --show-error \
             --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
-            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/database/pooler")"
-          db_host="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_host // .[0].db_host // empty' <<< "$pooler_json")"
-          db_port="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_port // .[0].db_port // 5432' <<< "$pooler_json")"
-          db_user="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_user // .[0].db_user // empty' <<< "$pooler_json")"
-          db_name="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_name // .[0].db_name // "postgres"' <<< "$pooler_json")"
-          test -n "$db_host" && test -n "$db_user" || (echo "Supabase pooler metadata is incomplete" && exit 1)
-          echo "SUPABASE_DB_URL=postgresql://${db_user}@${db_host}:${db_port}/${db_name}?sslmode=require" >> "$GITHUB_ENV"
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF")"
+          region="$(jq -r '.region // empty' <<< "$project_json")"
+          test -n "$region" || (echo "Supabase project region is unavailable" && exit 1)
+          pooler_host="aws-0-${region}.pooler.supabase.com"
+          getent hosts "$pooler_host" >/dev/null || (echo "Supabase IPv4 pooler DNS lookup failed" && exit 1)
+          echo "SUPABASE_DB_URL=postgresql://postgres.${SUPABASE_PROJECT_REF}@${pooler_host}:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
       - name: Reconcile manually-applied foundation migration
         continue-on-error: true
         run: supabase migration repair 20261006000100 --db-url "$SUPABASE_DB_URL" --status applied --password "$SUPABASE_DB_PASSWORD"
