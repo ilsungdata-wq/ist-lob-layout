@@ -76,7 +76,7 @@ test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office 
  assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
  assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
  assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
- assert.match(html,/office-page-editor\.js\?v=20261007-2a3/);
+ assert.match(html,/office-page-editor\.js\?v=20261007-2b/);
 });
 test('phase 2A.3 uses capabilities for empty-workspace creation and real Excel import',()=>{
  const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
@@ -95,6 +95,31 @@ test('phase 2A.3 permission management resolves an existing profile by email onl
  assert.match(app,/Tài khoản này chưa tồn tại trên hệ thống/);
  assert.match(app,/This account does not exist in the system yet/);
  assert.doesNotMatch(app,/createUser|signUp.*permission/i);
+});
+test('phase 2B exposes a visible Office ribbon, registry library and real properties panel',()=>{
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(office,/left:true,right:true/);
+ for(const tab of ['home','insert','format','page','view'])assert.match(office,new RegExp(`'${tab}'`));
+ assert.match(office,/function renderOfficeLibrary\(lib\)/);
+ assert.match(office,/Tìm đối tượng\.\.\./);
+ for(const category of ['People','Machines / Equipment','Jig / Fixture','Material','Logistics','Infrastructure','Quality','LOB / Process','Line / Conveyor'])assert.match(office,new RegExp(category.replace(/[\/]/g,'\\/')));
+ assert.match(office,/function proInspector=function|proInspector=function/);
+ assert.match(office,/data-page-prop="widthMeters"/);
+ assert.match(css,/grid-template-columns:220px minmax\(520px,1fr\) 270px/);
+ assert.match(css,/Layout Editor đầy đủ được tối ưu cho máy tính/);
+});
+test('phase 2B ribbon commands and physical grid operate on the authoritative objects',()=>{
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
+ const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
+ for(const command of ['duplicate','delete','rotate-right','flip-h','flip-v'])assert.match(office,new RegExp(command));
+ assert.match(office,/fabric\.util\.multiplyTransformMatrices/);
+ assert.match(office,/fabric\.util\.qrDecompose/);
+ assert.match(professional,/invertTransform\(fabricLayoutCanvas\.viewportTransform/);
+ assert.match(fabric,/canvas\?\.snapGrid/);
+ assert.match(fabric,/canvas\.gridMeters/);
+ assert.doesNotMatch(fabric,/if\(!shapeSnapEnabled\)return;const g=SHAPE_CANVAS\.grid/);
 });
 test('model and version management guard EMPTY workspace before exact RPC contracts',()=>{
  assert.match(integration,/function requireRemoteId\(document,key,label\)/);

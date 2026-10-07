@@ -79,7 +79,7 @@ function proSyncWorld(row){if(!row)return;const c=model().layoutDocument?.canvas
 const legacySyncFabricObject=syncFabricObject;
 syncFabricObject=function(obj){legacySyncFabricObject(obj);const row=shapeArray().find(o=>o.id===obj?.layoutId);proSyncWorld(row);persistLocal();proQuickMeasure(obj)};
 const legacyProAdd=proAdd;
-proAdd=function(type,metadata={},at=null){legacyProAdd(type,metadata,at);const row=shapeArray().find(o=>o.id===shapeSelectedId);proSyncWorld(row);persistLocal()};
+proAdd=function(type,metadata={},at=null){let point=at;if(!point&&fabricLayoutCanvas){const inverse=fabric.util.invertTransform(fabricLayoutCanvas.viewportTransform||[1,0,0,1,0,0]);point=fabric.util.transformPoint(new fabric.Point(fabricLayoutCanvas.width/2,fabricLayoutCanvas.height/2),inverse)}legacyProAdd(type,metadata,point);const row=shapeArray().find(o=>o.id===shapeSelectedId);proSyncWorld(row);persistLocal()};
 const legacyFinishDrawing=proFinishDrawing;
 proFinishDrawing=function(end){legacyFinishDrawing(end);const row=shapeArray().find(o=>o.id===shapeSelectedId);proSyncWorld(row);persistLocal()};
 function proGridPixels(){const c=ensureLayoutDocument().canvas;return c.gridMeters*c.pixelsPerMeter}

@@ -203,3 +203,28 @@ body.layout-editing .office-title [data-office-context]{font-weight:700;opacity:
 body.layout-editing .shape-toolbar,body.layout-editing .shape-properties,body.layout-editing .legacy-editor-control,body.layout-editing .legacy-editor-controls{display:none!important}
 body.layout-editing #professionalEditorShell .canvas-container{position:relative;z-index:20;pointer-events:auto!important}
 body.layout-editing #professionalEditorShell .upper-canvas{z-index:2;pointer-events:auto!important;cursor:default}
+
+/* Phase 2B · persistent Excel-like workspace */
+body.layout-editing .office-ready .pro-body{grid-template-columns:220px minmax(520px,1fr) 270px}
+.office-left{width:220px!important;min-width:220px!important;background:#fff!important}
+.office-left>header,.office-right>header{display:flex;align-items:center;justify-content:space-between;height:34px;padding:0 10px!important;background:#f3f5f7!important;color:#33434d;border-bottom:1px solid #cbd3d9!important}
+.office-library-search{padding:8px;border-bottom:1px solid #dbe1e5;background:#fafbfc}
+.office-library-search input{box-sizing:border-box;width:100%;padding:7px 9px;border:1px solid #aebbc3;border-radius:3px;font:11px "Segoe UI",sans-serif}
+.office-library-list{overflow:auto;height:calc(100% - 85px)}
+.office-library-list details{border-bottom:1px solid #e0e5e8}
+.office-library-list summary{padding:7px 10px!important;background:#f7f8f9;color:#465761;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+.office-library-list details>div{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:4px}
+.office-library-list button{display:grid!important;grid-template-columns:25px 1fr;align-items:center;gap:5px;min-height:38px;padding:5px!important;border:1px solid transparent!important;text-align:left!important;cursor:grab!important}
+.office-library-list button:hover{border-color:#81b9b0!important;background:#eaf6f3!important}
+.office-library-list svg{width:22px;height:22px;fill:none;stroke:#31515d;stroke-width:1.6}
+.office-library-list button span{overflow:hidden;color:#344851;font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+.office-right{width:270px!important;min-width:270px!important;background:#fff!important}
+.office-right #proInspectorBody{padding-bottom:18px}
+.office-document-toggles{display:grid;gap:7px;padding:8px 10px;border-top:1px solid #e1e6e9}
+.office-document-toggles label{display:flex!important;align-items:center;gap:7px;padding:0!important}
+.office-fit-page{margin:8px 10px;padding:8px 12px;border:1px solid #88afa9;border-radius:3px;background:#e9f5f2;color:#075f57;font-weight:700}
+.office-ribbon nav button:disabled{color:#9aa5ac;cursor:not-allowed}
+.office-ribbon nav button:disabled:hover{background:transparent}
+.office-panel{min-height:80px;max-height:92px}
+.rg>button{min-width:48px;min-height:48px}
+@media(max-width:900px){body.layout-editing #professionalEditorShell:before{content:"Layout Editor đầy đủ được tối ưu cho máy tính. Trên điện thoại, hãy dùng pan/zoom để xem và mở trên desktop để chỉnh sửa chính xác.";display:block;padding:7px 12px;background:#fff4ce;color:#654f00;font:600 11px "Segoe UI",sans-serif}body.layout-editing .office-panel{display:none}.office-ribbon nav{overflow-x:auto}.office-ribbon nav button{flex:none}.office-title strong{font-size:11px}.office-title span{display:none}.pro-canvas-host{padding:16px!important}}
