@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
 const integration=fs.readFileSync(new URL('../supabase-integration.js',import.meta.url),'utf8');
-const migration=fs.readFileSync(new URL('../supabase/migrations/202610060003_permissions_revisions_management.sql',import.meta.url),'utf8');
+const migration=fs.readFileSync(new URL('../supabase/migrations/20261006000300_permissions_revisions_management.sql',import.meta.url),'utf8');
 
 test('admin defaults to viewer and layout edit requires explicit edit mode',()=>{
  assert.match(app,/manageMode=false,layoutEditing=false/);

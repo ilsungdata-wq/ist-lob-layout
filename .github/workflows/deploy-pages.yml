@@ -37,7 +37,9 @@ jobs:
       - name: Link production project
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
       - name: Reconcile manually-applied foundation migrations
-        run: supabase migration repair --linked --status applied 202610060001 202610060002
+        run: |
+          supabase migration repair 20261006000100 --linked --status applied
+          supabase migration repair 20261006000200 --linked --status applied
       - name: Preview pending migrations
         run: supabase db push --linked --dry-run
       - name: Apply pending migrations
