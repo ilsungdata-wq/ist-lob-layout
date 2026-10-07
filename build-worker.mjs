@@ -1,15 +1,16 @@
 import fs from "node:fs";
 
-const html = fs.readFileSync("dist/index.html", "utf8");
-const css = fs.readFileSync("dist/styles.css", "utf8");
-const overrides = fs.readFileSync("dist/overrides.css", "utf8");
-const catalog = fs.readFileSync("dist/catalog.js", "utf8");
-const app = fs.readFileSync("dist/app.js", "utf8");
-const studio = fs.readFileSync("dist/studio.js", "utf8");
-const fabricEngine = fs.readFileSync("dist/fabric-engine.js", "utf8");
-const professionalEditor = fs.readFileSync("dist/professional-editor.js", "utf8");
-const officePageEditor = fs.readFileSync("dist/office-page-editor.js", "utf8");
-const supabaseIntegration = fs.readFileSync("dist/supabase-integration.js", "utf8");
+const readText = path => fs.readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
+const html = readText("dist/index.html");
+const css = readText("dist/styles.css");
+const overrides = readText("dist/overrides.css");
+const catalog = readText("dist/catalog.js");
+const app = readText("dist/app.js");
+const studio = readText("dist/studio.js");
+const fabricEngine = readText("dist/fabric-engine.js");
+const professionalEditor = readText("dist/professional-editor.js");
+const officePageEditor = readText("dist/office-page-editor.js");
+const supabaseIntegration = readText("dist/supabase-integration.js");
 const serviceFiles = Object.fromEntries([
   "capabilities.js",
   "layout-service.js",
@@ -21,10 +22,10 @@ const serviceFiles = Object.fromEntries([
   "supabase/profiles.js",
   "supabase/storage.js",
   "supabase/versions.js",
-].map(name => [`/services/${name}`, fs.readFileSync(`dist/services/${name}`, "utf8")]));
-const fabricLib = fs.readFileSync("dist/vendor/fabric.min.js", "utf8");
-const xlsx = fs.readFileSync("dist/xlsx.full.min.js", "utf8");
-const xlsxLicense = fs.readFileSync("dist/xlsx.LICENSE", "utf8");
+].map(name => [`/services/${name}`, readText(`dist/services/${name}`)]));
+const fabricLib = readText("dist/vendor/fabric.min.js");
+const xlsx = readText("dist/xlsx.full.min.js");
+const xlsxLicense = readText("dist/xlsx.LICENSE");
 const layoutImages = Object.fromEntries([["/logo.png",fs.readFileSync("dist/logo.png").toString("base64")],...fs.readdirSync("dist/layout-reference").filter(name => name.endsWith(".png")).map(name => [`/layout-reference/${name}`, fs.readFileSync(`dist/layout-reference/${name}`).toString("base64")])]);
 const owner = "huyquynhtran96@gmail.com";
 
@@ -79,7 +80,7 @@ async function api(request,env,url){
 export default {async fetch(request,env){try{const url=new URL(request.url);if(url.pathname.startsWith("/api/"))return await api(request,env,url);if(LAYOUT_IMAGES[url.pathname])return binaryAsset(LAYOUT_IMAGES[url.pathname],"image/png");if(url.pathname.startsWith("/layout-reference/")&&env.ASSETS)return env.ASSETS.fetch(request);if(url.pathname==="/styles.css")return asset(CSS,"text/css; charset=utf-8");if(url.pathname==="/overrides.css")return asset(OVERRIDES,"text/css; charset=utf-8");if(url.pathname==="/xlsx.full.min.js")return asset(XLSX_LIB,"text/javascript; charset=utf-8");if(url.pathname==="/xlsx.LICENSE")return asset(XLSX_LICENSE,"text/plain; charset=utf-8");if(url.pathname==="/catalog.js")return asset(CATALOG,"text/javascript; charset=utf-8");if(url.pathname==="/studio.js")return asset(STUDIO,"text/javascript; charset=utf-8");if(url.pathname==="/fabric-engine.js")return asset(FABRIC_ENGINE,"text/javascript; charset=utf-8");if(url.pathname==="/professional-editor.js")return asset(PROFESSIONAL_EDITOR,"text/javascript; charset=utf-8");if(url.pathname==="/office-page-editor.js")return asset(OFFICE_PAGE_EDITOR,"text/javascript; charset=utf-8");if(url.pathname==="/supabase-integration.js")return asset(SUPABASE_INTEGRATION,"text/javascript; charset=utf-8");if(SERVICE_FILES[url.pathname])return asset(SERVICE_FILES[url.pathname],"text/javascript; charset=utf-8");if(url.pathname==="/vendor/fabric.min.js")return asset(FABRIC_LIB,"text/javascript; charset=utf-8");if(url.pathname==="/app.js")return asset(APP,"text/javascript; charset=utf-8");if(url.pathname==="/"||url.pathname==="/index.html")return asset(HTML,"text/html; charset=utf-8");return new Response("Not found",{status:404});}catch(error){console.error(error);return json({error:"Dịch vụ tạm thời không khả dụng."},500);}}};
 `;
 
-const output = `const HTML=${JSON.stringify(html)};\nconst CSS=${JSON.stringify(css)};\nconst OVERRIDES=${JSON.stringify(overrides)};\nconst XLSX_LIB=${JSON.stringify(xlsx)};\nconst XLSX_LICENSE=${JSON.stringify(xlsxLicense)};\nconst CATALOG=${JSON.stringify(catalog)};\nconst APP=${JSON.stringify(app)};\nconst STUDIO=${JSON.stringify(studio)};\nconst FABRIC_ENGINE=${JSON.stringify(fabricEngine)};\nconst PROFESSIONAL_EDITOR=${JSON.stringify(professionalEditor)};\nconst OFFICE_PAGE_EDITOR=${JSON.stringify(officePageEditor)};\nconst SUPABASE_INTEGRATION=${JSON.stringify(supabaseIntegration)};\nconst SERVICE_FILES=${JSON.stringify(serviceFiles)};\nconst FABRIC_LIB=${JSON.stringify(fabricLib)};\nconst LAYOUT_IMAGES=${JSON.stringify(layoutImages)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime}`;
+const output = `const HTML=${JSON.stringify(html)};\nconst CSS=${JSON.stringify(css)};\nconst OVERRIDES=${JSON.stringify(overrides)};\nconst XLSX_LIB=${JSON.stringify(xlsx)};\nconst XLSX_LICENSE=${JSON.stringify(xlsxLicense)};\nconst CATALOG=${JSON.stringify(catalog)};\nconst APP=${JSON.stringify(app)};\nconst STUDIO=${JSON.stringify(studio)};\nconst FABRIC_ENGINE=${JSON.stringify(fabricEngine)};\nconst PROFESSIONAL_EDITOR=${JSON.stringify(professionalEditor)};\nconst OFFICE_PAGE_EDITOR=${JSON.stringify(officePageEditor)};\nconst SUPABASE_INTEGRATION=${JSON.stringify(supabaseIntegration)};\nconst SERVICE_FILES=${JSON.stringify(serviceFiles)};\nconst FABRIC_LIB=${JSON.stringify(fabricLib)};\nconst LAYOUT_IMAGES=${JSON.stringify(layoutImages)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime.replace(/\r\n?/g, "\n")}`;
 fs.mkdirSync("dist/server", { recursive: true });
 fs.writeFileSync("dist/server/index.js", output);
 
