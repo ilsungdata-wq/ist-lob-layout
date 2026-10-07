@@ -6,9 +6,19 @@ const integration=fs.readFileSync(new URL('../supabase-integration.js',import.me
 const migration=fs.readFileSync(new URL('../supabase/migrations/20261006000300_permissions_revisions_management.sql',import.meta.url),'utf8');
 
 test('admin defaults to viewer and layout edit requires explicit edit mode',()=>{
- assert.match(app,/manageMode=false,layoutEditing=false/);
- assert.match(app,/canEditLayout=\(\)=>manageMode&&layoutEditing/);
- assert.match(app,/edit\.textContent=layoutEditing\?'Xem Layout':'Edit Layout'/);
+ assert.match(app,/manageMode=false,layoutEditing=false,editingModule=null/);
+ assert.match(app,/canEditLayout=\(\)=>editingModule==='layout'&&layoutEditing/);
+ assert.match(app,/function enterEditMode\(module\)/);
+ assert.match(app,/setSession\(next\).*editingModule=null/);
+});
+test('phase 1 uses one global model/version context and capability menus',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.equal((html.match(/id="modelSelect"/g)||[]).length,1);
+ assert.equal((html.match(/id="versionSelect"/g)||[]).length,1);
+ assert.match(html,/class="global-context"/);
+ assert.match(app,/Chỉnh sửa ▾/);assert.match(app,/Quản lý ▾/);
+ assert.match(app,/editingModule==='equipment'/);
+ assert.match(app,/canAccessDrafts=.*session\.authenticated/);
 });
 test('save remains in the same version and creates recoverable revision history',()=>{
  assert.match(integration,/saveRevision\(/);
