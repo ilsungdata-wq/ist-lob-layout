@@ -36,6 +36,20 @@ test('permission save reloads and verifies persisted capability state',()=>{
  assert.match(app,/permissionCache=await persistenceBridge\.permissionData\(\)/);
  assert.match(app,/Supabase chưa phản ánh đầy đủ quyền vừa lưu/);
 });
+test('phase 2A uses one Fabric Office editor with real-world geometry and dedicated edit mode',()=>{
+ const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(app,/applyRole\(\);if\(layoutEditing&&typeof initProfessionalLayoutEditor/);
+ assert.match(professional,/pixelsPerMeter/);assert.match(professional,/proSyncWorld/);
+ assert.match(professional,/new fabric\.ActiveSelection/);assert.match(professional,/Ctrl|ctrlKey/);
+ assert.match(office,/LAYOUT &amp; LOB IL-SUNGTECH/);
+ assert.match(office,/data-oc="exit"/);assert.match(office,/exit:setViewerMode/);
+ assert.match(office,/selectionKey=\['shiftKey','ctrlKey','metaKey'\]/);
+ assert.match(office,/\['home','insert','format','page','view'\]/);
+ assert.match(css,/body\.layout-editing #professionalEditorShell/);
+ assert.match(css,/pro-ruler-v\{display:block!important\}/);
+});
 test('save remains in the same version and creates recoverable revision history',()=>{
  assert.match(integration,/saveRevision\(/);
  assert.match(migration,/revision=revision\+1/);
