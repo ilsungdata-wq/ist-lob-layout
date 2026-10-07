@@ -7,6 +7,7 @@ globalThis.IST_LOB_CONFIG={supabase:{url:'https://test.supabase.co',anonKey:'ano
 
 const {auth}=await import('../services/supabase/auth.js');
 const {versionsApi,RevisionConflictError}=await import('../services/supabase/versions.js');
+const {historyApi}=await import('../services/supabase/history.js');
 
 test('email/password login stores the Supabase session and uses only the anon key',async()=>{
  let request;
@@ -16,6 +17,14 @@ test('email/password login stores the Supabase session and uses only the anon ke
  assert.equal(request.options.headers.apikey,globalThis.IST_LOB_CONFIG.supabase.anonKey);
  assert.equal(request.options.headers.Authorization,undefined);
  assert.equal(auth.session().access_token,'access');
+});
+
+test('revision save and restore use dedicated recoverable history RPCs',async()=>{
+ const calls=[];globalThis.fetch=async(url,options)=>{calls.push({url,body:JSON.parse(options.body)});return new Response(JSON.stringify([{id:'v1',revision:calls.length+6,status:'DRAFT'}]),{status:200,headers:{'content-type':'application/json'}})};
+ await historyApi.save({versionId:'v1',expectedRevision:6,layoutData:{objects:[{id:'a'}]},module:'LAYOUT',changeNote:'save'});
+ assert.match(calls[0].url,/save_layout_revision/);assert.equal(calls[0].body.p_expected_revision,6);assert.equal(calls[0].body.p_module,'LAYOUT');
+ await historyApi.restore('history-15',7);
+ assert.match(calls[1].url,/restore_layout_revision/);assert.equal(calls[1].body.p_history_id,'history-15');assert.equal(calls[1].body.p_expected_revision,7);
 });
 
 test('save layout sends the expected revision and maps a revision conflict',async()=>{

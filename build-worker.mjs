@@ -15,6 +15,7 @@ const serviceFiles = Object.fromEntries([
   "layout-service.js",
   "supabase/auth.js",
   "supabase/client.js",
+  "supabase/history.js",
   "supabase/models.js",
   "supabase/permissions.js",
   "supabase/profiles.js",

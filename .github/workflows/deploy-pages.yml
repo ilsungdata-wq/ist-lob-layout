@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Migrate, verify and deploy production
 
 on:
   push:
@@ -11,12 +11,75 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: production
   cancel-in-progress: false
 
 jobs:
-  build:
+  migrate:
+    name: Apply and verify Supabase migrations
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate migration configuration
+        shell: bash
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || (echo "Missing secret SUPABASE_ACCESS_TOKEN" && exit 1)
+          test -n "$SUPABASE_DB_PASSWORD" || (echo "Missing secret SUPABASE_DB_PASSWORD" && exit 1)
+          test -n "$SUPABASE_PROJECT_REF" || (echo "Missing variable SUPABASE_PROJECT_REF" && exit 1)
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Link production project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - name: Reconcile manually-applied foundation migrations
+        run: supabase migration repair --linked --status applied 202610060001 202610060002
+      - name: Preview pending migrations
+        run: supabase db push --linked --dry-run
+      - name: Apply pending migrations
+        run: supabase db push --linked
+      - name: Lint production schema
+        run: supabase db lint --linked --level error --fail-on error
+      - name: Verify production workflow schema
+        env:
+          PGHOST: db.${{ vars.SUPABASE_PROJECT_REF }}.supabase.co
+          PGPORT: "5432"
+          PGDATABASE: postgres
+          PGUSER: postgres
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGSSLMODE: require
+        run: psql --no-psqlrc --set=ON_ERROR_STOP=1 --file=supabase/verify_deployment_gate.sql
+
+  test:
+    name: Test application
+    runs-on: ubuntu-latest
+    needs: migrate
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: |
+          node --check app.js
+          node --check studio.js
+          node --check fabric-engine.js
+          node --check professional-editor.js
+          node --check office-page-editor.js
+          node --check supabase-integration.js
+      - name: Unit and workflow contract tests
+        run: node --test tests/*.test.mjs
+      - name: Verify generated worker
+        run: |
+          node build-worker.mjs
+          node --check dist/server/index.js
+          git diff --exit-code -- dist
+
+  build:
+    name: Build GitHub Pages artifact
+    runs-on: ubuntu-latest
+    needs: test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
@@ -43,6 +106,7 @@ jobs:
           path: _site
 
   deploy:
+    name: Deploy GitHub Pages
     permissions:
       contents: read
       pages: write
