@@ -76,7 +76,7 @@ test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office 
  assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
  assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
  assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
- assert.match(html,/office-page-editor\.js\?v=20261007-2bp/);
+ assert.match(html,/office-page-editor\.js\?v=20261007-2c/);
 });
 test('phase 2A.3 uses capabilities for empty-workspace creation and real Excel import',()=>{
  const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
@@ -179,4 +179,43 @@ test('phase 2B+ localizes the Office workspace and prints only layout plus KPI',
  assert.match(office,/shapeSummaryCards/);
  assert.match(css,/body\.office-print #officePrintSheet/);
  assert.match(css,/grid-template-columns:repeat\(9,1fr\)/);
+});
+
+test('phase 2C uses responsive mobile cards instead of desktop LOB and equipment tables',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(html,/id="mobileLobPanel"/);
+ assert.match(html,/id="mobileEquipmentPanel"/);
+ assert.match(html,/mobile-ux\.js\?v=20261007-2c/);
+ assert.match(mobile,/function renderMobileLobCards\(/);
+ assert.match(mobile,/function renderMobileEquipment\(/);
+ assert.match(mobile,/Number\(value\|\|0\)\.toFixed\(2\)/);
+ assert.match(css,/@media\(max-width:768px\)/);
+ assert.match(css,/\.process-table-wrap[^}]*display:none!important/);
+ assert.match(css,/min-height:50px/);
+});
+test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
+ const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
+ const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
+ const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
+ assert.match(app,/module==='layout'&&matchMedia\('\(max-width: 768px\)'\)\.matches/);
+ assert.match(mobile,/function fitMobileLayout\(/);
+ assert.match(mobile,/pointerdown/);
+ assert.match(mobile,/pointers\.size===2/);
+ assert.match(mobile,/inspectMobileObject/);
+ assert.match(mobile,/officeProcessFacts/);
+ assert.match(fabric,/inspectable=!editable/);
+});
+test('phase 2C stopwatch entry respects tt.measure and updates existing process workflow',()=>{
+ const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
+ const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
+ const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
+ assert.match(mobile,/can\('tt\.measure'\)/);
+ assert.match(mobile,/enterEditMode\('measure'\)/);
+ assert.match(mobile,/openStopwatch\(station\)/);
+ assert.match(mobile,/stopwatchReset\(\);stopwatchStart\(\)/);
+ assert.match(studio,/function stopwatchApply\(/);
+ assert.match(app,/editingModule==='measure'&&can\('tt\.measure'\)/);
+ assert.match(app,/value="\$\{tt\.toFixed\(2\)\}"/);
 });
