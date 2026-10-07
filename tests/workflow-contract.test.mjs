@@ -76,7 +76,7 @@ test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office 
  assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
  assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
  assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
- assert.match(html,/office-page-editor\.js\?v=20261007-2c/);
+ assert.match(html,/office-page-editor\.js\?v=20261007-2c1/);
 });
 test('phase 2A.3 uses capabilities for empty-workspace creation and real Excel import',()=>{
  const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
@@ -187,7 +187,7 @@ test('phase 2C uses responsive mobile cards instead of desktop LOB and equipment
  const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
  assert.match(html,/id="mobileLobPanel"/);
  assert.match(html,/id="mobileEquipmentPanel"/);
- assert.match(html,/mobile-ux\.js\?v=20261007-2c/);
+ assert.match(html,/mobile-ux\.js\?v=20261007-2c1/);
  assert.match(mobile,/function renderMobileLobCards\(/);
  assert.match(mobile,/function renderMobileEquipment\(/);
  assert.match(mobile,/Number\(value\|\|0\)\.toFixed\(2\)/);
@@ -199,7 +199,7 @@ test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts deskt
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
  const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
  const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
- assert.match(app,/module==='layout'&&matchMedia\('\(max-width: 768px\)'\)\.matches/);
+ assert.match(app,/module==='layout'&&matchMedia\('\(max-width: 768px\), \(max-height: 500px\) and \(max-width: 950px\)'\)\.matches/);
  assert.match(mobile,/function fitMobileLayout\(/);
  assert.match(mobile,/pointerdown/);
  assert.match(mobile,/pointers\.size===2/);
@@ -218,4 +218,23 @@ test('phase 2C stopwatch entry respects tt.measure and updates existing process 
  assert.match(studio,/function stopwatchApply\(/);
  assert.match(app,/editingModule==='measure'&&can\('tt\.measure'\)/);
  assert.match(app,/value="\$\{tt\.toFixed\(2\)\}"/);
+});
+
+
+test('phase 2C orientation reflows phone landscape without resetting app or timer state',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
+ assert.match(html,/viewport-fit=cover/);
+ assert.doesNotMatch(html+mobile,/orientation\.lock\(/);
+ assert.match(mobile,/orientationchange/);
+ assert.match(mobile,/visualViewport\?\.addEventListener\('resize'/);
+ assert.match(mobile,/layoutViewMode==='fit'/);
+ assert.match(mobile,/worldCenter/);
+ assert.match(mobile,/fabricLayoutCanvas\.calcOffset\(\)/);
+ assert.match(css,/@media\(max-height:500px\) and \(max-width:950px\) and \(orientation:landscape\)/);
+ assert.match(css,/safe-area-inset-left/);
+ assert.match(css,/\.viewer-mode \.upper-canvas\{pointer-events:auto!important;touch-action:none!important\}/);
+ assert.match(studio,/performance\.now\(\)-stopwatch\.startAt/);
 });
