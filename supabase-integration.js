@@ -73,6 +73,22 @@ async function createVersion(source,versionNumber,changeNote){
  const r=source._remote;if(!r?.modelId)throw new Error('Model hiện tại chưa nằm trên Supabase.');
  const version=await layoutService.createVersion({modelId:r.modelId,sourceVersionId:r.versionId,versionNumber,changeNote});await loadWorkspace(version.id);return version;
 }
+async function importCandidates(candidates,mode='new'){
+ let selectedVersionId=null;
+ for(const candidate of candidates){
+  const payload=clone(candidate.data);delete payload._remote;
+  const existing=candidate.previousEntry?.[1],remote=existing?._remote;
+  if(existing&&mode==='draft'){
+   if(remote?.status!=='DRAFT')throw new Error(`${existing.name}: chỉ được Import trực tiếp vào Version DRAFT.`);
+   const saved=await layoutService.saveRevision({versionId:remote.versionId,expectedRevision:remote.revision,layoutData:payload,module:'LAYOUT',changeNote:`Import Excel · ${candidate.sheetName}`});selectedVersionId=saved.id||remote.versionId;continue;
+  }
+  let modelId=remote?.modelId;
+  if(!modelId){const code=String(payload.modelCode||payload.name).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);const row=await layoutService.createModel({modelCode:code,modelName:payload.name,description:`Import từ ${candidate.sheetName}`});modelId=row.id}
+  const version=await layoutService.createVersion({modelId,sourceVersionId:remote?.versionId||null,versionNumber:candidate.versionNumber,changeNote:`Import Excel · ${candidate.sheetName}`});
+  const saved=await layoutService.saveRevision({versionId:version.id,expectedRevision:version.revision,layoutData:payload,module:'LAYOUT',changeNote:`Import Excel · ${candidate.sheetName}`});selectedVersionId=saved.id||version.id;
+ }
+ await loadWorkspace(selectedVersionId);return selectedVersionId;
+}
 async function publish(document){const id=document._remote?.versionId;if(!id)throw new Error('Phiên bản chưa nằm trên Supabase.');await layoutService.publishVersion(id);await loadWorkspace(id)}
 async function archive(document){const id=document._remote?.versionId;if(!id)throw new Error('Phiên bản chưa nằm trên Supabase.');await layoutService.archiveVersion(id);await loadWorkspace();}
 async function reload(document){await loadWorkspace(document?._remote?.versionId)}
@@ -87,7 +103,7 @@ async function setCapability({userId,modelId,versionId,capability,active}){retur
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}
 async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
 
-const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,saveCurrent,createModel,createVersion,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset};
+const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset};
 host.register(bridge);
 host.wireAuthentication(bridge);
 restore().then(async active=>{if(configured&&!active){host.setSession({role:'viewer',email:'',authenticated:false});try{await loadPublicWorkspace()}catch(error){host.replaceModels({'public:error':{name:'Không tải được dữ liệu Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'ERROR',permission:null}}},'public:error');host.authError(error.message)}}}).catch(error=>host.authError(error.message));

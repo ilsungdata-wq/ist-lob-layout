@@ -178,3 +178,8 @@ body.readonly .edit-form button,body.readonly #addBtn,body.readonly #duplicateBt
 
 /* Permission and lifecycle management */
 .management-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0 10px}.management-row .btn{font-size:11px;padding:7px}.permission-dialog{width:min(820px,94vw)}.permission-dialog form{display:grid;gap:12px}.permission-dialog label{display:grid;gap:5px}.permission-capabilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.permission-capabilities label{display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #d7e1e5;border-radius:6px;font:12px ui-monospace,monospace}.audit-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px;border-bottom:1px solid #dce5e8}.audit-row small{grid-column:1}.audit-actions{grid-column:2;grid-row:1/3;display:flex;gap:6px;align-items:center}@media(max-width:720px){.permission-capabilities{grid-template-columns:1fr}.management-row{grid-template-columns:1fr}}
+.import-preview-content{width:min(1180px,94vw)}
+.import-preview-table input{min-width:170px;width:100%;padding:8px;border:1px solid #b8cbd4;border-radius:6px}
+.import-preview-table td{vertical-align:top;line-height:1.45}
+.import-preview-content>label{display:grid;gap:6px;margin:14px 0;font-weight:700}
+.import-preview-content>label select{padding:9px;border:1px solid #b8cbd4;border-radius:6px;background:#fff}
