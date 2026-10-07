@@ -75,7 +75,7 @@ function proUnitFactor(){return{m:1,cm:100,mm:1000}[ensureLayoutDocument().canva
 function proUnit(){return ensureLayoutDocument().canvas.unit}
 function proDisplay(m,digits=2){return(+m*proUnitFactor()).toFixed(digits)}
 function proMeters(value){return(+value||0)/proUnitFactor()}
-function proSyncWorld(row){if(!row)return;const c=ensureLayoutDocument().canvas,p=c.pixelsPerMeter;row.world={x:row.x/p,y:row.y/p,width:row.width/p,height:row.height/p,rotation:+row.rotation||0};if(row.type==='dimension-h')row.text=`${row.world.width.toFixed(2)} m`;if(row.type==='dimension-v')row.text=`${row.world.height.toFixed(2)} m`}
+function proSyncWorld(row){if(!row)return;const c=model().layoutDocument?.canvas||ensureLayoutDocument().canvas,p=c.pixelsPerMeter;row.world={x:row.x/p,y:row.y/p,width:row.width/p,height:row.height/p,rotation:+row.rotation||0};if(row.type==='dimension-h')row.text=`${row.world.width.toFixed(2)} m`;if(row.type==='dimension-v')row.text=`${row.world.height.toFixed(2)} m`}
 const legacySyncFabricObject=syncFabricObject;
 syncFabricObject=function(obj){legacySyncFabricObject(obj);const row=shapeArray().find(o=>o.id===obj?.layoutId);proSyncWorld(row);persistLocal();proQuickMeasure(obj)};
 const legacyProAdd=proAdd;

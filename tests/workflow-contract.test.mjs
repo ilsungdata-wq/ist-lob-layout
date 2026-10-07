@@ -50,6 +50,21 @@ test('phase 2A uses one Fabric Office editor with real-world geometry and dedica
  assert.match(css,/body\.layout-editing #professionalEditorShell/);
  assert.match(css,/pro-ruler-v\{display:block!important\}/);
 });
+test('phase 2A.1 persists transforms from existing Fabric objects and keeps legacy editor hidden',()=>{
+ const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
+ const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(professional,/model\(\)\.layoutDocument\?\.canvas\|\|ensureLayoutDocument\(\)\.canvas/);
+ assert.match(office,/function phase2CommitCanvasTransform\(\)/);
+ assert.match(office,/fabricLayoutCanvas\.getActiveObjects\(\)/);
+ assert.match(office,/Object\.assign\(row,next\)/);
+ assert.match(office,/proSyncWorld\(row\)/);
+ assert.match(office,/object:modified/);
+ assert.match(office,/pointerup/);
+ assert.match(office,/scheduleSave\(\)/);
+ assert.match(css,/body\.layout-editing \.shape-toolbar/);
+ assert.match(css,/\.upper-canvas\{z-index:2;pointer-events:auto!important/);
+});
 test('save remains in the same version and creates recoverable revision history',()=>{
  assert.match(integration,/saveRevision\(/);
  assert.match(migration,/revision=revision\+1/);

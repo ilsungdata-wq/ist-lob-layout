@@ -200,3 +200,6 @@ body.layout-editing #professionalEditorShell .pro-ruler-h,body.layout-editing #p
 body.layout-editing #professionalEditorShell .pro-status{flex:0 0 30px}
 body.layout-editing .office-title button:last-child{background:#fff;color:#075d56;border-color:#fff;font-weight:700}
 body.layout-editing .office-title [data-office-context]{font-weight:700;opacity:1}
+body.layout-editing .shape-toolbar,body.layout-editing .shape-properties,body.layout-editing .legacy-editor-control,body.layout-editing .legacy-editor-controls{display:none!important}
+body.layout-editing #professionalEditorShell .canvas-container{position:relative;z-index:20;pointer-events:auto!important}
+body.layout-editing #professionalEditorShell .upper-canvas{z-index:2;pointer-events:auto!important;cursor:default}

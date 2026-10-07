@@ -84,13 +84,35 @@ refreshOffice=function(){
  if(context)context.textContent=`${model().name} · ${model().version}`;
 };
 const phase2BindCanvas=proBindCanvas;
+function phase2CommitCanvasTransform(){
+ if(!fabricLayoutCanvas||!canEdit())return;
+ const active=fabricLayoutCanvas.getActiveObjects();
+ if(!active.length)return;
+ active.forEach(object=>{
+  const row=shapeArray().find(item=>item.id===object.layoutId);
+  if(!row)return;
+  const next={
+   x:Math.max(0,object.left||0),
+   y:Math.max(0,object.top||0),
+   width:Math.max(.01,object.getScaledWidth()),
+   height:Math.max(.01,object.getScaledHeight()),
+   rotation:object.getTotalAngle?.()||object.angle||0
+  };
+  Object.assign(row,next);
+  proSyncWorld(row);
+ });
+ persistLocal();
+ scheduleSave();
+ proRenderPanels();
+}
 proBindCanvas=function(){
  phase2BindCanvas();
  if(!fabricLayoutCanvas)return;
+ fabricLayoutCanvas.upperCanvasEl.dataset.officeEditorBound='true';
  fabricLayoutCanvas.selectionKey=['shiftKey','ctrlKey','metaKey'];
- fabricLayoutCanvas.on('object:modified',event=>{
-  const objects=event.target?.type==='activeSelection'?event.target.getObjects():[event.target];
-  objects.filter(Boolean).forEach(object=>proSyncWorld(shapeArray().find(row=>row.id===object.layoutId)));
-  persistLocal();
- });
+ fabricLayoutCanvas.on('object:modified',phase2CommitCanvasTransform);
+ const commitAfterFabric=()=>requestAnimationFrame(phase2CommitCanvasTransform);
+ fabricLayoutCanvas.on('mouse:up',commitAfterFabric);
+ fabricLayoutCanvas.upperCanvasEl?.addEventListener('pointerup',commitAfterFabric);
+ fabricLayoutCanvas.upperCanvasEl?.addEventListener('mouseup',commitAfterFabric);
 };
