@@ -16,9 +16,25 @@ test('phase 1 uses one global model/version context and capability menus',()=>{
  assert.equal((html.match(/id="modelSelect"/g)||[]).length,1);
  assert.equal((html.match(/id="versionSelect"/g)||[]).length,1);
  assert.match(html,/class="global-context"/);
- assert.match(app,/Chỉnh sửa ▾/);assert.match(app,/Quản lý ▾/);
+ assert.match(app,/tr\('edit'\)/);assert.match(app,/tr\('management'\)/);
  assert.match(app,/editingModule==='equipment'/);
  assert.match(app,/canAccessDrafts=.*session\.authenticated/);
+});
+test('phase 2 shell, i18n, restore and print controls are explicit',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
+ const i18n=fs.readFileSync(new URL('../services/i18n.js',import.meta.url),'utf8');
+ assert.match(html,/LAYOUT &amp; LOB IL-SUNGTECH/);assert.match(html,/class="context-bar"/);
+ assert.match(i18n,/vi:\{/);assert.match(i18n,/en:\{/);assert.match(i18n,/ist-lob-language/);
+ assert.match(studio,/session\.authenticated\|\|!can\('model\.manage'\)/);
+ assert.match(studio,/printExcelVersionBtn'\)\.disabled=!available/);
+ assert.match(html,/In bản Excel gốc/);assert.match(html,/In bản đã chỉnh sửa/);
+ assert.equal((html.match(/id="layoutXlsxImportBtn"/g)||[]).length,1);
+});
+test('permission save reloads and verifies persisted capability state',()=>{
+ assert.match(app,/changes=permissionCapabilities\.filter/);
+ assert.match(app,/permissionCache=await persistenceBridge\.permissionData\(\)/);
+ assert.match(app,/Supabase chưa phản ánh đầy đủ quyền vừa lưu/);
 });
 test('save remains in the same version and creates recoverable revision history',()=>{
  assert.match(integration,/saveRevision\(/);

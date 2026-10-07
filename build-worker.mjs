@@ -14,6 +14,7 @@ const supabaseIntegration = readText("dist/supabase-integration.js");
 const serviceFiles = Object.fromEntries([
   "capabilities.js",
   "excel-import-utils.js",
+  "i18n.js",
   "layout-service.js",
   "supabase/auth.js",
   "supabase/client.js",
