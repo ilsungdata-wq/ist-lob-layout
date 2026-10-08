@@ -170,3 +170,55 @@ document.addEventListener('ist-language-change',()=>{if($('professionalEditorShe
 
 const phase2bBuildOffice=buildOffice;buildOffice=function(){phase2bBuildOffice();localizeOffice()};
 printOffice=function(){if(!fabricLayoutCanvas)return;const canvas=odoc().canvas,width=canvas.widthMeters*canvas.pixelsPerMeter,height=canvas.heightMeters*canvas.pixelsPerMeter;document.getElementById('officePrintSheet')?.remove();const sheet=document.createElement('section');sheet.id='officePrintSheet';sheet.innerHTML=`<header><h1>${escOffice(model().name)} · ${escOffice(model().version)}</h1><span>${canvas.widthMeters} × ${canvas.heightMeters} m</span></header><div class="office-print-kpi">${$('shapeSummaryCards')?.innerHTML||''}</div><img alt="Layout ${escOffice(model().name)}" src="${fabricLayoutCanvas.toDataURL({format:'png',left:0,top:0,width,height,multiplier:2})}">`;document.body.appendChild(sheet);document.body.classList.add('office-print');window.print();setTimeout(()=>{document.body.classList.remove('office-print');sheet.remove()},800)};
+
+/* Phase 2D: stability fixes for the one authoritative Office/Fabric editor. */
+function phase2dViewportPoint(object){
+ const canvasRect=fabricLayoutCanvas.upperCanvasEl.getBoundingClientRect(),bounds=object.getBoundingRect(),vpt=fabricLayoutCanvas.viewportTransform||[1,0,0,1,0,0],point=fabric.util.transformPoint(new fabric.Point(bounds.left,bounds.top),vpt);
+ return{left:canvasRect.left+point.x,top:canvasRect.top+point.y,width:Math.max(180,bounds.width*(vpt[0]||1)),height:Math.max(48,bounds.height*(vpt[3]||vpt[0]||1))}
+}
+editFabricText=function(object){
+ if(!canEditLayout()||!object?.layoutId||object.lockMovementX)return;
+ const row=shapeArray().find(item=>item.id===object.layoutId);if(!row)return;
+ document.querySelector('.fabric-inline-editor')?.remove();
+ const position=phase2dViewportPoint(object),input=document.createElement('textarea'),original=String(row.text||'');
+ input.className='fabric-inline-editor';input.value=original;input.setAttribute('aria-label','Nội dung đối tượng');
+ Object.assign(input.style,{position:'fixed',left:`${Math.max(8,position.left)}px`,top:`${Math.max(8,position.top)}px`,width:`${Math.min(innerWidth-position.left-12,position.width)}px`,height:`${Math.min(innerHeight-position.top-12,position.height)}px`});
+ document.body.appendChild(input);let closed=false;
+ const finish=save=>{if(closed)return;closed=true;if(save&&input.value!==original){proPushHistory('Edit text');row.text=input.value;row.name=row.name||input.value.split('\n')[0]||row.type;recordAudit('Sửa chữ trên Layout',row.type,original,row.text);persistLocal();scheduleSave()}input.remove();renderShapesCanvas();const refreshed=fabricLayoutCanvas?.getObjects().find(item=>item.layoutId===row.id);if(refreshed){fabricLayoutCanvas.setActiveObject(refreshed);fabricLayoutCanvas.requestRenderAll()}};
+ input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();finish(false)}else if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();finish(true)}});
+ input.addEventListener('blur',()=>finish(true));requestAnimationFrame(()=>{input.focus();input.select()})
+};
+
+const phase2dFinishDrawing=proFinishDrawing;
+proFinishDrawing=function(end){
+ const start=proEditor.drawStart;if(!start)return;
+ if(Math.hypot(end.x-start.x,end.y-start.y)<4){if(proEditor.drawPreview)fabricLayoutCanvas?.remove(proEditor.drawPreview);proEditor.drawStart=proEditor.drawPreview=null;proSetTool('select');fabricLayoutCanvas?.discardActiveObject();fabricLayoutCanvas?.requestRenderAll();return}
+ phase2dFinishDrawing(end);proSetTool('select')
+};
+const phase2dSetTool=proSetTool;
+proSetTool=function(tool){if(tool!==proEditor.tool){if(proEditor.drawPreview)fabricLayoutCanvas?.remove(proEditor.drawPreview);proEditor.drawPreview=proEditor.drawStart=null}phase2dSetTool(tool)};
+
+async function phase2dSaveLayout(){
+ if(!canEditLayout()){toast('Bạn không có quyền lưu Layout ở chế độ hiện tại.');return false}
+ phase2CommitCanvasTransform();
+ try{await saveCurrent('LAYOUT');const revision=model()?._remote?.revision;toast(revision==null?'Đã lưu Layout':`Đã lưu Layout · Revision ${revision}`);return true}catch(error){toast(`Lưu Layout thất bại: ${error.userMessage||error.message}`);return false}
+}
+const phase2dCommandOffice=commandOffice;
+commandOffice=function(command){if(command==='save')return phase2dSaveLayout();return phase2dCommandOffice(command)};
+
+const phase2dInspector=proInspector;
+proInspector=function(){
+ phase2dInspector();if(proSelectedRows().length)return;
+ const box=$('proInspectorBody');if(!box)return;
+ box.querySelectorAll('[data-page-prop]').forEach(input=>input.onchange=()=>{if(!canEditLayout())return;const key=input.dataset.pageProp,before=odoc().canvas,old={widthMeters:before.widthMeters,heightMeters:before.heightMeters};proPushHistory('Page size');const canvas=odoc().canvas;canvas[key]=['widthMeters','heightMeters','gridMeters'].includes(key)?Math.max(key==='gridMeters'?0:1,+input.value||0):input.value;canvas.width=Math.round(canvas.widthMeters*canvas.pixelsPerMeter);canvas.height=Math.round(canvas.heightMeters*canvas.pixelsPerMeter);recordAudit('Sửa kích thước Page','Layout Page',old,{widthMeters:canvas.widthMeters,heightMeters:canvas.heightMeters});renderShapesCanvas();scheduleSave();requestAnimationFrame(()=>fitOffice())})
+};
+
+const phase2dFitOffice=fitOffice;
+fitOffice=function(width=false){
+ if(!fabricLayoutCanvas)return;phase2dFitOffice(width);const canvas=odoc().canvas,zoom=fabricLayoutCanvas.getZoom(),pageWidth=canvas.widthMeters*canvas.pixelsPerMeter*zoom,pageHeight=canvas.heightMeters*canvas.pixelsPerMeter*zoom,x=Math.max(24,(fabricLayoutCanvas.getWidth()-pageWidth)/2),y=Math.max(24,(fabricLayoutCanvas.getHeight()-pageHeight)/2);fabricLayoutCanvas.setViewportTransform([zoom,0,0,zoom,x,y]);shapeZoom=zoom;fabricLayoutCanvas.calcOffset();fabricLayoutCanvas.requestRenderAll();renderOfficeRulers();refreshOffice()
+};
+
+function phase2dLayoutImage(){
+ const canvas=odoc().canvas,width=canvas.widthMeters*canvas.pixelsPerMeter,height=canvas.heightMeters*canvas.pixelsPerMeter,viewport=fabricLayoutCanvas.viewportTransform.slice(),background=fabricLayoutCanvas.backgroundColor,active=fabricLayoutCanvas.getActiveObject();fabricLayoutCanvas.discardActiveObject();fabricLayoutCanvas.backgroundColor='#ffffff';fabricLayoutCanvas.setViewportTransform([1,0,0,1,0,0]);fabricLayoutCanvas.requestRenderAll();const data=fabricLayoutCanvas.toDataURL({format:'png',left:0,top:0,width,height,multiplier:2});fabricLayoutCanvas.backgroundColor=background;fabricLayoutCanvas.setViewportTransform(viewport);if(active)fabricLayoutCanvas.setActiveObject(active);fabricLayoutCanvas.requestRenderAll();return data
+}
+printOffice=function(){if(!fabricLayoutCanvas)return;const canvas=odoc().canvas;document.getElementById('officePrintSheet')?.remove();const sheet=document.createElement('section');sheet.id='officePrintSheet';sheet.innerHTML=`<header><h1>${escOffice(model().name)} · ${escOffice(model().version)}</h1><span>${canvas.widthMeters} × ${canvas.heightMeters} m</span></header><div class="office-print-kpi">${$('shapeSummaryCards')?.innerHTML||''}</div><img alt="Layout ${escOffice(model().name)}" src="${phase2dLayoutImage()}">`;document.body.appendChild(sheet);document.body.classList.add('office-print');window.print();setTimeout(()=>{document.body.classList.remove('office-print');sheet.remove()},800)};
