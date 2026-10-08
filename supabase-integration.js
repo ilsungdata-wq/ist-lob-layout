@@ -104,7 +104,7 @@ async function setCapability({userId,modelId,versionId,capability,active}){retur
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}
 async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
 
-const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset};
+const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
 host.register(bridge);
 host.wireAuthentication(bridge);
 restore().then(async active=>{if(configured&&!active){host.setSession({role:'viewer',email:'',authenticated:false});try{await loadPublicWorkspace()}catch(error){host.replaceModels({'public:error':{name:'Không tải được dữ liệu Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'ERROR',permission:null}}},'public:error');host.authError(error.message)}}}).catch(error=>host.authError(error.message));

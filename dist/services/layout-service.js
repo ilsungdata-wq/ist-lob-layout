@@ -12,5 +12,6 @@ export const layoutService={
  createVersion:data=>versionsApi.create(data),saveLayout:data=>versionsApi.save(data),saveRevision:data=>historyApi.save(data),publishVersion:id=>versionsApi.publish(id),archiveVersion:id=>versionsApi.archive(id),renameVersion:(id,name)=>versionsApi.rename(id,name),deleteVersion:id=>versionsApi.softDelete(id),listPublicVersions:id=>versionsApi.listPublic(id),
  listHistory:id=>historyApi.list(id),restoreHistory:(id,revision)=>historyApi.restore(id,revision),
  getModelPermissions:id=>permissionsApi.list(id),getMyPermission:id=>permissionsApi.getMyPermission(id),getMyCapabilities:(id,versionId)=>permissionsApi.getMyCapabilities(id,versionId),listProfiles:()=>permissionsApi.profiles(),listCapabilityGrants:()=>permissionsApi.grants(),setCapability:(...args)=>permissionsApi.setCapability(...args),setProfileActive:(...args)=>permissionsApi.setProfileActive(...args),setModelPermission:(modelId,userId,permission)=>permissionsApi.set(modelId,userId,permission),removeModelPermission:(modelId,userId)=>permissionsApi.remove(modelId,userId),
- uploadAsset:(modelId,file,options)=>storageApi.upload(modelId,file,options)
+ uploadAsset:(modelId,file,options)=>storageApi.upload(modelId,file,options),
+ getAssetUrl:(path,expiresIn)=>storageApi.signedUrl(path,expiresIn)
 };
