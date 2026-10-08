@@ -315,3 +315,50 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
  .viewer-mode #professionalEditorShell .canvas-container{border:0;box-shadow:none;background:transparent}
  .viewer-mode #professionalEditorShell .office-library-reopen{display:none!important}
 }
+
+/* Searchable model picker */
+#modelSelect[hidden]{display:none!important}
+.model-picker-button{position:relative;width:100%;padding-right:30px!important;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.model-picker-button:after{content:'⌕';position:absolute;right:10px;font-size:20px;top:50%;transform:translateY(-50%)}
+.model-picker-dialog{width:min(520px,calc(100vw - 24px));max-height:80dvh;padding:18px;border:1px solid #bacdce;border-radius:14px;color:#173b47;box-shadow:0 16px 60px #102c3a55}
+.model-picker-dialog::backdrop{background:#102c3a88}.model-picker-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}.model-picker-dialog h2{margin:0;font-size:20px}.model-picker-dialog header button{width:44px;height:44px;border:0;background:#edf5f3;border-radius:8px;font-size:24px}
+.model-picker-dialog input{box-sizing:border-box;width:100%;min-height:46px;margin-top:12px;padding:10px 12px;border:1px solid #91aeaf;border-radius:8px;font-size:16px}.model-picker-dialog p{margin:10px 0;font-size:12px;color:#537078}
+.model-picker-results{display:grid;gap:4px;max-height:50dvh;overflow:auto;overscroll-behavior:contain}.model-picker-results button{min-height:46px;padding:10px 12px;border:1px solid transparent;border-radius:7px;background:#f6f9f8;color:#173b47;text-align:left;font:600 14px 'Segoe UI',sans-serif}.model-picker-results button:hover,.model-picker-results button:focus-visible{border-color:#087e70;background:#e4f5f0}.model-picker-results button.selected{background:#087e70;color:white}
+
+/* Mobile chart and fullscreen: controls and canvas occupy separate rows. */
+@media screen and (max-width:768px), screen and (max-height:500px) and (max-width:950px){
+ #processView .lob-analysis{display:block!important;margin:10px 0}
+ #processView .lob-chart-panel{padding:12px;overflow:hidden}
+ #processView .lob-chart-panel h2{font-size:15px}
+ #processView .lob-chart{min-height:292px;overflow-x:auto;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+ #processView .lob-chart svg{flex:none;width:auto;max-width:none;min-width:780px;height:292px}
+ #processView .lob-chart-panel:after{content:'Vuốt ngang để xem các công đoạn · Chạm cột để xem chi tiết';display:block;margin-top:6px;color:#537078;font-size:11px}
+ #processView .lob-stats{display:none!important}
+ .mobile-process-card.chart-selected{outline:3px solid #087e70;scroll-margin-top:180px}
+ body.mobile-layout-expanded{overflow:hidden!important}
+ .mobile-layout-fullscreen{box-sizing:border-box;display:flex!important;flex-direction:column;height:100dvh!important;overflow:hidden!important;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)!important}
+ .mobile-layout-fullscreen>.zone-heading,.mobile-layout-fullscreen>.shape-summary-cards,.mobile-layout-fullscreen .layout-summary{display:none!important}
+ .mobile-layout-fullscreen #mobileLayoutControls{position:relative;z-index:5;order:-1;flex:0 0 auto;height:auto;min-height:56px;grid-template-columns:40px 70px 40px minmax(0,1fr)}
+ .mobile-layout-fullscreen #mobileLayoutControls button{white-space:normal;line-height:1.2;font-size:12px}
+ .mobile-layout-fullscreen>.shapes-canvas-scroll{flex:1;min-height:0!important;height:auto!important}
+ .mobile-layout-fullscreen #professionalEditorShell{flex:1;min-height:0;overflow:hidden}
+ .mobile-layout-fullscreen #professionalEditorShell .pro-body,.mobile-layout-fullscreen #professionalEditorShell .pro-canvas-host{height:100%!important;min-height:0!important}
+ .mobile-layout-fullscreen #professionalEditorShell .shapes-canvas-scroll{min-height:0!important;height:100%!important}
+}
+
+/* Worksheet editing: white workspace, with a separate view/print boundary. */
+@media screen and (min-width:769px){
+ body.layout-editing #professionalEditorShell .pro-body{flex:1 1 0!important;height:auto!important;min-height:0!important}
+ body.layout-editing #professionalEditorShell .pro-canvas-host{background:#fff!important;padding:0!important}
+ body.layout-editing .office-workspace-stage{min-height:0;min-width:0}
+ body.layout-editing .pro-canvas-host .shapes-canvas-scroll{width:100%;height:100%!important;max-height:none;margin:0;padding:0!important}
+ body.layout-editing .pro-canvas-host .shapes-canvas{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;border:0;box-shadow:none;background:transparent}
+ body.layout-editing .office-workspace-stage .canvas-container{border:0;box-shadow:none;background-color:white;background-image:linear-gradient(#e5eaf0 1px,transparent 1px),linear-gradient(90deg,#e5eaf0 1px,transparent 1px);background-size:var(--worksheet-grid,24px) var(--worksheet-grid,24px);background-position:var(--worksheet-x,0px) var(--worksheet-y,0px)}
+ body.layout-editing .hide-grid .canvas-container{background-image:none}
+ body.layout-editing .pro-ruler-h{top:0!important}body.layout-editing .pro-ruler-v{left:0!important}
+ body.layout-editing .office-pan-scroll{background:#f1f5f6}
+}
+@media screen and (max-width:768px), screen and (max-height:500px) and (max-width:950px){
+ .viewer-mode #equipmentDiagram.shapes-canvas{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important}
+ .viewer-mode .mobile-layout-fullscreen .office-workspace-stage{height:100%;min-height:0}
+}

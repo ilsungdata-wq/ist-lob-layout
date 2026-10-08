@@ -232,3 +232,25 @@ window.ISTAppHost={
 };
 function initLanguage(){const i18n=globalThis.ISTI18n;if(!i18n)return;const sync=()=>{$('langVi').classList.toggle('active',i18n.language==='vi');$('langEn').classList.toggle('active',i18n.language==='en')};$('langVi').onclick=()=>{i18n.setLanguage('vi');sync();applyRole()};$('langEn').onclick=()=>{i18n.setLanguage('en');sync();applyRole()};i18n.apply();sync()}
 initLanguage();initStudio();initShapesEditor();boot();registerTools();
+
+/* Search the existing model options; keep the original permission/save workflow. */
+(()=>{
+ const select=$('modelSelect');if(!select)return;
+ const trigger=document.createElement('button');trigger.type='button';trigger.id='modelPickerButton';trigger.className='select model-picker-button';trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-controls','modelPickerDialog');
+ select.after(trigger);select.hidden=true;
+ const dialog=document.createElement('dialog');dialog.id='modelPickerDialog';dialog.className='model-picker-dialog';dialog.setAttribute('aria-labelledby','modelPickerTitle');
+ dialog.innerHTML='<header><h2 id="modelPickerTitle">Chọn model</h2><button type="button" aria-label="Đóng tìm kiếm model">×</button></header><input id="modelPickerSearch" type="search" placeholder="Nhập tên model…" aria-label="Tìm kiếm model" autocomplete="off"><p id="modelPickerCount" aria-live="polite"></p><div id="modelPickerResults" class="model-picker-results"></div>';
+ document.body.appendChild(dialog);
+ const search=$('modelPickerSearch'),results=$('modelPickerResults');
+ const normalize=value=>String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
+ function sync(){const selected=select.selectedOptions[0];trigger.textContent=selected?.textContent||'Chọn model';trigger.title=trigger.textContent;trigger.setAttribute('aria-label','Model: '+trigger.textContent);if(dialog.open)filter()}
+ function filter(){
+  const query=normalize(search.value.trim()),options=[...select.options].filter(option=>normalize(option.textContent).includes(query));results.replaceChildren();
+  $('modelPickerCount').textContent=options.length?`${options.length} kết quả`:'Không tìm thấy model.';
+  for(const option of options){const button=document.createElement('button');button.type='button';button.textContent=option.textContent;button.classList.toggle('selected',option.selected);if(option.selected)button.setAttribute('aria-current','true');button.onclick=async()=>{dialog.close();select.value=option.value;await select.onchange({target:select});sync()};results.appendChild(button)}
+ }
+ trigger.onclick=()=>{search.value='';filter();dialog.showModal();search.focus()};search.oninput=filter;
+ search.onkeydown=event=>{if(event.key==='ArrowDown'){event.preventDefault();results.querySelector('button')?.focus()}else if(event.key==='Enter'&&results.childElementCount===1){event.preventDefault();results.querySelector('button').click()}};
+ dialog.querySelector('header button').onclick=()=>dialog.close();dialog.addEventListener('close',()=>trigger.focus());
+ const originalRenderModels=renderModels;renderModels=function(){originalRenderModels();sync()};sync();
+})();
