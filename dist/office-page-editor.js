@@ -270,7 +270,10 @@ renderShapesCanvas=function(){v1RenderCanvas();requestAnimationFrame(v1RefreshPr
 const finalMountOffice=mountAuthoritativeOfficeEditor;
 mountAuthoritativeOfficeEditor=function(){const mounted=finalMountOffice();if(mounted&&!office.editSnapshot)office.editSnapshot=structuredClone(model());return mounted};
 function ensureOfficeExitDialog(){let dialog=$('officeExitDialog');if(dialog)return dialog;document.body.insertAdjacentHTML('beforeend',`<dialog id="officeExitDialog" class="office-dialog office-exit-dialog"><form method="dialog"><h2>Đóng chỉnh sửa Layout?</h2><p>Bạn có thay đổi chưa lưu trong Model và Version hiện tại.</p><footer><button value="continue">Tiếp tục chỉnh sửa</button><button value="discard" class="danger">Bỏ thay đổi</button><button value="save" class="primary">Lưu &amp; đóng</button></footer></form></dialog>`);dialog=$('officeExitDialog');dialog.addEventListener('close',async()=>{const action=dialog.returnValue;if(action==='save'){if(await phase2dSaveLayout())finalLeaveOffice()}else if(action==='discard')await finalDiscardOffice()});return dialog}
-function finalLeaveOffice(){office.editSnapshot=null;setViewerMode();requestAnimationFrame(()=>{if(typeof fitLayoutViewer==='function')fitLayoutViewer();else if(typeof applyShapeZoom==='function')applyShapeZoom()})}
+function fitOfficeViewerWidth(){
+ if(layoutEditing||!fabricLayoutCanvas)return;const host=document.querySelector('#professionalEditorShell .pro-canvas-host');if(!host)return;const bounds=host.getBoundingClientRect(),width=Math.max(720,Math.floor(bounds.width)),height=Math.max(420,Math.floor(innerHeight-bounds.top-16));fabricLayoutCanvas.setDimensions({width,height});const diagram=$('equipmentDiagram');if(diagram){diagram.style.width=width+'px';diagram.style.height=height+'px'}fitOffice(true);fabricLayoutCanvas.calcOffset();fabricLayoutCanvas.requestRenderAll();renderOfficeRulers()
+}
+function finalLeaveOffice(){office.editSnapshot=null;setViewerMode();requestAnimationFrame(()=>requestAnimationFrame(fitOfficeViewerWidth))}
 async function finalDiscardOffice(){try{if(persistenceBridge?.configured&&model()?._remote?.versionId)await persistenceBridge.reload(model());else if(office.editSnapshot)state.models[currentKey]=structuredClone(office.editSnapshot);hasUnsavedChanges=false;persistLocal();finalLeaveOffice()}catch(error){toast(`Không thể tải lại Layout: ${error.message}`)}}
 function finalExitOffice(){if(!hasUnsavedChanges)return finalLeaveOffice();ensureOfficeExitDialog().showModal()}
 
@@ -287,6 +290,7 @@ const finalCommandOffice=commandOffice;
 commandOffice=function(command){if(command==='exit')return finalExitOffice();if(command==='excel-preset')return openExcelReferencePreset();return finalCommandOffice(command)};
 const finalRenderProcessLibrary=v1RenderProcessLibrary;
 v1RenderProcessLibrary=function(lib){finalRenderProcessLibrary(lib);const actions=lib.querySelector('.v1-lob-actions');if(actions&&!actions.querySelector('[data-lob-preset]')){const button=document.createElement('button');button.dataset.lobPreset='1';button.textContent='Bố trí theo mẫu Excel';button.onclick=openExcelReferencePreset;actions.prepend(button)}};
+if(!globalThis.__officeViewerResizeBound){globalThis.__officeViewerResizeBound=true;window.addEventListener('resize',()=>{if(document.body.classList.contains('viewer-mode'))requestAnimationFrame(fitOfficeViewerWidth)})}
 
 const finalFabricObject=fabricObject;
 fabricObject=function(row){

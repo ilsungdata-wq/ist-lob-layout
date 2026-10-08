@@ -238,3 +238,4 @@ test('phase 2C orientation reflows phone landscape without resetting app or time
  assert.match(css,/\.viewer-mode \.upper-canvas\{pointer-events:auto!important;touch-action:none!important\}/);
  assert.match(studio,/performance\.now\(\)-stopwatch\.startAt/);
 });
+test('published version keeps its state without showing the PUBLISHED suffix',()=>{assert.match(app,/remoteStatus&&remoteStatus!=='PUBLISHED'/)});
