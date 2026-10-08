@@ -1,7 +1,7 @@
 (function(root){
  const clean=value=>String(value||'').replace(/^\s*layout\s*/i,'').replace(/\s+/g,' ').trim();
  function normalizeModelName(sheetName){
-  return clean(sheetName).replace(/\s+block(?:\s*[-_]?\s*\d+)?$/i,' Block').replace(/\s+/g,' ').trim();
+  return clean(sheetName).replace(/\s+block\s*[-_]?\s*(\d+)$/i,' Block $1').replace(/\s+/g,' ').trim();
  }
  function isLayoutCandidate(sheetName,knownModels=[]){
   const raw=String(sheetName||'').trim(),normalized=normalizeModelName(raw).toUpperCase();

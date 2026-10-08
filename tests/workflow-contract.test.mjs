@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
+const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
 const integration=fs.readFileSync(new URL('../supabase-integration.js',import.meta.url),'utf8');
 const migration=fs.readFileSync(new URL('../supabase/migrations/20261006000300_permissions_revisions_management.sql',import.meta.url),'utf8');
 
@@ -239,3 +240,4 @@ test('phase 2C orientation reflows phone landscape without resetting app or time
  assert.match(studio,/performance\.now\(\)-stopwatch\.startAt/);
 });
 test('published version keeps its state without showing the PUBLISHED suffix',()=>{assert.match(app,/remoteStatus&&remoteStatus!=='PUBLISHED'/)});
+test('LOB highlights automatic stations and Excel references follow each imported source sheet',()=>{assert.match(app,/auto-badge/);assert.match(app,/classList\.add\('auto-row'\)/);assert.match(app,/const displayModelName=m=>m\?\.sourceSheet/);assert.match(app,/norm\(displayModelName\(m\)\)/);assert.match(studio,/current\.sourceSheet&&globalThis\.ISTExcelImport/);assert.match(studio,/ISTExcelImport\.normalizeModelName\(current\.sourceSheet\)/)});
