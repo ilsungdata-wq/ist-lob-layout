@@ -377,3 +377,8 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
  .topbar .shell-menu>summary:after{content:none}
  .topbar .language-switch button{min-height:44px;min-width:36px}
 }
+
+/* Align language labels identically, including Safari inline-flex baselines. */
+.topbar .language-switch{display:inline-flex;align-items:center;gap:4px;align-self:center}
+.topbar .language-switch button,.topbar .language-switch #langVi,.topbar .language-switch #langEn{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:40px;min-width:40px;height:44px;min-height:44px;margin:0;padding:0;line-height:1;font-size:13px;font-weight:800;vertical-align:middle}
+.topbar .language-switch>span{display:inline-flex;align-items:center;height:44px;line-height:1;margin:0}
