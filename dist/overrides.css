@@ -304,3 +304,14 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
  .mobile-card-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mobile-process-card,.mobile-equipment-card{padding:9px}.mobile-process-card dl,.mobile-equipment-card dl{margin:8px 0}.mobile-measure,.mobile-equipment-edit{min-height:48px}
  .stopwatch-dialog form{display:grid;grid-template-columns:minmax(180px,1fr) minmax(260px,1fr);gap:7px 14px;align-items:center}.stopwatch-dialog .dialog-close{position:absolute}.stopwatch-dialog .eyebrow,.stopwatch-dialog h2,.stopwatch-dialog .stopwatch-display{grid-column:1}.stopwatch-dialog .stopwatch-actions,.stopwatch-dialog .stopwatch-summary,.stopwatch-dialog #stopwatchRecentBtn,.stopwatch-dialog #stopwatchRecentHistory,.stopwatch-dialog #stopwatchApply{grid-column:2}.stopwatch-dialog h2{margin:0}.stopwatch-display{font-size:38px}.stopwatch-summary{max-height:35vh;overflow:auto}
 }
+
+/* Desktop viewer: one viewport from the host through the Fabric surface. */
+@media screen and (min-width:769px){
+ .viewer-mode #professionalEditorShell .pro-body{flex:none;height:auto;min-height:0}
+ .viewer-mode #professionalEditorShell .pro-canvas-host{height:var(--viewer-height,calc(100dvh - 300px));min-height:240px}
+ .viewer-mode #professionalEditorShell .office-workspace-stage{min-height:0;min-width:0}
+ .viewer-mode #professionalEditorShell .shapes-canvas-scroll{width:100%;height:100%!important;min-height:0;max-height:none;margin:0;padding:0!important}
+ .viewer-mode #professionalEditorShell .shapes-canvas{width:100%!important;min-width:0!important;height:100%!important;min-height:0!important;border:0;box-shadow:none;background:transparent}
+ .viewer-mode #professionalEditorShell .canvas-container{border:0;box-shadow:none;background:transparent}
+ .viewer-mode #professionalEditorShell .office-library-reopen{display:none!important}
+}
