@@ -362,3 +362,18 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
  .viewer-mode #equipmentDiagram.shapes-canvas{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important}
  .viewer-mode .mobile-layout-fullscreen .office-workspace-stage{height:100%;min-height:0}
 }
+
+/* Mobile header wraps whole controls instead of squeezing their labels. */
+@media screen and (max-width:768px), screen and (max-height:500px) and (max-width:950px){
+ .topbar{display:flex;flex-wrap:wrap;align-items:center;height:auto;min-height:0;gap:8px;padding:8px max(8px,env(safe-area-inset-right)) 8px max(8px,env(safe-area-inset-left));overflow:visible}
+ .topbar .brand{flex:0 1 auto;max-width:100%;overflow:visible}
+ .topbar .brand strong{max-width:none}
+ .topbar .top-actions{display:flex;flex:1 1 100%;width:100%;min-width:0;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:6px;margin:0;overflow:visible}
+ .topbar .mode-actions{display:contents}
+ .topbar .top-actions>.language-switch{flex:0 0 auto;margin:0}
+ .topbar .language-switch #langEn{display:inline-flex}
+ .topbar .shell-menu{flex:0 0 auto;min-width:0}
+ .topbar #signinBtn,.topbar #printBtn,.topbar .mode-actions .btn,.topbar .shell-menu>summary{box-sizing:border-box;flex:0 0 auto;width:auto;max-width:none;min-height:44px;height:auto;padding:9px 10px;font-size:12px;line-height:24px;white-space:nowrap;text-overflow:clip;overflow:visible}
+ .topbar .shell-menu>summary:after{content:none}
+ .topbar .language-switch button{min-height:44px;min-width:36px}
+}
