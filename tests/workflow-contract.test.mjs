@@ -32,6 +32,14 @@ test('phase 2 shell, i18n, restore and print controls are explicit',()=>{
  assert.match(html,/In bản Excel gốc/);assert.match(html,/In bản đã chỉnh sửa/);
  assert.equal((html.match(/id="layoutXlsxImportBtn"/g)||[]).length,1);
 });
+test('public Viewer uses one published workspace RPC instead of a request per Model',()=>{
+ assert.match(integration,/const rows=await layoutService\.listPublicWorkspace\(\),mapped=\{\}/);
+ assert.doesNotMatch(integration,/async function loadPublicWorkspace\(\)\{\s*const models=await layoutService\.listModels/);
+ const migration=fs.readFileSync(new URL('../supabase/migrations/20261009000100_optimize_public_workspace.sql',import.meta.url),'utf8');
+ assert.match(migration,/create or replace function public\.get_published_workspace\(\)/);
+ assert.match(migration,/lv\.status='PUBLISHED'/);
+ assert.match(migration,/grant execute on function public\.get_published_workspace\(\) to anon,authenticated/);
+});
 test('permission save reloads and verifies persisted capability state',()=>{
  assert.match(app,/changes=permissionCapabilities\.filter/);
  assert.match(app,/permissionCache=await persistenceBridge\.permissionData\(\)/);

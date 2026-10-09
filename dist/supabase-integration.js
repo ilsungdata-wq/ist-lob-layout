@@ -35,12 +35,9 @@ async function loadWorkspace(preferredVersionId=null){
  host.replaceModels(mapped,firstKey);return mapped;
 }
 async function loadPublicWorkspace(){
- const models=await layoutService.listModels(),mapped={};let firstKey=null;
- for(const row of models){
-  const versions=await layoutService.listPublicVersions(row.id);
-  for(const version of versions){
-   const document=clone(version.layout_data||{});document.name=row.model_name||row.model_code;document.modelCode=row.model_code;document.description=row.description||'';document.version=version.version_number;document.processes=Array.isArray(document.processes)?document.processes:[];document.published=true;document.isLatest=version.id===row.current_published_version_id;document._remote={modelId:row.id,versionId:version.id,revision:version.revision,status:'PUBLISHED',permission:null,updatedAt:version.updated_at};const key=remoteKey(version.id);mapped[key]=document;if(!firstKey||document.isLatest)firstKey=key;
-  }
+ const rows=await layoutService.listPublicWorkspace(),mapped={};let firstKey=null;
+ for(const row of rows){
+  const document=clone(row.layout_data||{});document.name=row.model_name||row.model_code;document.modelCode=row.model_code;document.description=row.description||'';document.version=row.version_number;document.processes=Array.isArray(document.processes)?document.processes:[];document.published=true;document.isLatest=row.id===row.current_published_version_id;document._remote={modelId:row.model_id,versionId:row.id,revision:row.revision,status:'PUBLISHED',permission:null,updatedAt:row.updated_at};const key=remoteKey(row.id);mapped[key]=document;if(!firstKey||document.isLatest)firstKey=key;
  }
  if(!firstKey){firstKey='public:empty';mapped[firstKey]={name:'Chưa có Layout Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'EMPTY',permission:null}}}
  host.replaceModels(mapped,firstKey);return mapped;

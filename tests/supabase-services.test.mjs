@@ -28,6 +28,14 @@ test('revision save and restore use dedicated recoverable history RPCs',async()=
  assert.match(calls[1].url,/restore_layout_revision/);assert.equal(calls[1].body.p_history_id,'history-15');assert.equal(calls[1].body.p_expected_revision,7);
 });
 
+test('public Viewer loads the published workspace with one batched RPC',async()=>{
+ let request;
+ globalThis.fetch=async(url,options)=>{request={url,options};return new Response(JSON.stringify([]),{status:200,headers:{'content-type':'application/json'}})};
+ await versionsApi.listPublicWorkspace();
+ assert.match(request.url,/\/rpc\/get_published_workspace$/);
+ assert.deepEqual(JSON.parse(request.options.body),{});
+});
+
 test('save layout sends the expected revision and maps a revision conflict',async()=>{
  let body;
  globalThis.fetch=async(_url,options)=>{body=JSON.parse(options.body);return new Response(JSON.stringify([{id:'v1',revision:6,status:'DRAFT'}]),{status:200,headers:{'content-type':'application/json'}})};
