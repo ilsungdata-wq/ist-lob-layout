@@ -21,7 +21,7 @@ function proRedo(){const e=proEditor.redo.pop();if(e)proRestore(e,proEditor.undo
 function proRenderHistoryButtons(){const u=$('proUndo'),r=$('proRedo');if(u)u.disabled=!proEditor.undo.length;if(r)r.disabled=!proEditor.redo.length}
 function proSelectedObjects(){return fabricLayoutCanvas?.getActiveObjects?.()||[]}
 function proSelectedRows(){const ids=new Set(proSelectedObjects().map(o=>o.layoutId));return ensureLayoutDocument().objects.filter(o=>ids.has(o.id))}
-function proSetContextTarget(target){const id=target?.layoutId;if(!id)return;proEditor.contextObjectId=id;proEditor.selection=[id];shapeSelectedId=id;if(fabricLayoutCanvas?.getActiveObject?.()!==target){fabricLayoutCanvas.setActiveObject(target);fabricLayoutCanvas.requestRenderAll()}proRenderPanels()}
+function proSetContextTarget(target){const id=target?.layoutId;if(!id)return;const active=fabricLayoutCanvas?.getActiveObject?.(),selected=active?.type==='activeSelection'?(active.getObjects?.()||[]).map(object=>object.layoutId).filter(Boolean):[id];proEditor.contextObjectId=id;proEditor.selection=selected.length?selected:[id];shapeSelectedId=id;if(active?.type!=='activeSelection'&&active!==target){fabricLayoutCanvas.setActiveObject(target);fabricLayoutCanvas.requestRenderAll()}proRenderPanels()}
 function proContextRows(){const selected=proSelectedRows();if(selected.length)return selected;const id=proEditor.contextObjectId||shapeSelectedId;return id?shapeArray().filter(o=>o.id===id):[]}
 function proCommitFabricSelection(label){const objects=proSelectedObjects();if(!objects.length)return;proPushHistory(label);objects.forEach(syncFabricObject);renderShapesCanvas();proRenderPanels()}
 

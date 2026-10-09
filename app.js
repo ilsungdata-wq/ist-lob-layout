@@ -115,7 +115,7 @@ function renderLegacyEquipmentDiagram(){
   $('equipmentDiagram').querySelectorAll('.equipment-station').forEach(el=>{el.onclick=()=>select(el.dataset.id);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(el.dataset.id)}}});
 }
 function readJigRows(){return [...$('jigList').querySelectorAll('.jig-row')].map(row=>({id:row.dataset.jigId||('j'+Date.now()+'-'+row.dataset.index),name:row.querySelector('.jig-name').value.trim(),type:row.querySelector('.jig-type').value,setup:Math.max(0,+row.querySelector('.jig-setup').value||0)}))}
-function updateJigDraft(station){station.jigs=readJigRows();renderCanvas();renderDomainOverview();renderProcessTable();renderJigInventory();scheduleSave()}
+function updateJigDraft(station){station.jigs=readJigRows();renderCanvas();renderShapesCanvas?.();renderDomainOverview();renderProcessTable();renderJigInventory();scheduleSave()}
 function renderJigs(station){
   const jigs=getJigs(station);
   $('jigSummary').textContent=jigs.length?`${jigs.length} Jig · tổng setup ${jigs.reduce((n,j)=>n+(+j.setup||0),0).toFixed(1)} phút`:'Chọn loại Jig để tự hiển thị V3 hoặc Jig Attach trên bàn.';
