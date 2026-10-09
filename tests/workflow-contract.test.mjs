@@ -40,6 +40,14 @@ test('public Viewer uses one published workspace RPC instead of a request per Mo
  assert.match(migration,/lv\.status='PUBLISHED'/);
  assert.match(migration,/grant execute on function public\.get_published_workspace\(\) to anon,authenticated/);
 });
+test('remote workspace waits for Supabase data instead of drawing the local sample first',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(html,/workspace-loading/);
+ assert.match(app,/remoteWorkspacePending=!!globalThis\.IST_LOB_CONFIG/);
+ assert.match(app,/if\(supabaseConfigured\)\{setWorkspaceLoading\(true\);applyRole\(\);return\}/);
+ assert.match(app,/if\(!remoteWorkspacePending\)renderAll\(\)/);
+ assert.match(app,/remoteWorkspacePending=false;persistLocal\(\);applyRole\(\);enforcePublicVersion\(\);renderAll\(\);setWorkspaceLoading\(false\)/);
+});
 test('permission save reloads and verifies persisted capability state',()=>{
  assert.match(app,/changes=permissionCapabilities\.filter/);
  assert.match(app,/permissionCache=await persistenceBridge\.permissionData\(\)/);
@@ -85,7 +93,7 @@ test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office 
  assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
  assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
  assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
- assert.match(html,/office-page-editor\.js\?v=20261009-viewer-v7/);
+ assert.match(html,/office-page-editor\.js\?v=20261009-load-v8/);
 });
 test('phase 2A.3 uses capabilities for empty-workspace creation and real Excel import',()=>{
  const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
@@ -196,7 +204,7 @@ test('phase 2C uses responsive mobile cards instead of desktop LOB and equipment
  const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
  assert.match(html,/id="mobileLobPanel"/);
  assert.match(html,/id="mobileEquipmentPanel"/);
- assert.match(html,/mobile-ux\.js\?v=20261009-viewer-v7/);
+ assert.match(html,/mobile-ux\.js\?v=20261009-load-v8/);
  assert.match(mobile,/function renderMobileLobCards\(/);
  assert.match(mobile,/function renderMobileEquipment\(/);
  assert.match(mobile,/Number\(value\|\|0\)\.toFixed\(2\)/);

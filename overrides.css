@@ -383,6 +383,13 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
 .topbar .language-switch button,.topbar .language-switch #langVi,.topbar .language-switch #langEn{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:40px;min-width:40px;height:44px;min-height:44px;margin:0;padding:0;line-height:1;font-size:13px;font-weight:800;vertical-align:middle}
 .topbar .language-switch>span{display:inline-flex;align-items:center;height:44px;line-height:1;margin:0}
 
+/* Do not reveal the local sample layout while Supabase loads the selected workspace. */
+.workspace-loading-screen{display:none;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;gap:10px;background:#f4f8f8;color:#123844;font:700 15px 'Segoe UI',sans-serif}
+.workspace-loading .workspace-loading-screen{display:flex}
+.workspace-loading-screen span{width:20px;height:20px;border:3px solid #b8d5d0;border-top-color:#087e70;border-radius:50%;animation:workspace-loading-spin .75s linear infinite}
+.workspace-loading-screen[hidden]{display:none!important}
+@keyframes workspace-loading-spin{to{transform:rotate(360deg)}}
+
 /* Viewer foregrounds the process layout; metadata stays in one compact strip. */
 @media screen and (min-width:769px){
  .viewer-mode #overviewView>.workspace{padding:6px}
