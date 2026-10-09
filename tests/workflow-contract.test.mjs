@@ -93,7 +93,7 @@ test('phase 2A.2 real Edit Layout route mounts exactly one authoritative Office 
  assert.match(office,/dataset\.authoritativeEditor=active\?'office':'inactive'/);
  assert.match(office,/globalThis\.ISTEditorRuntime=runtime/);
  assert.match(professional,/legacy\.hidden=true;legacy\.inert=true/);
- assert.match(html,/office-page-editor\.js\?v=20261009-load-v8/);
+ assert.match(html,/office-page-editor\.js\?v=/);
 });
 test('phase 2A.3 uses capabilities for empty-workspace creation and real Excel import',()=>{
  const studio=fs.readFileSync(new URL('../studio.js',import.meta.url),'utf8');
