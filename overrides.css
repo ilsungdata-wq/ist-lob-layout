@@ -382,3 +382,22 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
 .topbar .language-switch{display:inline-flex;align-items:center;gap:4px;align-self:center}
 .topbar .language-switch button,.topbar .language-switch #langVi,.topbar .language-switch #langEn{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:40px;min-width:40px;height:44px;min-height:44px;margin:0;padding:0;line-height:1;font-size:13px;font-weight:800;vertical-align:middle}
 .topbar .language-switch>span{display:inline-flex;align-items:center;height:44px;line-height:1;margin:0}
+
+/* Viewer foregrounds the process layout; metadata stays in one compact strip. */
+@media screen and (min-width:769px){
+ .viewer-mode #overviewView>.workspace{padding:6px}
+ .viewer-mode #overviewView .canvas-card>.canvas-toolbar{display:none!important}
+ .viewer-mode #overviewView .shapes-zone{margin:0}
+ .viewer-mode #overviewView .zone-heading{position:static;padding:6px 10px;min-height:0;gap:8px}
+ .viewer-mode #overviewView .zone-heading p{display:none}
+ .viewer-mode #overviewView .zone-heading h2{font-size:13px;margin:0}
+ .viewer-mode #overviewView .shape-summary-cards{display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px}
+ .viewer-mode #overviewView .shape-summary-cards article{display:flex;flex:0 0 auto;align-items:center;justify-content:flex-start;gap:5px;min-height:0;min-width:0;padding:3px 8px;border:0;box-shadow:none;border-radius:3px}
+ .viewer-mode #overviewView .shape-summary-cards strong{font-size:13px;line-height:18px}
+ .viewer-mode #overviewView .shape-summary-cards span{font-size:9px}
+ .viewer-mode #overviewView .canvas-state>label{display:none}
+ .viewer-mode #professionalEditorShell .upper-canvas{pointer-events:auto!important;cursor:grab!important;touch-action:none}
+ .viewer-mode #professionalEditorShell .upper-canvas.viewer-dragging{cursor:grabbing!important}
+ .viewer-mode #professionalEditorShell .office-pan-scroll{display:none}
+}
+@media screen and (min-width:769px){body.viewer-mode .zone-heading>div>span{display:none!important}body.viewer-mode #professionalEditorShell .pro-ruler-h{top:0!important}}
