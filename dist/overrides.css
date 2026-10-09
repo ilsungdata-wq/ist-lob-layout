@@ -412,3 +412,5 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
 /* Keep both worksheet pan controls visible above the canvas, including wide layouts. */
 body.layout-editing #professionalEditorShell .office-pan-x{display:block!important;right:30px!important;bottom:7px!important;left:42px!important;height:22px!important;border:1px solid #9db5b2;border-radius:5px;background:#edf4f2;box-shadow:0 1px 3px #16384530}
 body.layout-editing #professionalEditorShell #officePanX{display:block!important;width:100%!important;height:20px!important;min-width:0!important;visibility:visible!important;appearance:auto}
+/* The editor can be taller than the viewport; pin the horizontal control to the visible lower edge. */
+body.layout-editing #professionalEditorShell .office-pan-x{position:fixed!important;z-index:100001!important;right:278px!important;bottom:8px!important;left:88px!important}
