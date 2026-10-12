@@ -1,10 +1,11 @@
 const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..');
+function samplePdf(){const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>','<< /Length 43 >>\nstream\nBT /F1 18 Tf 40 100 Td (LAYOUT PDF) Tj ET\nendstream','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];let value='%PDF-1.4\n',offsets=[0];objects.forEach((object,index)=>{offsets.push(Buffer.byteLength(value));value+=`${index+1} 0 obj\n${object}\nendobj\n`});const xref=Buffer.byteLength(value);value+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n${offsets.slice(1).map(offset=>String(offset).padStart(10,'0')+' 00000 n ').join('\n')}\ntrailer\n<< /Size ${objects.length+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;return Buffer.from(value)}
 const server=http.createServer((req,res)=>{
  const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+(name==='/'?'/index.html':name));
  if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end()}
- res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png'})[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));
+ res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.png':'image/png','.wasm':'application/wasm'})[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));
 });
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -74,6 +75,21 @@ const server=http.createServer((req,res)=>{
   await page.waitForFunction(()=>document.getElementById('excelReferenceImage').naturalWidth>0&&!document.getElementById('excelReferenceImage').hidden);
   await page.screenshot({path:path.join(root,'../excel-reference-verified.png'),fullPage:false});
   console.log('PASS upload Excel -> import -> View Original Excel');
+  await page.locator('#closeExcelReferenceBtn').click();
+  const pdfBase64=samplePdf().toString('base64');
+  const pdfModuleState=await page.evaluate(async()=>{const url=new URL('./vendor/pdfjs/pdf.min.mjs',document.baseURI).href;try{const lib=await Promise.race([import(url),new Promise((_,reject)=>setTimeout(()=>reject(Error('import timeout')),5000))]);return{url,loaded:!!lib.getDocument,version:lib.version}}catch(error){return{url,error:error.message}}});console.log('PDF MODULE',pdfModuleState);
+  await page.evaluate(value=>{const bytes=Uint8Array.from(atob(value),c=>c.charCodeAt(0)),file=new File([bytes],'layout-reference.pdf',{type:'application/pdf'});window.referencePdfJob=ISTReferenceEditor.open(file)},pdfBase64);
+  await page.locator('#referenceEditorDialog').waitFor({state:'visible'});
+  await page.waitForTimeout(8000);
+  const pdfState=await page.evaluate(()=>({page:document.getElementById('referencePdfPage').value,width:document.getElementById('referenceEditCanvas').width,disabled:document.getElementById('referenceSave').disabled,status:document.getElementById('referenceEditStatus').textContent}));
+  if(pdfState.disabled||pdfState.width<=10)console.log('PDF DEBUG',pdfState);
+  assert.equal(pdfState.page,'1');assert.ok(pdfState.width>10);assert.match(pdfState.status,/layout-reference\.pdf/);
+  await page.locator('#referenceRotateRight').click();await page.locator('#referenceSave').click();await page.locator('#referenceEditorDialog').waitFor({state:'hidden'});
+  assert.equal(await page.evaluate(()=>model().referenceImageName),'layout-reference.pdf');
+  console.log('PASS original reference editor: upload PDF, render page, rotate and save preview');
+  const factoryAssets=await page.evaluate(()=>Object.entries(OFFICE_FACTORY_ASSETS).map(([type,file])=>({type,file,loaded:!!office.cache?.[new URL('./assets/factory-library/'+file,document.baseURI).href]})));
+  assert.equal(factoryAssets.length,13);assert.ok(factoryAssets.every(item=>item.file.endsWith('.png')));
+  console.log('PASS factory library: 13 supplied drawing assets registered');
   assert.deepEqual(errors,[]);
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })().catch(error=>{console.error(error);process.exitCode=1;server.close()});

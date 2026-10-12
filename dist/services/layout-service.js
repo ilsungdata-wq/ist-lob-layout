@@ -1,7 +1,7 @@
 import{modelsApi}from'./supabase/models.js';
 import{versionsApi}from'./supabase/versions.js';
 import{permissionsApi}from'./supabase/permissions.js';
-import{storageApi}from'./supabase/storage.js?v=20261012-layout-v19';
+import{storageApi}from'./supabase/storage.js?v=20261012-reference-v20';
 import{profilesApi}from'./supabase/profiles.js';
 import{auth}from'./supabase/auth.js';
 import{historyApi}from'./supabase/history.js';

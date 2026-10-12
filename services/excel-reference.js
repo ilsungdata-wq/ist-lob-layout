@@ -29,7 +29,11 @@
   function color(node,fallback='#111111'){
    if(!node)return fallback;
    const raw=attr(node,'rgb')||attr(node,'val')||attr(node,'lastClr');
-   let hex=/^[0-9a-f]{6,8}$/i.test(raw)?raw.slice(-6):themeColors[num(node,'theme',schemeMap[raw]??-1)];
+   // Spreadsheet theme indices start lt1, dk1, lt2, dk2; DrawingML stores
+   // dk1, lt1, dk2, lt2. Mixing these turns white cell fills into black.
+   const spreadsheetTheme=node.hasAttribute('theme')?num(node,'theme'):-1;
+   const themeIndex=spreadsheetTheme>=0?([1,0,3,2][spreadsheetTheme]??spreadsheetTheme):(schemeMap[raw]??-1);
+   let hex=/^[0-9a-f]{6,8}$/i.test(raw)?raw.slice(-6):themeColors[themeIndex];
    if(!hex||!/^[0-9a-f]{6}$/i.test(hex))return fallback;
    let rgb=[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)),tint=num(node,'tint',0);
    rgb=rgb.map(v=>tint<0?v*(1+tint):v+(255-v)*tint);

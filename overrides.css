@@ -416,3 +416,24 @@ body.layout-editing #professionalEditorShell .office-pan-x{display:block!importa
 body.layout-editing #professionalEditorShell #officePanX{display:block!important;width:100%!important;height:20px!important;min-width:0!important;visibility:visible!important;appearance:auto}
 /* The editor can be taller than the viewport; pin the horizontal control to the visible lower edge. */
 body.layout-editing #professionalEditorShell .office-pan-x{position:fixed!important;z-index:100001!important;right:278px!important;bottom:8px!important;left:88px!important}
+
+/* Edit the original reference without opening Page Edit. */
+.reference-editor-dialog{width:min(1500px,96vw);max-width:96vw;height:94dvh;max-height:94dvh;padding:0;border:0;border-radius:12px;color:#17343f;background:#fff;box-shadow:0 24px 80px #0f172a66}
+.reference-editor-dialog::backdrop{background:#0f172aaa}
+.reference-editor-shell{height:100%;display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto}
+.reference-editor-shell>header,.reference-editor-shell>footer{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid #dbe5e7;background:#fff}
+.reference-editor-shell h2{margin:0;font-size:19px}.reference-editor-shell header p{margin:5px 0 0;color:#526c75;font-size:13px}
+.reference-edit-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 18px;background:#f3f8f7}
+.reference-edit-toolbar label{display:flex;gap:8px;align-items:center;margin:0;font-size:13px}.reference-edit-toolbar select{width:auto;max-width:140px}
+.reference-file-label{position:relative;overflow:hidden;cursor:pointer;background:#0f766e;color:#fff!important}.reference-file-label input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.reference-edit-help{margin:0;padding:8px 18px;font-size:12px;color:#526c75;border-bottom:1px solid #dbe5e7}
+.reference-edit-stage{min-height:0;overflow:auto;padding:20px;text-align:center;background:#e8eeed}
+#referenceEditCanvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto;margin:auto;background:#fff;box-shadow:0 2px 14px #17343f22;touch-action:none}
+#referenceEditCanvas.cropping{cursor:crosshair}
+.reference-edit-toolbar [aria-pressed="true"]{background:#0f766e;color:#fff}
+.reference-editor-shell>footer{border-top:1px solid #dbe5e7;border-bottom:0}.reference-editor-shell>footer>div{display:flex;gap:8px;flex-shrink:0}
+#referenceEditStatus{margin:0;font-size:13px;overflow-wrap:anywhere}#referenceEditStatus.error{color:#b91c1c}
+.excel-reference-dialog-actions{flex-wrap:wrap}
+@media(max-width:700px){.reference-editor-dialog{width:98vw;max-width:98vw;height:96dvh;max-height:96dvh}.reference-edit-toolbar{padding:8px;gap:5px}.reference-editor-shell>header,.reference-editor-shell>footer{padding:10px}.reference-editor-shell>footer{align-items:flex-start;flex-direction:column}.reference-editor-shell>footer>div{align-self:flex-end}}
+.office-gallery img,.office-library-list img{width:28px;height:28px;object-fit:contain;display:block;margin:auto}
+.process-label-properties{border-top:1px solid #d8e3e8;margin-top:10px;padding-top:8px}

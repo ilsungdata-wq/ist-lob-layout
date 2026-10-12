@@ -1,4 +1,4 @@
-import{layoutService}from'./services/layout-service.js?v=20261012-layout-v19';
+import{layoutService}from'./services/layout-service.js?v=20261012-reference-v20';
 import{isSupabaseConfigured}from'./services/supabase/client.js';
 import{RevisionConflictError}from'./services/supabase/versions.js';
 
@@ -6,6 +6,11 @@ const host=globalThis.ISTAppHost;
 const configured=isSupabaseConfigured();
 const remoteKey=id=>`supabase:${id}`;
 const clone=value=>structuredClone(value);
+function compactLayoutAssets(document){
+ const assets={...(document.layoutAssets||{})},rows=document.layoutDocument?.objects||document.layoutObjects||[];
+ for(const row of rows){if(row.type!=='image'||typeof row.src!=='string'||!row.src.startsWith('data:'))continue;let hash=2166136261;for(let index=0;index<row.src.length;index++){hash^=row.src.charCodeAt(index);hash=Math.imul(hash,16777619)}const key=`img-${(hash>>>0).toString(16)}-${row.src.length}`;assets[key]=row.src;row.assetRef=key;delete row.src}
+ if(Object.keys(assets).length)document.layoutAssets=assets;return document
+}
 
 function profileSession(profile,user){
  if(!profile)throw new Error('Không tìm thấy public.profiles cho tài khoản này.');
@@ -14,17 +19,15 @@ function profileSession(profile,user){
 }
 async function loadWorkspace(preferredVersionId=null){
  const profile=host.session(),models=await layoutService.listModels(),mapped={};let firstKey=null,editable=false;
- for(const row of models){
- const permission=profile.globalRole==='ADMIN'?'MANAGE':await layoutService.getMyPermission(row.id);
-  const rows=await layoutService.listVersions(row.id),versions=[];
-  for(const version of rows){
-   const capabilities=profile.globalRole==='ADMIN'?capabilityList():await layoutService.getMyCapabilities(row.id,version.id),canEditVersion=capabilities.some(value=>['layout.edit','lob.edit','equipment.edit','jig.edit','version.manage'].includes(value));
-   if(canEditVersion)editable=true;if(!canEditVersion&&version.status!=='PUBLISHED')continue;versions.push(version);
+ // Load independent model/version permission calls concurrently. With many saved
+ // layouts this removes the previous N×M network waterfall.
+ const bundles=await Promise.all(models.map(async row=>{const [permission,versions]=await Promise.all([profile.globalRole==='ADMIN'?Promise.resolve('MANAGE'):layoutService.getMyPermission(row.id),layoutService.listVersions(row.id)]);const enriched=await Promise.all(versions.map(async version=>({version,capabilities:profile.globalRole==='ADMIN'?capabilityList():await layoutService.getMyCapabilities(row.id,version.id)})));return{row,permission,enriched}}));
+ for(const {row,permission,enriched} of bundles){
+  const visible=[];
+  for(const {version,capabilities} of enriched){
+   const canEditVersion=capabilities.some(value=>['layout.edit','lob.edit','equipment.edit','jig.edit','version.manage'].includes(value));if(canEditVersion)editable=true;if(!canEditVersion&&version.status!=='PUBLISHED')continue;visible.push(version);
    const document=clone(!canEditVersion&&version.status==='PUBLISHED'?(version.published_snapshot||version.layout_data||{}):(version.layout_data||{}));
-   document.name=row.model_name||row.model_code;document.modelCode=row.model_code;document.description=row.description||'';
-   document.version=version.version_number;document.processes=Array.isArray(document.processes)?document.processes:[];
-   document.published=version.status==='PUBLISHED';document.isLatest=versions[0]?.id===version.id;
-   document._remote={modelId:row.id,versionId:version.id,revision:version.revision,status:version.status,permission,capabilities,updatedAt:version.updated_at,publishedRevision:version.published_revision};
+   document.name=row.model_name||row.model_code;document.modelCode=row.model_code;document.description=row.description||'';document.version=version.version_number;document.processes=Array.isArray(document.processes)?document.processes:[];document.published=version.status==='PUBLISHED';document.isLatest=visible[0]?.id===version.id;document._remote={modelId:row.id,versionId:version.id,revision:version.revision,status:version.status,permission,capabilities,updatedAt:version.updated_at,publishedRevision:version.published_revision};
    const key=remoteKey(version.id);mapped[key]=document;if(!firstKey||version.id===preferredVersionId)firstKey=key;
   }
  }
@@ -58,7 +61,7 @@ async function saveCurrent(document,module='LAYOUT'){
  const remote=document._remote;if(!remote?.versionId)throw new Error('Hãy tạo Model và Version trên Supabase trước khi lưu.');
  if(remote.status==='ARCHIVED'||remote.deletedAt)throw new Error('Phiên bản đã lưu trữ hoặc xóa không thể chỉnh sửa.');
  try{
-  const payload=clone(document);delete payload._remote;
+  const payload=compactLayoutAssets(clone(document));delete payload._remote;
   const saved=await layoutService.saveRevision({versionId:remote.versionId,expectedRevision:remote.revision,layoutData:payload,module,changeNote:document.note||null});
   document._remote={...remote,revision:saved.revision,status:saved.status,updatedAt:saved.updated_at};return saved;
  }catch(error){if(error instanceof RevisionConflictError)throw Object.assign(error,{userMessage:'Layout đã được người khác cập nhật. Hãy tải lại phiên bản mới nhất trước khi lưu.'});throw error}
@@ -103,7 +106,17 @@ async function importCandidates(candidates,mode='new'){
  }
  await loadWorkspace(selectedVersionId);return selectedVersionId;
 }
-async function publish(document){const id=document._remote?.versionId;if(!id)throw new Error('Phiên bản chưa nằm trên Supabase.');await layoutService.publishVersion(id);await loadWorkspace(id)}
+async function publish(document){
+ const id=document._remote?.versionId;if(!id)throw new Error('Phiên bản chưa nằm trên Supabase.');
+ // The selected version remains authoritative: save it first, then publish that
+ // exact id without replacing the editor workspace or resetting its viewport.
+ const canvas=typeof fabricLayoutCanvas==='undefined'?null:fabricLayoutCanvas,viewport=canvas?.viewportTransform?.slice(),size=canvas?{width:canvas.width,height:canvas.height}:null;
+ await saveCurrent(document,'LAYOUT');const published=await layoutService.publishVersion(id);
+ document.published=true;document._remote={...document._remote,status:'PUBLISHED',publishedRevision:published?.published_revision??document._remote.revision};
+ host.refreshCurrent?.();
+ requestAnimationFrame(()=>{const currentCanvas=typeof fabricLayoutCanvas==='undefined'?null:fabricLayoutCanvas;if(!viewport||!currentCanvas)return;if(size)currentCanvas.setDimensions(size);currentCanvas.setViewportTransform(viewport);currentCanvas.calcOffset();currentCanvas.requestRenderAll()});
+ return published;
+}
 async function archive(document){const id=document._remote?.versionId;if(!id)throw new Error('Phiên bản chưa nằm trên Supabase.');await layoutService.archiveVersion(id);await loadWorkspace();}
 async function reload(document){await loadWorkspace(document?._remote?.versionId)}
 async function history(document){return layoutService.listHistory(document._remote.versionId)}
