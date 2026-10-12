@@ -43,6 +43,12 @@ const server=http.createServer((req,res)=>{
   for(let i=0;i<2;i++){close(editor.pasted[i].x,editor.copied[i].x+24);close(editor.pasted[i].y,editor.copied[i].y+24);close(editor.pasted[i].width,editor.copied[i].width);close(editor.moved[i].x,editor.pasted[i].x+55);close(editor.moved[i].y,editor.pasted[i].y+35)}
   assert.deepEqual(editor.view,[1.3,0,0,1.3,-360,-120]);assert.equal(editor.label,'12');assert.equal(editor.edited,'27');
   console.log('PASS editor: rotated multi-copy, group movement, viewport stability, editable process labels');
+  const beforeFactoryDrop=await page.evaluate(()=>shapeArray().filter(row=>row.type==='worker').length);
+  await page.locator('[data-library-type="worker"]').first().dragTo(page.locator('.upper-canvas'),{targetPosition:{x:1050,y:360}});
+  await page.waitForFunction(before=>shapeArray().filter(row=>row.type==='worker').length===before+1,beforeFactoryDrop);
+  const factoryDrop=await page.evaluate(()=>{const row=shapeArray().filter(item=>item.type==='worker').at(-1);return{count:shapeArray().filter(item=>item.type==='worker').length,x:row.x,y:row.y,selected:shapeSelectedId===row.id,dropReady:document.querySelector('.pro-canvas-host').classList.contains('office-drop-ready')}});
+  assert.equal(factoryDrop.count,beforeFactoryDrop+1);assert.equal(factoryDrop.dropReady,false);assert.ok(factoryDrop.x>0&&factoryDrop.y>0);
+  console.log('PASS factory drag/drop: library object lands on the canvas and drag state is cleared');
   await page.screenshot({path:path.join(root,'../page-edit-verified.png'),fullPage:false});
   const preview=await page.evaluate(async()=>{
    const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet([['LAYOUT ORIGINAL'],[1,2,3],['IQC','PRESS','OQC'],[1,2,1],[12,15,10],['T/T']]),'Layout TEST');

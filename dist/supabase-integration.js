@@ -1,4 +1,4 @@
-import{layoutService}from'./services/layout-service.js?v=20261012-reference-v20';
+import{layoutService}from'./services/layout-service.js?v=20261012-performance-v21';
 import{isSupabaseConfigured}from'./services/supabase/client.js';
 import{RevisionConflictError}from'./services/supabase/versions.js';
 
@@ -17,11 +17,17 @@ function profileSession(profile,user){
  if(!profile.is_active)throw new Error('Tài khoản đã bị vô hiệu hóa.');
  return{email:user.email||profile.email,displayName:profile.display_name||user.email||profile.email,role:profile.global_role==='ADMIN'?'owner':'viewer',globalRole:profile.global_role,profileId:profile.id,profileActive:profile.is_active,authenticated:true};
 }
+async function mapWorkspaceLimit(items,limit,mapper){
+ const rows=Array.from(items||[]),results=new Array(rows.length);let cursor=0;
+ async function worker(){while(cursor<rows.length){const index=cursor++;results[index]=await mapper(rows[index],index)}}
+ await Promise.all(Array.from({length:Math.min(Math.max(1,limit),rows.length)},worker));
+ return results;
+}
 async function loadWorkspace(preferredVersionId=null){
  const profile=host.session(),models=await layoutService.listModels(),mapped={};let firstKey=null,editable=false;
- // Load independent model/version permission calls concurrently. With many saved
- // layouts this removes the previous N×M network waterfall.
- const bundles=await Promise.all(models.map(async row=>{const [permission,versions]=await Promise.all([profile.globalRole==='ADMIN'?Promise.resolve('MANAGE'):layoutService.getMyPermission(row.id),layoutService.listVersions(row.id)]);const enriched=await Promise.all(versions.map(async version=>({version,capabilities:profile.globalRole==='ADMIN'?capabilityList():await layoutService.getMyCapabilities(row.id,version.id)})));return{row,permission,enriched}}));
+ // Supabase Nano has little CPU headroom. Keep useful parallelism without opening
+ // one connection for every saved model/version at the same time.
+ const bundles=await mapWorkspaceLimit(models,2,async row=>{const [permission,versions]=await Promise.all([profile.globalRole==='ADMIN'?Promise.resolve('MANAGE'):layoutService.getMyPermission(row.id),layoutService.listVersions(row.id)]);const enriched=await mapWorkspaceLimit(versions,2,async version=>({version,capabilities:profile.globalRole==='ADMIN'?capabilityList():await layoutService.getMyCapabilities(row.id,version.id)}));return{row,permission,enriched}});
  for(const {row,permission,enriched} of bundles){
   const visible=[];
   for(const {version,capabilities} of enriched){

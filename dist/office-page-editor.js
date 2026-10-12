@@ -414,3 +414,12 @@ fabricObject=function(row){
  if(row.type==='image'&&!row.src&&row.assetRef&&model().layoutAssets?.[row.assetRef])return embeddedAssetFabricObject({...row,src:model().layoutAssets[row.assetRef]});
  return embeddedAssetFabricObject(row)
 };
+
+/* The file-drop handler used to replace the factory-object drop handler. Bind
+   both formats in one place and use a small preview instead of the source PNG. */
+function officeFactoryDragPreview(button){let preview=$('officeFactoryDragPreview');if(!preview){preview=document.createElement('div');preview.id='officeFactoryDragPreview';preview.className='office-factory-drag-preview';document.body.appendChild(preview)}preview.replaceChildren(button.querySelector('img')?.cloneNode(true)||document.createTextNode(button.textContent.trim()));return preview}
+function bindOfficeFactoryDrag(lib){lib.querySelectorAll('[data-library-type]').forEach(button=>{button.ondragstart=event=>{event.dataTransfer.effectAllowed='copy';event.dataTransfer.setData('application/x-ist-factory-object',button.dataset.libraryType);event.dataTransfer.setDragImage(officeFactoryDragPreview(button),24,24);document.querySelector('.pro-canvas-host')?.classList.add('office-drop-ready')};button.ondragend=()=>document.querySelector('.pro-canvas-host')?.classList.remove('office-drop-ready')})}
+const finalOfficeLibraryRenderer=renderOfficeLibrary;
+renderOfficeLibrary=function(lib){finalOfficeLibraryRenderer(lib);bindOfficeFactoryDrag(lib)};
+const finalOfficeWire=wireOffice;
+wireOffice=function(){finalOfficeWire();const host=document.querySelector('.pro-canvas-host');if(!host)return;host.ondragover=event=>{const types=[...event.dataTransfer.types],factory=types.includes('application/x-ist-factory-object'),image=[...event.dataTransfer.items].some(item=>item.type.startsWith('image/'));if(factory||image){event.preventDefault();event.dataTransfer.dropEffect='copy'}};host.ondrop=event=>{host.classList.remove('office-drop-ready');const type=event.dataTransfer.getData('application/x-ist-factory-object');if(type&&fabricLayoutCanvas){event.preventDefault();event.stopPropagation();proAdd(type,{},fabricLayoutCanvas.getScenePoint(event));return}const file=[...event.dataTransfer.files].find(item=>item.type.startsWith('image/'));if(file){event.preventDefault();insertImage(file)}}};
