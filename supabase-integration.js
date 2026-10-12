@@ -31,6 +31,7 @@ async function loadWorkspace(preferredVersionId=null){
  if(!Object.keys(mapped).length){
   const key='supabase:empty';mapped[key]={name:'Chưa có Model',version:'—',processes:[],layoutObjects:[],_remote:{status:'EMPTY',permission:profile.globalRole==='ADMIN'?'MANAGE':null}};firstKey=key;
  }
+ if(!preferredVersionId&&Object.keys(mapped).length)firstKey=Object.entries(mapped).sort(([,a],[,b])=>new Date(b._remote?.updatedAt||0)-new Date(a._remote?.updatedAt||0))[0][0];
  if(profile.globalRole!=='ADMIN')host.setSession({...profile,role:editable?'editor':'viewer'});
  host.replaceModels(mapped,firstKey);return mapped;
 }
@@ -39,6 +40,7 @@ async function loadPublicWorkspace(){
  for(const row of rows){
   const document=clone(row.layout_data||{});document.name=row.model_name||row.model_code;document.modelCode=row.model_code;document.description=row.description||'';document.version=row.version_number;document.processes=Array.isArray(document.processes)?document.processes:[];document.published=true;document.isLatest=row.id===row.current_published_version_id;document._remote={modelId:row.model_id,versionId:row.id,revision:row.revision,status:'PUBLISHED',permission:null,updatedAt:row.updated_at};const key=remoteKey(row.id);mapped[key]=document;if(!firstKey||document.isLatest)firstKey=key;
  }
+ if(Object.keys(mapped).length)firstKey=Object.entries(mapped).sort(([,a],[,b])=>new Date(b._remote?.updatedAt||0)-new Date(a._remote?.updatedAt||0))[0][0];
  if(!firstKey){firstKey='public:empty';mapped[firstKey]={name:'Chưa có Layout Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'EMPTY',permission:null}}}
  host.replaceModels(mapped,firstKey);return mapped;
 }

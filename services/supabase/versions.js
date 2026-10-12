@@ -11,5 +11,5 @@ export const versionsApi={
  async publish(versionId){return one(await rpc('publish_layout_version',{p_version_id:versionId}))},
  async archive(versionId){return one(await rpc('archive_layout_version',{p_version_id:versionId}))},
  async rename(versionId,versionNumber){return one(await rpc('rename_layout_version',{p_version_id:versionId,p_version_number:versionNumber}))},
- async softDelete(versionId){return one(await rpc('soft_delete_layout_version',{p_version_id:versionId}))}
+ async softDelete(versionId){return one(await rpc('hard_delete_layout_version',{p_version_id:versionId}))}
 };
