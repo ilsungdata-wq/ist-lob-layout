@@ -234,7 +234,7 @@ test('phase 2C stopwatch entry respects tt.measure and updates existing process 
  assert.match(mobile,/stopwatchReset\(\);stopwatchStart\(\)/);
  assert.match(studio,/function stopwatchApply\(/);
  assert.match(app,/editingModule==='measure'&&can\('tt\.measure'\)/);
- assert.match(app,/value="\$\{tt\.toFixed\(2\)\}"/);
+ assert.match(app,/value="\$\{hasTime\?tt\.toFixed\(2\):''\}"/);
 });
 
 
