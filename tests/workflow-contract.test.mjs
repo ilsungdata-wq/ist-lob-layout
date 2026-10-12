@@ -74,7 +74,7 @@ test('phase 2A.1 persists transforms from existing Fabric objects and keeps lega
  assert.match(professional,/model\(\)\.layoutDocument\?\.canvas\|\|ensureLayoutDocument\(\)\.canvas/);
  assert.match(office,/function phase2CommitCanvasTransform\(\)/);
  assert.match(office,/fabricLayoutCanvas\.getActiveObjects\(\)/);
- assert.match(office,/Object\.assign\(row,next\)/);
+ assert.match(office,/commitOfficeObjectGeometry\(object,row\)/);
  assert.match(office,/proSyncWorld\(row\)/);
  assert.match(office,/object:modified/);
  assert.match(office,/pointerup/);
@@ -131,8 +131,9 @@ test('phase 2B ribbon commands and physical grid operate on the authoritative ob
  const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
  const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
  for(const command of ['duplicate','delete','rotate-right','flip-h','flip-v'])assert.match(office,new RegExp(command));
- assert.match(office,/fabric\.util\.multiplyTransformMatrices/);
- assert.match(office,/fabric\.util\.qrDecompose/);
+ const geometry=fs.readFileSync(new URL('../services/editor-geometry.js',import.meta.url),'utf8');
+ assert.match(geometry,/util\.multiplyTransformMatrices/);
+ assert.match(geometry,/util\.qrDecompose/);
  assert.match(professional,/invertTransform\(fabricLayoutCanvas\.viewportTransform/);
  assert.match(fabric,/canvas\?\.snapGrid/);
  assert.match(fabric,/canvas\.gridMeters/);
@@ -169,8 +170,9 @@ test('phase 2B+ keeps fixed-page geometry and persists real Fabric resize transf
  const professional=fs.readFileSync(new URL('../professional-editor.js',import.meta.url),'utf8');
  const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
  assert.match(professional,/widthMeters:33,heightMeters:8/);
- assert.match(office,/object\.width\|\|1\)\*Math\.abs\(transform\.scaleX/);
- assert.match(office,/object\.height\|\|1\)\*Math\.abs\(transform\.scaleY/);
+ const geometry=fs.readFileSync(new URL('../services/editor-geometry.js',import.meta.url),'utf8');
+ assert.match(geometry,/base\.width\*Math\.abs\(after\.scaleX\/before\.scaleX\)/);
+ assert.match(geometry,/base\.height\*Math\.abs\(after\.scaleY\/before\.scaleY\)/);
  assert.doesNotMatch(fabric,/obj\.scaleX=1;obj\.scaleY=1/);
  assert.match(professional,/opt\.e\.ctrlKey\|\|opt\.e\.metaKey/);
  assert.match(professional,/opt\.e\.button===1/);

@@ -1,4 +1,4 @@
-import{layoutService}from'./services/layout-service.js';
+import{layoutService}from'./services/layout-service.js?v=20261012-layout-v19';
 import{isSupabaseConfigured}from'./services/supabase/client.js';
 import{RevisionConflictError}from'./services/supabase/versions.js';
 
@@ -74,8 +74,16 @@ async function createVersion(source,versionNumber,changeNote){
 }
 async function attachSourceWorkbook(modelId,candidate,payload){
  if(!candidate.sourceFile)return;
- const file=candidate.sourceFile,safeName=file.name.replace(/[^a-z0-9._-]/gi,'_'),uploaded=await layoutService.uploadAsset(modelId,file,{path:`excel-source/${Date.now()}-${safeName}`});
+ const original=candidate.sourceFile,type=/\.xlsm$/i.test(original.name)?'application/vnd.ms-excel.sheet.macroEnabled.12':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+ const file=new File([original],original.name,{type}),safeName=file.name.replace(/[^a-z0-9._-]/gi,'_'),uploaded=await layoutService.uploadAsset(modelId,file,{path:`excel-source/${crypto.randomUUID()}-${safeName}`});
  payload.sourceExcelAsset={id:uploaded.record?.id||null,path:uploaded.path,name:file.name,mimeType:file.type,size:file.size,sheetName:candidate.sheetName};
+ if(candidate.referenceSvg){
+  const previewFile=new File([candidate.referenceSvg],safeName+'.svg',{type:'image/svg+xml'});
+  const preview=await layoutService.uploadAsset(modelId,previewFile,{path:'excel-reference/'+crypto.randomUUID()+'.svg'});
+  payload.referenceAsset={id:preview.record?.id||null,path:preview.path,name:previewFile.name,mimeType:previewFile.type,size:previewFile.size};
+  delete payload.referenceImage;
+ }
+
 }
 async function importCandidates(candidates,mode='new'){
  let selectedVersionId=null;

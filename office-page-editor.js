@@ -106,16 +106,7 @@ function phase2CommitCanvasTransform(){
  active.forEach(object=>{
   const row=shapeArray().find(item=>item.id===object.layoutId);
   if(!row)return;
-  const matrix=object.group?fabric.util.multiplyTransformMatrices(object.group.calcTransformMatrix(),object.calcOwnMatrix()):object.calcTransformMatrix();
-  const transform=fabric.util.qrDecompose(matrix),width=Math.max(.01,(object.width||1)*Math.abs(transform.scaleX||1)),height=Math.max(.01,(object.height||1)*Math.abs(transform.scaleY||1));
-  const next={
-   x:Math.max(0,transform.translateX-width/2),
-   y:Math.max(0,transform.translateY-height/2),
-   width,
-   height,
-   rotation:transform.angle||0
-  };
-  Object.assign(row,next);
+  commitOfficeObjectGeometry(object,row);
   proSyncWorld(row);
  });
  persistLocal();
@@ -155,7 +146,7 @@ function mountAuthoritativeOfficeEditor(){
 
 /* Phase 2B+ production extensions: smart LOB stations and localized Office UI. */
 function officeProcessFor(row){return row?.metadata?.processId?model().processes.find(process=>process.id===row.metadata.processId||process.processId===row.metadata.processId):null}
-function officeProcessFacts(row){const process=officeProcessFor(row),jigs=process?(typeof getJigs==='function'?getJigs(process):process.jigs||[]):[];return process?{process,no:process.stt??process.processNo??'',name:process.name||'',tt:stationTime(process),mp:process.mp??0,equipment:[process.equipment,process.eqType,...jigs.map(jig=>jig.name||jig.type)].filter(Boolean).join(', '),auto:!!process.auto||Number(process.mp)===0,dkn:!!process.isDKN||!!process.critical||!!process.skill25||!!process.skill40||!!process.multiSkill||(process.multiSkills||[]).length>0}:null}
+function officeProcessFacts(row){const process=officeProcessFor(row),jigs=process?(typeof getJigs==='function'?getJigs(process):process.jigs||[]):[];return process?{process,no:row.metadata?.processNo??process.stt??process.processNo??'',name:process.name||'',tt:stationTime(process),mp:process.mp??0,equipment:[process.equipment,process.eqType,...jigs.map(jig=>jig.name||jig.type)].filter(Boolean).join(', '),auto:!!process.auto||Number(process.mp)===0,dkn:!!process.isDKN||!!process.critical||!!process.skill25||!!process.skill40||!!process.multiSkill||(process.multiSkills||[]).length>0}:null}
 function officeStationLabel(row){const facts=officeProcessFacts(row),display=row.metadata?.display||{};if(!facts)return row.text||'PROCESS STATION';const lines=[];if(display.No!==false)lines.push(String(facts.no));if(display.Name!==false)lines.push(facts.name);if(display.TT)lines.push(`T/T ${Number(facts.tt||0).toFixed(2)}`);if(display.MP)lines.push(`MP ${facts.mp}`);if(display.Equipment&&facts.equipment)lines.push(facts.equipment);if(facts.auto)lines.push('AUTO');return lines.join('\n')}
 const phase2bFabricObject=fabricObject;
 fabricObject=function(row){
@@ -281,9 +272,10 @@ printOffice=function(){if(!fabricLayoutCanvas)return;const canvas=odoc().canvas,
 const v1RenderCanvas=renderShapesCanvas;
 let viewerDocument=null;
 renderShapesCanvas=function(){
- const sameDocument=viewerDocument===model(),previousView=!layoutEditing&&sameDocument?fabricLayoutCanvas?.viewportTransform?.slice():null;
+ const sameDocument=viewerDocument===model(),previousView=sameDocument?fabricLayoutCanvas?.viewportTransform?.slice():null,previousSize=previousView?{width:fabricLayoutCanvas.width,height:fabricLayoutCanvas.height}:null;
  if(previousView){const ratio=shapeZoom/previousView[0];previousView[4]=fabricLayoutCanvas.width/2+(previousView[4]-fabricLayoutCanvas.width/2)*ratio;previousView[5]=fabricLayoutCanvas.height/2+(previousView[5]-fabricLayoutCanvas.height/2)*ratio;previousView[0]=previousView[3]=shapeZoom}
  v1RenderCanvas();viewerDocument=model();
+ if(previousView&&layoutEditing&&fabricLayoutCanvas){fabricLayoutCanvas.setDimensions(previousSize);fabricLayoutCanvas.setViewportTransform(previousView);fabricLayoutCanvas.calcOffset();renderOfficeRulers();syncOfficePanControls();fabricLayoutCanvas.requestRenderAll()}
  requestAnimationFrame(()=>{v1RefreshProcessLibrary();if(!layoutEditing){fitOfficeViewerWidth(!previousView);if(previousView&&fabricLayoutCanvas){fabricLayoutCanvas.setViewportTransform(previousView);renderOfficeRulers();syncOfficePanControls();fabricLayoutCanvas.requestRenderAll()}}})
 };
 
@@ -352,3 +344,48 @@ const finalOverviewPrint=printOffice;
 function ensureOfficePrintDialog(){let dialog=$('officePrintDialog');if(dialog)return dialog;document.body.insertAdjacentHTML('beforeend',`<dialog id="officePrintDialog" class="office-dialog office-print-dialog"><form method="dialog"><h2>In Layout</h2><p>Chọn bản tổng quan một trang hoặc bản chi tiết nhiều trang khi nội dung dày.</p><footer><button value="cancel">Hủy</button><button value="detail">Chi tiết nhiều trang</button><button value="overview" class="primary">A4 tổng quan</button></footer></form></dialog>`);dialog=$('officePrintDialog');dialog.addEventListener('close',()=>{if(dialog.returnValue==='overview')finalOverviewPrint();if(dialog.returnValue==='detail')printDetailedOffice()});return dialog}
 function printDetailedOffice(){const processes=[...model().processes].sort((a,b)=>(Number(a.stt)||0)-(Number(b.stt)||0));document.getElementById('officeDetailedPrint')?.remove();const sheet=document.createElement('section');sheet.id='officeDetailedPrint';sheet.innerHTML=`<header><b>IL-SUNG TECH</b><h1>${escOffice(model().name)} · ${escOffice(model().version)} · Chi tiết công đoạn</h1></header><div>${processes.map(process=>`<article><b>${escOffice(process.stt)}</b><strong>${escOffice(process.name)}</strong><span>T/T ${Number(stationTime(process)||0).toFixed(2)} s</span><span>MP ${escOffice(process.mp??0)}</span><span>${process.auto?'AUTO':'MANUAL'}${v1ExplicitDkn(process)?' · ★ ĐKN':''}</span><small>${escOffice(v1ProcessEquipment(process)||'—')}</small></article>`).join('')}</div>`;document.body.appendChild(sheet);document.body.classList.add('office-print-detail');window.print();setTimeout(()=>{document.body.classList.remove('office-print-detail');sheet.remove()},800)}
 printOffice=function(mode){if(mode==='overview')return finalOverviewPrint();if(mode==='detail')return printDetailedOffice();ensureOfficePrintDialog().showModal()};
+
+/* Keep rendered transforms separate from stored geometry, including groups. */
+const referenceGeometryObject=fabricObject;
+fabricObject=function(row){
+ const object=referenceGeometryObject(row);
+ object.officeGeometry={x:row.x,y:row.y,width:row.width,height:row.height,rotation:row.rotation||0};
+ object.officeInitialMatrix=object.calcTransformMatrix().slice();
+ return object;
+};
+function commitOfficeObjectGeometry(object,row){
+ if(!object.officeInitialMatrix||!object.officeGeometry)return;
+ Object.assign(row,ISTEditorGeometry.geometryAfterTransform(object.officeGeometry,object.officeInitialMatrix,object.calcTransformMatrix(),fabric.util));
+}
+syncFabricObject=function(object){
+ if(fabricSyncing||!canEdit()||!object?.layoutId)return;
+ const row=shapeArray().find(item=>item.id===object.layoutId);if(!row)return;
+ commitOfficeObjectGeometry(object,row);proSyncWorld(row);persistLocal();scheduleSave();
+};
+function officeProcessNumber(row){
+ if(!row.metadata?.processId)return '';
+ const process=model().processes.find(item=>item.id===row.metadata.processId);
+ return String(row.metadata.processNo??process?.stt??'');
+}
+function updateOfficeProcessLabels(){
+ if(!fabricLayoutCanvas)return;
+ const objects=fabricLayoutCanvas.getObjects();
+ for(const label of objects.filter(item=>item.officeProcessLabel)){
+  const object=objects.find(item=>item.layoutId===label.officeProcessLabel);
+  if(!object)continue;
+  const bounds=object.getBoundingRect();
+  label.set({left:bounds.left+bounds.width/2,top:bounds.top-8,visible:object.visible});label.setCoords();
+ }
+}
+const processNumberRender=renderShapesCanvas;
+renderShapesCanvas=function(){
+ processNumberRender();if(!fabricLayoutCanvas)return;
+ for(const row of shapeArray()){
+  const number=officeProcessNumber(row);if(!number||row.type==='process-station')continue;
+  const label=new fabric.Text(number,{fontFamily:'Arial',fontSize:20,fontWeight:'bold',fill:'#111827',originX:'center',originY:'bottom',selectable:false,evented:false,objectCaching:false});
+  label.officeProcessLabel=row.id;fabricLayoutCanvas.add(label);
+ }
+ updateOfficeProcessLabels();
+ for(const event of ['object:moving','object:scaling','object:rotating','object:modified'])fabricLayoutCanvas.on(event,updateOfficeProcessLabels);
+ fabricLayoutCanvas.requestRenderAll();
+};
