@@ -1,6 +1,6 @@
 /* Select the one layout published to Viewer: the web layout or the original PDF/Excel. */
 (()=>{
-  let sourceMode='edited',bound=false,lastWorkspace='',resizeFrame=0,lastCanvasSize='';
+  let sourceMode='edited',bound=false,lastWorkspace='',resizeFrame=0,lastCanvasSize='',resizeObserver;
   const publisher=()=>!!can('version.publish');
   const hasEditedLayout=()=>shapeArray().length>0;
   const selectedMode=()=>model()?.viewerLayoutSource||(hasEditedLayout()?'edited':'reference');
@@ -17,6 +17,11 @@
   }
   function select(mode){
     if(!publisher())return;
+    if(mode===sourceMode)return;
+    if(mode==='reference'&&!$('excelReferenceImage')?.getAttribute('src')){
+      toast('Phiên bản này chưa có PDF hoặc Excel gốc để Pushlist.');
+      return;
+    }
     sourceMode=mode;model().viewerLayoutSource=mode;persistLocal();scheduleSave();renderExcelReference();sync();
     toast('Đã chọn '+(mode==='reference'?'PDF / Excel gốc':'Layout đã edit')+'. Nhấn Pushlist để phát hành cho người xem.');
   }
@@ -31,7 +36,13 @@
     const rect=host.getBoundingClientRect(),width=Math.floor(rect.width),height=Math.floor(rect.height);
     if(width<240||height<180)return;
     const size=`${width}x${height}`;
-    if(size!==lastCanvasSize){fabricLayoutCanvas.setDimensions({width,height});fabricLayoutCanvas.calcOffset();lastCanvasSize=size;}
+    // Resizing the document root on every Fabric render created a feedback loop:
+    // ResizeObserver -> fit -> render -> ResizeObserver.  Viewers only need a
+    // resize when their actual canvas host changes size.
+    if(size===lastCanvasSize)return;
+    fabricLayoutCanvas.setDimensions({width,height});
+    fabricLayoutCanvas.calcOffset();
+    lastCanvasSize=size;
     if(typeof proFitLayout==='function')proFitLayout();
     fabricLayoutCanvas.requestRenderAll();
   }
@@ -42,7 +53,8 @@
     $('excelReferenceImage')?.addEventListener('load',sync);$('excelReferenceImage')?.addEventListener('error',sync);
     const baseRenderStudio=renderStudio;renderStudio=function(){baseRenderStudio();refresh()};
     const baseSwitchView=switchView;switchView=function(view){baseSwitchView(view);if(view==='overview')requestAnimationFrame(()=>requestAnimationFrame(queueFit))};
-    new ResizeObserver(queueFit).observe(document.documentElement);
+    const host=document.querySelector('.pro-canvas-host');
+    if(host){resizeObserver=new ResizeObserver(queueFit);resizeObserver.observe(host);}
   }
   document.addEventListener('DOMContentLoaded',init);
 })();

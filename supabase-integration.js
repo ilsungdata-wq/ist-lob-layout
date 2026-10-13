@@ -30,11 +30,15 @@ function workspaceDocument(row,version,permission,capabilities){
 async function ensureLoaded(document){
  const remote=document?._remote;
  if(!remote?.lazy)return document;
- const version=await layoutService.getVersion(remote.versionId);
+ const version=remote.public
+  ?await layoutService.getPublicVersion(remote.versionId)
+  :await layoutService.getVersion(remote.versionId);
  if(!version)throw new Error('Không tìm thấy phiên bản Layout trên Supabase.');
- const source=!remote.canEdit&&version.status==='PUBLISHED'?(version.published_snapshot||version.layout_data||{}):(version.layout_data||{});
+ const source=remote.public||(!remote.canEdit&&version.status==='PUBLISHED')
+  ?(version.published_snapshot||version.layout_data||{})
+  :(version.layout_data||{});
  const loaded=clone(source);
- Object.assign(document,loaded,{name:document.name,modelCode:document.modelCode,description:document.description,version:version.version_number,processes:Array.isArray(loaded.processes)?loaded.processes:[],layoutObjects:Array.isArray(loaded.layoutObjects)?loaded.layoutObjects:[],published:version.status==='PUBLISHED',_remote:{...remote,revision:version.revision,status:version.status,updatedAt:version.updated_at,publishedRevision:version.published_revision,lazy:false}});
+ Object.assign(document,loaded,{name:document.name,modelCode:document.modelCode,description:document.description,version:version.version_number,processes:Array.isArray(loaded.processes)?loaded.processes:[],layoutObjects:Array.isArray(loaded.layoutObjects)?loaded.layoutObjects:[],published:remote.public||version.status==='PUBLISHED',_remote:{...remote,revision:version.revision,status:remote.public?'PUBLISHED':version.status,updatedAt:version.updated_at,publishedRevision:version.published_revision,lazy:false}});
  return document;
 }
 async function loadWorkspace(preferredVersionId=null){
@@ -66,10 +70,11 @@ async function loadWorkspace(preferredVersionId=null){
 async function loadPublicWorkspace(){
  const rows=await layoutService.listPublicWorkspace(),mapped={};let firstKey=null;
  for(const row of rows){
-  const document=clone(row.layout_data||{});document.name=row.model_name||row.model_code;document.modelCode=row.model_code;document.description=row.description||'';document.version=row.version_number;document.processes=Array.isArray(document.processes)?document.processes:[];document.published=true;document.isLatest=row.id===row.current_published_version_id;document._remote={modelId:row.model_id,versionId:row.id,revision:row.revision,status:'PUBLISHED',permission:null,updatedAt:row.updated_at};const key=remoteKey(row.id);mapped[key]=document;if(!firstKey||document.isLatest)firstKey=key;
+  const document={name:row.model_name||row.model_code,modelCode:row.model_code,description:row.description||'',version:row.version_number,processes:[],layoutObjects:[],published:true,isLatest:row.id===row.current_published_version_id,_remote:{modelId:row.model_id,versionId:row.id,revision:row.revision,status:'PUBLISHED',permission:null,updatedAt:row.updated_at,lazy:true,public:true}};const key=remoteKey(row.id);mapped[key]=document;if(!firstKey||document.isLatest)firstKey=key;
  }
  if(Object.keys(mapped).length)firstKey=Object.entries(mapped).sort(([,a],[,b])=>new Date(b._remote?.updatedAt||0)-new Date(a._remote?.updatedAt||0))[0][0];
  if(!firstKey){firstKey='public:empty';mapped[firstKey]={name:'Chưa có Layout Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'EMPTY',permission:null}}}
+ if(mapped[firstKey]?._remote?.lazy)await ensureLoaded(mapped[firstKey]);
  host.replaceModels(mapped,firstKey);return mapped;
 }
 async function login(email,password){
