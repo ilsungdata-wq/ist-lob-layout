@@ -215,6 +215,12 @@ test('phase 2C uses responsive mobile cards instead of desktop LOB and equipment
  assert.match(css,/\.process-table-wrap[^}]*display:none!important/);
  assert.match(css,/min-height:50px/);
 });
+test('public Viewer exposes only the layout source selected for Pushlist',()=>{
+ const inline=fs.readFileSync(new URL('../inline-layout-reference.js',import.meta.url),'utf8');
+ assert.match(inline,/model\(\)\?\.viewerLayoutSource/);
+ assert.match(inline,/canvas\.hidden=useReference/);
+ assert.match(inline,/openReference\.hidden=!publisher\(\)/);
+});
 test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
  const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');

@@ -5,11 +5,14 @@
   const hasEditedLayout=()=>shapeArray().length>0;
   const selectedMode=()=>model()?.viewerLayoutSource||(hasEditedLayout()?'edited':'reference');
   function sync(){
-    const panel=$('layoutReferenceInline'),image=$('layoutReferenceInlineImage'),status=$('layoutReferenceInlineStatus'),canvas=document.querySelector('.shapes-canvas-scroll'),source=$('excelReferenceImage'),control=$('layoutSourceControl'),select=$('layoutSourceSelect');
+    const panel=$('layoutReferenceInline'),image=$('layoutReferenceInlineImage'),status=$('layoutReferenceInlineStatus'),canvas=document.querySelector('.shapes-canvas-scroll'),source=$('excelReferenceImage'),control=$('layoutSourceControl'),select=$('layoutSourceSelect'),openReference=$('openExcelReferenceBtn');
     if(!panel||!image||!status||!canvas)return;
     const useReference=sourceMode==='reference',available=!!source?.getAttribute('src')&&!source.hidden;
     panel.hidden=!useReference;canvas.hidden=useReference;
     if(control)control.hidden=!publisher();
+    // VIEW receives one Pushlist choice only. The original-file dialog remains
+    // available solely to users who can choose and publish that source.
+    if(openReference)openReference.hidden=!publisher();
     if(select){select.value=sourceMode;select.querySelector('option[value="reference"]').disabled=!available;}
     if(!useReference){fitViewerCanvas();return}
     if(available){image.src=source.src;image.hidden=false;status.textContent=$('excelReferenceName')?.textContent||'File gốc đã Pushlist';}
