@@ -469,3 +469,15 @@ body.layout-editing #professionalEditorShell .office-pan-x{position:fixed!import
 .viewer-mode .viewer-reference-action>span{color:#59727a;font-size:11px;font-weight:800}
 .viewer-mode .viewer-reference-action .excel-reference-open{display:inline-flex!important;align-items:center;min-height:34px;padding:7px 12px}
 @media(max-width:720px){.viewer-mode .zone-heading{align-items:center}.viewer-mode .viewer-reference-action{margin-left:0}.viewer-mode .viewer-reference-action>span{display:none}.viewer-mode .viewer-reference-action .excel-reference-open{min-height:40px}}
+
+/* In-page choice for models that still use their approved PDF/Excel reference. */
+.layout-source-toggle{display:none;align-items:center;gap:3px;padding:3px;border:1px solid #c6d8d8;border-radius:8px;background:#fff}
+.layout-source-toggle button{border:0;border-radius:5px;background:transparent;color:#48626c;font-size:11px;font-weight:800;padding:7px 9px;cursor:pointer}
+.layout-source-toggle button.active{background:#0b7d70;color:#fff}
+.viewer-mode .layout-source-toggle{display:flex}
+.layout-reference-inline{min-height:420px;padding:14px;background:#dfe8e5;overflow:auto}
+.layout-reference-inline>div{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1800px;margin:0 auto 10px;color:#193c48}
+.layout-reference-inline>div b{font-size:13px}.layout-reference-inline>div span{font-size:11px;color:#607982}
+.layout-reference-inline img{display:block;max-width:100%;height:auto;margin:auto;background:#fff;box-shadow:0 4px 18px #09252d30}
+body.layout-editing .layout-source-toggle,body.layout-editing .layout-reference-inline{display:none!important}
+@media(max-width:720px){.viewer-mode .zone-heading{flex-wrap:wrap}.viewer-mode .layout-source-toggle{width:100%;justify-content:stretch}.layout-source-toggle button{flex:1;min-height:38px}.layout-reference-inline{min-height:360px;padding:7px}.layout-reference-inline>div{align-items:flex-start;flex-direction:column;gap:3px}}
