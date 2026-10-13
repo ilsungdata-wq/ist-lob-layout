@@ -449,3 +449,15 @@ body.layout-editing #professionalEditorShell .office-pan-x{position:fixed!import
 
 /* One compact horizontal row for layout quantities. */
 .shape-summary-cards{display:flex!important;flex-wrap:nowrap;align-items:center;gap:0;padding:4px 10px;overflow-x:auto;background:#f4f7f6}.shape-summary-cards article{display:flex!important;flex:0 0 auto;align-items:center;gap:3px;min-height:0;padding:0 9px!important;border:0!important;border-radius:0!important;border-right:1px solid #cbd9d6!important;background:transparent!important;box-shadow:none!important}.shape-summary-cards article:last-child{border-right:0!important}.shape-summary-cards span{order:1;font-size:10px!important;color:#264b55!important}.shape-summary-cards span::after{content:':'}.shape-summary-cards input{order:2;width:25px!important;padding:0!important;font-size:13px!important;text-align:left!important;background:transparent!important;outline:0!important}.shape-summary-cards input:not(:disabled){background:transparent!important;outline:0!important}.shape-summary-cards input:focus{outline:1px solid #0f766e!important;border-radius:2px}
+
+/* Layout totals use the same compact badge language as the Equipment & Jig inventory. */
+.shape-summary-cards{gap:7px!important;padding:7px 10px!important;background:#f4f7f6!important}
+.shape-summary-cards article{gap:4px!important;padding:4px 9px!important;border:1px solid #c9dce0!important;border-radius:16px!important;background:#fff!important;box-shadow:0 1px 3px #0b293512!important}
+.shape-summary-cards article:first-child{border-color:#0d2d3b!important;background:#0d2d3b!important;box-shadow:none!important}
+.shape-summary-cards span{font-size:10px!important;font-weight:800!important;color:#355865!important;text-transform:none!important}
+.shape-summary-cards span::after{content:':'}.shape-summary-cards article:first-child span{color:#fff!important}
+.shape-summary-cards input{width:28px!important;margin:0!important;border:0!important;color:#123a48!important;font-size:11px!important;font-weight:900!important;line-height:16px!important;text-align:center!important;background:transparent!important;appearance:textfield!important}
+.shape-summary-cards article:first-child input{color:#fff!important}
+.shape-summary-cards input::-webkit-outer-spin-button,.shape-summary-cards input::-webkit-inner-spin-button{margin:0!important;-webkit-appearance:none!important}
+.shape-summary-cards input:focus{outline:1px solid #0f766e!important;background:#e8f6f3!important;border-radius:4px!important}
+.shape-summary-cards article:first-child input:focus{background:#16495c!important}
