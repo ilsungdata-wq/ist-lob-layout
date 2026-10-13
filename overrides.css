@@ -461,3 +461,11 @@ body.layout-editing #professionalEditorShell .office-pan-x{position:fixed!import
 .shape-summary-cards input::-webkit-outer-spin-button,.shape-summary-cards input::-webkit-inner-spin-button{margin:0!important;-webkit-appearance:none!important}
 .shape-summary-cards input:focus{outline:1px solid #0f766e!important;background:#e8f6f3!important;border-radius:4px!important}
 .shape-summary-cards article:first-child input:focus{background:#e8f6f3!important}
+
+/* Viewer keeps a dedicated, always-visible route to the read-only Excel/PDF reference. */
+.viewer-reference-action{display:none}
+.viewer-mode .canvas-state>#openExcelReferenceBtn{display:none!important}
+.viewer-mode .viewer-reference-action{display:flex;align-items:center;gap:8px;margin-left:auto}
+.viewer-mode .viewer-reference-action>span{color:#59727a;font-size:11px;font-weight:800}
+.viewer-mode .viewer-reference-action .excel-reference-open{display:inline-flex!important;align-items:center;min-height:34px;padding:7px 12px}
+@media(max-width:720px){.viewer-mode .zone-heading{align-items:center}.viewer-mode .viewer-reference-action{margin-left:0}.viewer-mode .viewer-reference-action>span{display:none}.viewer-mode .viewer-reference-action .excel-reference-open{min-height:40px}}
