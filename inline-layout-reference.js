@@ -1,7 +1,7 @@
 /* Select the one layout published to Viewer: the web layout or the original PDF/Excel. */
 (()=>{
   let sourceMode='edited',bound=false,lastWorkspace='',resizeFrame=0,lastCanvasSize='';
-  const publisher=()=>!!(manageMode&&can('version.publish'));
+  const publisher=()=>!!can('version.publish');
   const hasEditedLayout=()=>shapeArray().length>0;
   const selectedMode=()=>model()?.viewerLayoutSource||(hasEditedLayout()?'edited':'reference');
   function sync(){
