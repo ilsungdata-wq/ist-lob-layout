@@ -27,7 +27,18 @@
   for(let r=range.s.r;r<=range.e.r-1;r++){const mpRow=[1,2,3,4].map(offset=>r+offset).find(row=>row<=range.e.r&&rowLabel(row,'MP')),ttRow=[1,2,3,4].map(offset=>r+offset).find(row=>row<=range.e.r&&(rowLabel(row,'T/T')||rowLabel(row,'TT'))),items=[];for(let c=range.s.c;c<=range.e.c;c++){const raw=cell(XLSX,ws,r,c),name=typeof raw==='string'?raw.replace(/\s+/g,' ').trim():'';if(!name||name.startsWith('=')||ignored.has(norm(name)))continue;const first=number(cell(XLSX,ws,r+1,c)),second=number(cell(XLSX,ws,r+2,c));let time=ttRow===undefined?first:number(cell(XLSX,ws,ttRow,c)),mp=mpRow!==undefined?number(cell(XLSX,ws,mpRow,c)):ttRow!==undefined?first:second;if(time!==null&&(time<0||time>300))time=null;if(mp!==null&&(mp<0||mp>30))mp=null;if(time===null&&mp===null)continue;const no=number(cell(XLSX,ws,r-1,c));items.push({name,time,mp,no:no&&no>0&&no<300?Math.round(no):null,col:c})}if(items.length>=3&&items.filter(item=>item.no!==null).length>=3){const median=values=>[...values].sort((a,b)=>a-b)[Math.floor(values.length/2)],times=items.map(x=>x.time).filter(x=>x!==null),mps=items.map(x=>x.mp).filter(x=>x!==null);if(!mpRow&&times.length&&mps.length&&median(times)<=3&&median(mps)>3)for(const item of items)[item.time,item.mp]=[item.mp,item.time];blocks.push({row:r,items})}}
   if(!blocks.length)throw new Error(`Không tìm thấy bảng Công đoạn / T/T / MP trong ${sheetName}.`);
   const items=[],seen=new Set();for(const [blockIndex,block] of blocks.entries())for(const [columnIndex,item] of block.items.sort((a,b)=>a.col-b.col).entries()){const key=(item.no||'')+'|'+norm(item.name);if(!seen.has(key)){seen.add(key);items.push({...item,block:blockIndex,columnIndex})}}items.forEach((item,index)=>{if(!item.no)item.no=index+1});items.sort((a,b)=>a.no-b.no||a.block-b.block||a.col-b.col);
-  const modelName=normalizeModelName(sheetName);let line=1,type=/block/i.test(modelName)?'block':'normal';for(let r=range.s.r;r<=range.e.r;r++)for(let c=range.s.c;c<=range.e.c;c++){const label=norm(cell(XLSX,ws,r,c));if(label==='LINE'){const value=number(cell(XLSX,ws,r+2,c));if(Number.isInteger(value)&&value>0)line=value}if(label==='TYPE'){const value=String(cell(XLSX,ws,r+2,c)||'').trim().toLowerCase();if(value)type=value.includes('block')?'block':'normal'}}return{modelName,line,type,items};
+  const modelName=normalizeModelName(sheetName),lobSummary={},lobLabels={LOB:'lob',OPERATION_TIME_SEC:'operationTime',PROCESS:'processCount',NECK_TIME:'neckTime',AVG:'average',NET_TIME:'netTime',TT:'tt',UPH:'uph',ST:'st',RATE:'rate'};let line=1,type=/block/i.test(modelName)?'block':'normal';
+  for(let r=range.s.r;r<=range.e.r;r++){
+   for(let c=range.s.c;c<=range.e.c;c++){
+    const label=norm(cell(XLSX,ws,r,c));
+    if(label==='LINE'){const value=number(cell(XLSX,ws,r+2,c));if(Number.isInteger(value)&&value>0)line=value}
+    if(label==='TYPE'){const value=String(cell(XLSX,ws,r+2,c)||'').trim().toLowerCase();if(value)type=value.includes('block')?'block':'normal'}
+    const key=lobLabels[label.replace(/\s+/g,'_')];if(!key)continue;
+    const value=[1,2,3].map(offset=>number(cell(XLSX,ws,r,c+offset))).find(value=>value!==null);
+    if(value!==undefined)lobSummary[key]=key==='lob'||key==='rate'?(value>1?value/100:value):value;
+   }
+  }
+  return{modelName,line,type,items,lobSummary};
  }
  const api={normalizeModelName,isLayoutCandidate,stableProcessId,sortVersionsNewest,nextVersionNumber,previewSummary,parseLayoutWorksheet};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;root.ISTExcelImport=api;
