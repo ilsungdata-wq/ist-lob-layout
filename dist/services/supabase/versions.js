@@ -2,7 +2,7 @@ import{supabaseRequest,rpc}from'./client.js';
 const one=data=>Array.isArray(data)?data[0]||null:data||null;
 export class RevisionConflictError extends Error{constructor(details){super('Layout changed by another user. Reload before saving.');this.name='RevisionConflictError';this.details=details}}
 export const versionsApi={
- async list(modelId){return(await supabaseRequest(`/rest/v1/layout_versions?model_id=eq.${encodeURIComponent(modelId)}&select=*&order=created_at.desc`)).data},
+ async list(modelId){return(await supabaseRequest(`/rest/v1/layout_versions?model_id=eq.${encodeURIComponent(modelId)}&select=id,model_id,version_number,status,change_note,revision,created_at,updated_at,published_revision,layout_data&order=created_at.desc`)).data},
  async listPublic(modelId){return await rpc('get_published_versions',{p_model_id:modelId})},
  async listPublicWorkspace(){return await rpc('get_published_workspace')},
  async get(id){return(await supabaseRequest(`/rest/v1/layout_versions?id=eq.${encodeURIComponent(id)}&select=*&limit=1`)).data?.[0]||null},
@@ -11,5 +11,5 @@ export const versionsApi={
  async publish(versionId){return one(await rpc('publish_layout_version',{p_version_id:versionId}))},
  async archive(versionId){return one(await rpc('archive_layout_version',{p_version_id:versionId}))},
  async rename(versionId,versionNumber){return one(await rpc('rename_layout_version',{p_version_id:versionId,p_version_number:versionNumber}))},
- async softDelete(versionId){return one(await rpc('soft_delete_layout_version',{p_version_id:versionId}))}
+ async softDelete(versionId){return one(await rpc('hard_delete_layout_version',{p_version_id:versionId}))}
 };

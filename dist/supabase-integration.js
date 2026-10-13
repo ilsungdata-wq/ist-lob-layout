@@ -1,4 +1,4 @@
-import{layoutService}from'./services/layout-service.js?v=20261012-performance-v21';
+import{layoutService}from'./services/layout-service.js?v=20261013-layout-v22';
 import{isSupabaseConfigured}from'./services/supabase/client.js';
 import{RevisionConflictError}from'./services/supabase/versions.js';
 
