@@ -2,6 +2,8 @@ import{supabaseRequest,rpc}from'./client.js';
 const one=data=>Array.isArray(data)?data[0]||null:data||null;
 export class RevisionConflictError extends Error{constructor(details){super('Layout changed by another user. Reload before saving.');this.name='RevisionConflictError';this.details=details}}
 export const versionsApi={
+ async listWorkspaceMetadata(){return(await supabaseRequest('/rest/v1/layout_versions?select=id,model_id,version_number,status,change_note,revision,created_at,updated_at,published_revision&order=created_at.desc')).data},
+ async listMetadata(modelId){return(await supabaseRequest(`/rest/v1/layout_versions?model_id=eq.${encodeURIComponent(modelId)}&select=id,model_id,version_number,status,change_note,revision,created_at,updated_at,published_revision&order=created_at.desc`)).data},
  async list(modelId){return(await supabaseRequest(`/rest/v1/layout_versions?model_id=eq.${encodeURIComponent(modelId)}&select=id,model_id,version_number,status,change_note,revision,created_at,updated_at,published_revision,layout_data&order=created_at.desc`)).data},
  async listPublic(modelId){return await rpc('get_published_versions',{p_model_id:modelId})},
  async listPublicWorkspace(){return await rpc('get_published_workspace')},

@@ -1,4 +1,4 @@
-import{layoutService}from'./services/layout-service.js?v=20261013-layout-v22';
+import{layoutService}from'./services/layout-service.js?v=20261013-layout-v23';
 import{isSupabaseConfigured}from'./services/supabase/client.js';
 import{RevisionConflictError}from'./services/supabase/versions.js';
 
@@ -23,17 +23,35 @@ async function mapWorkspaceLimit(items,limit,mapper){
  await Promise.all(Array.from({length:Math.min(Math.max(1,limit),rows.length)},worker));
  return results;
 }
+function workspaceDocument(row,version,permission,capabilities){
+ const canEdit=capabilities.some(value=>['layout.edit','lob.edit','equipment.edit','jig.edit','version.manage'].includes(value));
+ return{name:row.model_name||row.model_code,modelCode:row.model_code,description:row.description||'',version:version.version_number,processes:[],layoutObjects:[],published:version.status==='PUBLISHED',isLatest:false,_remote:{modelId:row.id,versionId:version.id,revision:version.revision,status:version.status,permission,capabilities,updatedAt:version.updated_at,publishedRevision:version.published_revision,lazy:true,canEdit}};
+}
+async function ensureLoaded(document){
+ const remote=document?._remote;
+ if(!remote?.lazy)return document;
+ const version=await layoutService.getVersion(remote.versionId);
+ if(!version)throw new Error('Không tìm thấy phiên bản Layout trên Supabase.');
+ const source=!remote.canEdit&&version.status==='PUBLISHED'?(version.published_snapshot||version.layout_data||{}):(version.layout_data||{});
+ const loaded=clone(source);
+ Object.assign(document,loaded,{name:document.name,modelCode:document.modelCode,description:document.description,version:version.version_number,processes:Array.isArray(loaded.processes)?loaded.processes:[],layoutObjects:Array.isArray(loaded.layoutObjects)?loaded.layoutObjects:[],published:version.status==='PUBLISHED',_remote:{...remote,revision:version.revision,status:version.status,updatedAt:version.updated_at,publishedRevision:version.published_revision,lazy:false}});
+ return document;
+}
 async function loadWorkspace(preferredVersionId=null){
  const profile=host.session(),models=await layoutService.listModels(),mapped={};let firstKey=null,editable=false;
- // Supabase Nano has little CPU headroom. Keep useful parallelism without opening
- // one connection for every saved model/version at the same time.
- const bundles=await mapWorkspaceLimit(models,2,async row=>{const [permission,versions]=await Promise.all([profile.globalRole==='ADMIN'?Promise.resolve('MANAGE'):layoutService.getMyPermission(row.id),layoutService.listVersions(row.id)]);const enriched=await mapWorkspaceLimit(versions,2,async version=>({version,capabilities:profile.globalRole==='ADMIN'?capabilityList():await layoutService.getMyCapabilities(row.id,version.id)}));return{row,permission,enriched}});
+ // Workspace startup is constant-query: model metadata, version metadata and
+ // effective capabilities are each fetched once, regardless of layout count.
+ const [allVersions,capabilityRows]=await Promise.all([layoutService.listWorkspaceMetadata(),profile.globalRole==='ADMIN'?Promise.resolve([]):layoutService.getWorkspaceCapabilities()]);
+ const versionsByModel=new Map(),capabilitiesByVersion=new Map(),permissionByModel=new Map();
+ for(const version of allVersions){const rows=versionsByModel.get(version.model_id)||[];rows.push(version);versionsByModel.set(version.model_id,rows)}
+ for(const row of capabilityRows){const capabilities=capabilitiesByVersion.get(row.version_id)||[];capabilities.push(row.capability);capabilitiesByVersion.set(row.version_id,capabilities);if(row.permission)permissionByModel.set(row.model_id,row.permission)}
+ const bundles=models.map(row=>{const permission=profile.globalRole==='ADMIN'?'MANAGE':permissionByModel.get(row.id)||null,versions=versionsByModel.get(row.id)||[];return{row,permission,enriched:versions.map(version=>({version,capabilities:profile.globalRole==='ADMIN'?capabilityList():capabilitiesByVersion.get(version.id)||[]}))}});
  for(const {row,permission,enriched} of bundles){
   const visible=[];
   for(const {version,capabilities} of enriched){
    const canEditVersion=capabilities.some(value=>['layout.edit','lob.edit','equipment.edit','jig.edit','version.manage'].includes(value));if(canEditVersion)editable=true;if(!canEditVersion&&version.status!=='PUBLISHED')continue;visible.push(version);
-   const document=clone(!canEditVersion&&version.status==='PUBLISHED'?(version.published_snapshot||version.layout_data||{}):(version.layout_data||{}));
-   document.name=row.model_name||row.model_code;document.modelCode=row.model_code;document.description=row.description||'';document.version=version.version_number;document.processes=Array.isArray(document.processes)?document.processes:[];document.published=version.status==='PUBLISHED';document.isLatest=visible[0]?.id===version.id;document._remote={modelId:row.id,versionId:version.id,revision:version.revision,status:version.status,permission,capabilities,updatedAt:version.updated_at,publishedRevision:version.published_revision};
+   const document=workspaceDocument(row,version,permission,capabilities);
+   document.isLatest=visible[0]?.id===version.id;
    const key=remoteKey(version.id);mapped[key]=document;if(!firstKey||version.id===preferredVersionId)firstKey=key;
   }
  }
@@ -42,6 +60,7 @@ async function loadWorkspace(preferredVersionId=null){
  }
  if(!preferredVersionId&&Object.keys(mapped).length)firstKey=Object.entries(mapped).sort(([,a],[,b])=>new Date(b._remote?.updatedAt||0)-new Date(a._remote?.updatedAt||0))[0][0];
  if(profile.globalRole!=='ADMIN')host.setSession({...profile,role:editable?'editor':'viewer'});
+ if(mapped[firstKey]?._remote?.lazy)await ensureLoaded(mapped[firstKey]);
  host.replaceModels(mapped,firstKey);return mapped;
 }
 async function loadPublicWorkspace(){
@@ -137,7 +156,7 @@ async function setCapability({userId,modelId,versionId,capability,active}){retur
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}
 async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
 
-const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
+const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
 host.register(bridge);
 host.wireAuthentication(bridge);
 restore().then(async active=>{if(configured&&!active){host.setSession({role:'viewer',email:'',authenticated:false});try{await loadPublicWorkspace()}catch(error){host.replaceModels({'public:error':{name:'Không tải được dữ liệu Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'ERROR',permission:null}}},'public:error');host.authError(error.message)}}}).catch(error=>host.authError(error.message));

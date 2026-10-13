@@ -36,6 +36,15 @@ test('public Viewer loads the published workspace with one batched RPC',async()=
  assert.deepEqual(JSON.parse(request.options.body),{});
 });
 
+test('editor startup requests version metadata without downloading layout JSON',async()=>{
+ let request;
+ globalThis.fetch=async(url,options)=>{request={url,options};return new Response(JSON.stringify([]),{status:200,headers:{'content-type':'application/json'}})};
+ await versionsApi.listWorkspaceMetadata();
+ assert.match(request.url,/\/rest\/v1\/layout_versions\?/);
+ assert.match(request.url,/select=id,model_id,version_number/);
+ assert.doesNotMatch(request.url,/layout_data/);
+});
+
 test('save layout sends the expected revision and maps a revision conflict',async()=>{
  let body;
  globalThis.fetch=async(_url,options)=>{body=JSON.parse(options.body);return new Response(JSON.stringify([{id:'v1',revision:6,status:'DRAFT'}]),{status:200,headers:{'content-type':'application/json'}})};
