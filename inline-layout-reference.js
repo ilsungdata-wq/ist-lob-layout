@@ -28,6 +28,17 @@
     $('excelReferenceImage')?.addEventListener('error',sync);
     const baseRenderStudio=renderStudio;
     renderStudio=function(){baseRenderStudio();refresh()};
+    const baseSwitchView=switchView;
+    switchView=function(view){
+      baseSwitchView(view);
+      if(view!=='overview')return;
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        if($('overviewView').hidden||$('layoutReferenceInline')?.hidden===false)return;
+        renderShapesCanvas();
+        if(typeof proFitLayout==='function')proFitLayout();
+        else if(typeof proFit==='function')proFit();
+      }));
+    };
   }
   document.addEventListener('DOMContentLoaded',init);
 })();
