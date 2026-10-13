@@ -443,3 +443,6 @@ body.layout-editing #professionalEditorShell .office-pan-x{position:fixed!import
 
 /* Equipment inventory: stable nine-column layout. */
 .jig-inventory-table{min-width:1280px;table-layout:fixed}.jig-inventory-table th,.jig-inventory-table td{white-space:normal;word-break:break-word}.jig-inventory-table th:nth-child(1),.jig-inventory-table td:nth-child(1){width:48px}.jig-inventory-table th:nth-child(2),.jig-inventory-table td:nth-child(2){width:82px}.jig-inventory-table th:nth-child(3),.jig-inventory-table td:nth-child(3){width:270px}.jig-inventory-table th:nth-child(4),.jig-inventory-table td:nth-child(4){width:150px}.jig-inventory-table th:nth-child(n+5),.jig-inventory-table td:nth-child(n+5){width:135px}.jig-inventory-table input,.jig-inventory-table select{width:100%;min-width:0;box-sizing:border-box}
+
+/* Compact count cards: editable quantity and label only. */
+.shape-summary-cards{grid-template-columns:repeat(10,minmax(58px,1fr));gap:4px;padding:5px 8px}.shape-summary-cards article{min-height:38px;padding:4px 5px}.shape-summary-cards input{font-size:16px}.shape-summary-cards span{font-size:8px}.shape-summary-cards button{display:none!important}
