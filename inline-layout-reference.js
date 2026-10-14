@@ -1,7 +1,9 @@
 /* Select the one layout published to Viewer: the web layout or the original PDF/Excel. */
 (()=>{
   let sourceMode='edited',bound=false,lastWorkspace='',resizeFrame=0,lastCanvasSize='',resizeObserver;
-  const publisher=()=>!!can('version.publish');
+  // A layout editor chooses what will be included in the next Pushlist. The
+  // separate version.publish permission still governs the actual publication.
+  const canChooseSource=()=>!!(can('layout.edit')||can('version.publish'));
   const hasEditedLayout=()=>shapeArray().length>0;
   const selectedMode=()=>model()?.viewerLayoutSource||(hasEditedLayout()?'edited':'reference');
   function sync(){
@@ -9,24 +11,24 @@
     if(!panel||!image||!status||!canvas)return;
     const useReference=sourceMode==='reference',available=!!source?.getAttribute('src')&&!source.hidden;
     panel.hidden=!useReference;canvas.hidden=useReference;
-    if(control)control.hidden=!publisher();
+    if(control)control.hidden=!canChooseSource();
     // VIEW receives one Pushlist choice only. The original-file dialog remains
-    // available solely to users who can choose and publish that source.
-    if(openReference)openReference.hidden=!publisher();
+    // available solely to users who can choose the next published source.
+    if(openReference)openReference.hidden=!canChooseSource();
     if(select){select.value=sourceMode;select.querySelector('option[value="reference"]').disabled=!available;}
     if(!useReference){fitViewerCanvas();return}
     if(available){image.src=source.src;image.hidden=false;status.textContent=$('excelReferenceName')?.textContent||'File gốc đã Pushlist';}
     else {image.removeAttribute('src');image.hidden=true;status.textContent='Phiên bản này chưa có file PDF/Excel gốc.';}
   }
   function select(mode){
-    if(!publisher())return;
+    if(!canChooseSource())return;
     if(mode===sourceMode)return;
     if(mode==='reference'&&!$('excelReferenceImage')?.getAttribute('src')){
       toast('Phiên bản này chưa có PDF hoặc Excel gốc để Pushlist.');
       return;
     }
     sourceMode=mode;model().viewerLayoutSource=mode;persistLocal();scheduleSave();renderExcelReference();sync();
-    toast('Đã chọn '+(mode==='reference'?'PDF / Excel gốc':'Layout đã edit')+'. Nhấn Pushlist để phát hành cho người xem.');
+    toast('Đã chọn '+(mode==='reference'?'PDF đã tải lên':'Layout vẽ trên webapp')+'. Lưu rồi Pushlist để phát hành cho người xem.');
   }
   function refresh(){
     const workspace=`${model()?.name||''}:${model()?.version||''}`;
