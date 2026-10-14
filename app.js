@@ -128,7 +128,7 @@ function renderJigs(station){
 
 function renderInspector(){const s=model().processes.find(x=>x.id===selectedId),form=$('editForm'),empty=$('emptyInspector');if(!s){form.classList.remove('visible');empty.style.display='block';$('stationBadge').textContent='SỬA THỦ CÔNG · TRẠM —';$('stationTitle').textContent='Chọn một trạm';return}empty.style.display='none';form.classList.add('visible');const i=model().processes.indexOf(s);$('stationBadge').textContent=`SỬA THỦ CÔNG · TRẠM ${String(i+1).padStart(2,'0')} · ${(s.x/LINE.pxPerMeter).toFixed(1)}m`;$('stationTitle').textContent=s.name;$('nameInput').value=s.name;$('timeInput').value=s.time;$('mpInput').value=s.mp;renderCategories(s);$('categoryInput').value=s.category;renderFlags(s);$('autoInput').checked=s.auto;$('criticalInput').checked=!!s.critical;renderSkillOptions(s);renderJigs(s);form.querySelectorAll('input,textarea,select').forEach(x=>x.disabled=!canEdit())}
 function renderProcessTable(){
-  const m=metrics(),rows=model().processes,editable=canEdit()&&lobEditMode,canMeasure=(editingModule==='lob'||editingModule==='measure')&&can('tt.measure');
+  const m=metrics(),rows=model().processes,editable=canEdit()&&(lobEditMode||layoutEditing),canMeasure=(editingModule==='lob'||editingModule==='measure')&&can('tt.measure');
   const ranked=[...rows].filter(s=>stationCycle(s)>0).sort((a,b)=>stationCycle(b)-stationCycle(a)).slice(0,5),rankById=new Map(ranked.map((s,i)=>[s.id,i+1]));
   const rankLabel=s=>{const rank=rankById.get(s.id);return rank===1?'NECK TIME':rank?`NECKTIME ${rank}`:''};
   const suggestions=[...new Set(Object.values(state.models).flatMap(m=>m.processes.map(s=>s.name)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -261,5 +261,6 @@ initLanguage();initStudio();initShapesEditor();boot();registerTools();
  dialog.querySelector('header button').onclick=()=>dialog.close();dialog.addEventListener('close',()=>trigger.focus());
  const originalRenderModels=renderModels;renderModels=function(){originalRenderModels();sync()};sync();
 })();
+
 
 

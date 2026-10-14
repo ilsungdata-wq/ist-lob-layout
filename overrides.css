@@ -578,3 +578,13 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
 /* Prevent fixed desktop chrome from overlapping the layout at laptop sizes. */
 @media(min-width:769px) and (max-height:850px){.viewer-mode .layout-reference-inline{height:calc(100dvh - 245px);min-height:300px;max-height:none}.viewer-mode #professionalEditorShell .pro-canvas-host{height:calc(100dvh - 245px)!important}.process-view{padding-bottom:24px}}
 @media(max-width:768px), (max-height:500px) and (max-width:950px){.lob-chart-head{display:none!important}.lob-model-row{grid-template-columns:1.2fr 1fr 1fr!important;gap:7px!important}.lob-model-name{grid-column:auto!important}.lob-model-row .lob-bar-cell.uph,.lob-model-row .lob-plain,.lob-view-btn{display:none}.lob-summary-detail-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* No residual navigation strip when the category tree is hidden. */
+@media(min-width:769px){body.tree-hidden .view-tree{left:-204px!important;width:204px!important;opacity:0;pointer-events:none}body.tree-hidden #treeToggle{display:grid!important;left:8px!important;opacity:1!important;pointer-events:auto!important}.tree-hidden .tree-toggle{transform:translateX(204px)}}
+/* Keep measuring and MP controls in independent columns. */
+#processView .tt-measure-cell{display:grid;grid-template-columns:minmax(72px,1fr) 32px;align-items:center;gap:6px;min-width:128px;white-space:normal}.tt-measure-cell .tt-stopwatch-btn{margin:0!important}.grid-mp{position:relative;z-index:1}
+/* UPH remains readable on every display. */
+.lob-bar-cell.uph{background:#d9edf5}.lob-bar-cell.uph i{background:#52b8dc}.lob-bar-cell.uph b{color:#073f54!important;text-shadow:0 1px #fff8}
+/* Detail dialog uses the available viewport without horizontal scrolling. */
+#lobSummaryDetail{width:min(780px,calc(100vw - 32px));max-width:calc(100vw - 32px);overflow:hidden}.lob-summary-detail{box-sizing:border-box;min-width:0!important;width:100%!important;max-width:100%;padding:26px 28px!important;overflow:visible!important}.lob-summary-detail-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}.lob-summary-detail-metrics article{min-width:0;min-height:76px;padding:14px!important;background:linear-gradient(145deg,#fff,#eff8f6)!important}.lob-summary-detail-metrics b{overflow-wrap:anywhere}
+@media(max-width:768px), (max-height:500px) and (max-width:950px){.lob-summary-detail{padding:20px!important}.lob-summary-detail-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
