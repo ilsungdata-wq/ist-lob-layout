@@ -7,6 +7,7 @@ export const versionsApi={
  async list(modelId){return(await supabaseRequest(`/rest/v1/layout_versions?model_id=eq.${encodeURIComponent(modelId)}&select=id,model_id,version_number,status,change_note,revision,created_at,updated_at,published_revision,layout_data&order=created_at.desc`)).data},
  async listPublic(modelId){return await rpc('get_published_versions',{p_model_id:modelId})},
  async listPublicWorkspace(){return await rpc('get_published_workspace')},
+ async setPublicCategoryVisibility(visibleCategories){return await rpc('set_workspace_visible_categories',{p_visible_categories:visibleCategories})},
  async getPublic(id){return one(await rpc('get_published_layout',{p_version_id:id}))},
  async get(id){return(await supabaseRequest(`/rest/v1/layout_versions?id=eq.${encodeURIComponent(id)}&select=*&limit=1`)).data?.[0]||null},
  async create({modelId,sourceVersionId=null,versionNumber,changeNote=null}){return one(await rpc('create_layout_version',{p_model_id:modelId,p_source_version_id:sourceVersionId,p_version_number:versionNumber,p_change_note:changeNote}))},

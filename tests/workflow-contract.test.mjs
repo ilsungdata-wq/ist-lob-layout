@@ -218,6 +218,14 @@ test('phase 2C uses responsive mobile cards instead of desktop LOB and equipment
  assert.match(css,/\.process-table-wrap[^}]*display:none!important/);
  assert.match(css,/min-height:50px/);
 });
+test('category visibility is a single persisted workspace setting for every public Model',()=>{
+ const settingsMigration=fs.readFileSync(new URL('../supabase/migrations/20261014000300_workspace_category_visibility.sql',import.meta.url),'utf8');
+ assert.match(settingsMigration,/create table if not exists public\.workspace_settings/);
+ assert.match(settingsMigration,/set_workspace_visible_categories/);
+ assert.match(settingsMigration,/cross join public\.workspace_settings settings/);
+ assert.match(integration,/async function saveCategoryVisibility\(visibleCategories\)/);
+ assert.match(app,/persistenceBridge\.saveCategoryVisibility\(selected\)/);
+});
 test('public Viewer exposes only the layout source selected for Pushlist',()=>{
  const inline=fs.readFileSync(new URL('../inline-layout-reference.js',import.meta.url),'utf8');
  assert.match(inline,/model\(\)\?\.viewerLayoutSource/);

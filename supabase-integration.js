@@ -154,6 +154,11 @@ async function publish(document){
  requestAnimationFrame(()=>{const currentCanvas=typeof fabricLayoutCanvas==='undefined'?null:fabricLayoutCanvas;if(!viewport||!currentCanvas)return;if(size)currentCanvas.setDimensions(size);currentCanvas.setViewportTransform(viewport);currentCanvas.calcOffset();currentCanvas.requestRenderAll()});
  return published;
 }
+async function saveCategoryVisibility(visibleCategories){
+ const saved=await layoutService.setPublicCategoryVisibility(visibleCategories);
+ publicWorkspaceCache=null;
+ return saved;
+}
 async function archive(document){const id=document._remote?.versionId;if(!id)throw new Error('Phiên bản chưa nằm trên Supabase.');await layoutService.archiveVersion(id);await loadWorkspace();}
 async function reload(document){await loadWorkspace(document?._remote?.versionId)}
 async function history(document){return layoutService.listHistory(document._remote.versionId)}
@@ -168,7 +173,7 @@ async function setCapability({userId,modelId,versionId,capability,active}){retur
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}
 async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
 
-const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,loadLobSummary:()=>getPublicWorkspace(),ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
+const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,loadLobSummary:()=>getPublicWorkspace(),ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,saveCategoryVisibility,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
 host.register(bridge);
 host.wireAuthentication(bridge);
 restore().then(async active=>{if(configured&&!active){host.setSession({role:'viewer',email:'',authenticated:false});try{await loadPublicWorkspace()}catch(error){host.replaceModels({'public:error':{name:'Không tải được dữ liệu Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'ERROR',permission:null}}},'public:error');host.authError(error.message)}}}).catch(error=>host.authError(error.message));
