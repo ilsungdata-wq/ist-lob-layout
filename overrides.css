@@ -549,3 +549,17 @@ body:not([data-view="lob-summary"]) #contextBar .global-context label{grid-templ
 body:not([data-view="lob-summary"]) #contextBar .global-context .select{min-height:32px;padding-top:4px;padding-bottom:4px;font-size:12px!important}
 @media(min-width:769px){body:not([data-view="lob-summary"]) #overviewView .workspace>#contextBar{margin-top:0!important}body:not([data-view="lob-summary"]) #processView>#contextBar,body:not([data-view="lob-summary"]) #jigView>#contextBar{margin-left:0!important}}
 @media(max-width:768px), (max-height:500px) and (max-width:950px){body:not([data-view="lob-summary"]) #contextBar{margin:5px 0!important;padding:5px 7px!important}body:not([data-view="lob-summary"]) #contextBar .global-context{display:grid;grid-template-columns:1fr 1fr;gap:6px}body:not([data-view="lob-summary"]) #contextBar .global-context label{display:grid;grid-template-columns:1fr;font-size:8px}body:not([data-view="lob-summary"]) #contextBar .global-context .select{min-height:34px;font-size:12px!important}}
+
+/* Home has its own full-height navigation and a normal document scroll. */
+@media(min-width:769px){
+ body[data-view="lob-summary"] .view-tree{top:54px}
+ body[data-view="lob-summary"] .lob-summary-view{min-height:calc(100dvh - 54px);height:auto;overflow:visible;padding-bottom:42px}
+}
+html:has(body[data-view="lob-summary"]),body[data-view="lob-summary"]{height:auto!important;min-height:100%;overflow-y:auto!important}
+body[data-view="lob-summary"] .app-shell{overflow:visible!important}
+body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
+
+/* Explicit column header keeps the comparison chart readable. */
+.lob-chart-head{min-height:38px;padding:0 16px!important;border:1px solid #17495a;border-radius:8px;background:#0d3342;color:#f3fffd!important;box-shadow:0 2px 7px #0b2b3518}
+.lob-chart-head span{display:block!important;color:inherit!important;font-size:11px!important;font-weight:800!important;line-height:38px;text-transform:uppercase;letter-spacing:.045em}
+@media(max-width:768px), (max-height:500px) and (max-width:950px){body[data-view="lob-summary"] .lob-summary-view{height:auto!important;overflow:visible!important;padding-bottom:32px}.lob-chart-head{display:none!important}}
