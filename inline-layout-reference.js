@@ -7,10 +7,10 @@
   const hasEditedLayout=()=>shapeArray().length>0;
   const selectedMode=()=>model()?.viewerLayoutSource||(hasEditedLayout()?'edited':'reference');
   function sync(){
-    const panel=$('layoutReferenceInline'),image=$('layoutReferenceInlineImage'),status=$('layoutReferenceInlineStatus'),canvas=document.querySelector('.shapes-canvas-scroll'),source=$('excelReferenceImage'),control=$('layoutSourceControl'),select=$('layoutSourceSelect'),openReference=$('openExcelReferenceBtn');
+    const panel=$('layoutReferenceInline'),image=$('layoutReferenceInlineImage'),status=$('layoutReferenceInlineStatus'),canvas=document.querySelector('.shapes-canvas-scroll'),office=$('professionalEditorShell'),source=$('excelReferenceImage'),control=$('layoutSourceControl'),select=$('layoutSourceSelect'),openReference=$('openExcelReferenceBtn');
     if(!panel||!image||!status||!canvas)return;
     const useReference=sourceMode==='reference',available=!!source?.getAttribute('src')&&!source.hidden;
-    panel.hidden=!useReference;canvas.hidden=useReference;
+    panel.hidden=!useReference;canvas.hidden=useReference;if(office)office.hidden=useReference;
     if(control)control.hidden=!canChooseSource();
     // VIEW receives one Pushlist choice only. The original-file dialog remains
     // available solely to users who can choose the next published source.

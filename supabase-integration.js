@@ -70,7 +70,7 @@ async function loadWorkspace(preferredVersionId=null){
 async function loadPublicWorkspace(){
  const rows=await layoutService.listPublicWorkspace(),mapped={};let firstKey=null;
  for(const row of rows){
-  const document={name:row.model_name||row.model_code,modelCode:row.model_code,description:row.description||'',version:row.version_number,processes:[],layoutObjects:[],published:true,isLatest:row.id===row.current_published_version_id,_remote:{modelId:row.model_id,versionId:row.id,revision:row.revision,status:'PUBLISHED',permission:null,updatedAt:row.updated_at,lazy:true,public:true}};const key=remoteKey(row.id);mapped[key]=document;if(!firstKey||document.isLatest)firstKey=key;
+  const document={name:row.model_name||row.model_code,modelCode:row.model_code,description:row.description||'',version:row.version_number,processes:[],layoutObjects:[],lobSummary:row.lob_summary||{},published:true,isLatest:row.id===row.current_published_version_id,_remote:{modelId:row.model_id,versionId:row.id,revision:row.revision,status:'PUBLISHED',permission:null,updatedAt:row.updated_at,lazy:true,public:true}};const key=remoteKey(row.id);mapped[key]=document;if(!firstKey||document.isLatest)firstKey=key;
  }
  if(Object.keys(mapped).length)firstKey=Object.entries(mapped).sort(([,a],[,b])=>new Date(b._remote?.updatedAt||0)-new Date(a._remote?.updatedAt||0))[0][0];
  if(!firstKey){firstKey='public:empty';mapped[firstKey]={name:'Chưa có Layout Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'EMPTY',permission:null}}}
@@ -161,7 +161,7 @@ async function setCapability({userId,modelId,versionId,capability,active}){retur
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}
 async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
 
-const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
+const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,loadLobSummary:()=>layoutService.listPublicWorkspace(),ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
 host.register(bridge);
 host.wireAuthentication(bridge);
 restore().then(async active=>{if(configured&&!active){host.setSession({role:'viewer',email:'',authenticated:false});try{await loadPublicWorkspace()}catch(error){host.replaceModels({'public:error':{name:'Không tải được dữ liệu Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'ERROR',permission:null}}},'public:error');host.authError(error.message)}}}).catch(error=>host.authError(error.message));
