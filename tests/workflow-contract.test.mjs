@@ -34,7 +34,10 @@ test('phase 2 shell, i18n, restore and print controls are explicit',()=>{
  assert.equal((html.match(/id="layoutXlsxImportBtn"/g)||[]).length,1);
 });
 test('public Viewer uses one published workspace RPC instead of a request per Model',()=>{
- assert.match(integration,/const rows=await layoutService\.listPublicWorkspace\(\),mapped=\{\}/);
+ assert.match(integration,/async function getPublicWorkspace/);
+ assert.match(integration,/const rows=await layoutService\.listPublicWorkspace\(\);/);
+ assert.match(integration,/const rows=await getPublicWorkspace\(\),mapped=\{\}/);
+ assert.match(integration,/loadLobSummary:\(\)=>getPublicWorkspace\(\)/);
  assert.doesNotMatch(integration,/async function loadPublicWorkspace\(\)\{\s*const models=await layoutService\.listModels/);
  const migration=fs.readFileSync(new URL('../supabase/migrations/20261009000100_optimize_public_workspace.sql',import.meta.url),'utf8');
  assert.match(migration,/create or replace function public\.get_published_workspace\(\)/);
