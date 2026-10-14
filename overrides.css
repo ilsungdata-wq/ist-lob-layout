@@ -516,3 +516,14 @@ button,.btn,input,select,textarea{font-size:13px!important}
 }
 .lob-summary-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,220px));gap:12px;margin-top:18px}.lob-summary-kpis article{display:grid;gap:5px;padding:13px 15px;border-left:4px solid #0e9a85;border-radius:8px;background:#fff;box-shadow:0 3px 10px #183b4012}.lob-summary-kpis span{color:#627b81;font-size:10px;font-weight:700;letter-spacing:.04em}.lob-summary-kpis b{color:#0d4d57;font-size:22px}.lob-summary-toolbar{display:flex;align-items:end;justify-content:space-between;gap:12px;max-width:1400px;margin:0 auto 14px}.lob-summary-toolbar label{display:grid;gap:4px;color:#536d74;font-size:11px;font-weight:700}.lob-summary-toolbar input{width:250px;padding:8px 10px;border:1px solid #bfd3d0;border-radius:6px;background:#fff}.lob-summary-toolbar span{color:#607a80;font-size:12px}.lob-summary-card footer{grid-column:1/-1;padding-top:7px;border-top:1px solid #e4eeeb;color:#078373;font-size:11px;font-weight:700}.lob-summary-card.empty{opacity:.7}.lob-summary-card.empty footer{color:#8a6960}
 @media(max-width:768px), (max-height:500px) and (max-width:950px){.view-tree{display:none!important}.lob-summary-kpis{grid-template-columns:1fr;gap:7px;margin-top:12px}.lob-summary-kpis article{padding:10px}.lob-summary-kpis b{font-size:18px}.lob-summary-toolbar{align-items:stretch;flex-direction:column;margin-bottom:10px}.lob-summary-toolbar input{width:100%}.viewer-mode .layout-reference-inline{padding:5px}.viewer-mode .layout-reference-inline img{max-height:none}}
+
+/* Home dashboard and tree navigation order. */
+@media(min-width:769px){
+  .context-bar{position:relative;z-index:60}
+  .global-context{margin-left:220px}
+  .view-tree{top:124px;background:#0d2633;border-right-color:#244755;box-shadow:2px 0 12px #061d2740}
+  .tree-title{color:#91b8bf}.view-tree .view-tab{color:#d9e8eb}.view-tree .view-tab span{background:#234b58;color:#bfe2df}.view-tree .view-tab:hover{background:#173b49;color:#fff}.view-tree .view-tab.active{background:#0e8f7c;color:#fff;box-shadow:inset 3px 0 #81f0d6}.view-tree .view-tab.active span{background:#dffaf2;color:#087b6d}
+  .tree-toggle{top:auto;bottom:24px;border-color:#426671;background:#123542;color:#dffaf2;box-shadow:0 3px 10px #020d123d}
+  .tree-collapsed .tree-toggle{right:-16px}
+}
+@media(max-width:768px), (max-height:500px) and (max-width:950px){.view-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}.view-tabs .view-tab{font-size:10px!important}}

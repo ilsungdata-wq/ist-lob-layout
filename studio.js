@@ -1,4 +1,4 @@
-let activeView='overview',layoutScale=1,historyOffset=0,historyModel='',historyRows=[],selectedObjectUid='',layoutClipboard=null,layoutEditMode=true,layoutVisualMode='excel',lobEditMode=false;
+let activeView='lob-summary',layoutScale=1,historyOffset=0,historyModel='',historyRows=[],selectedObjectUid='',layoutClipboard=null,layoutEditMode=true,layoutVisualMode='excel',lobEditMode=false;
 const STUDIO={width:2060,origin:260,scale:60,beltY:250,beltHeight:70};
 function modelType(){return model().type||(/block/i.test(model().name)?'block':'normal')}
 function ensureIqcFirst(){if(model().manualProcessOrder)return;const rows=model().processes,index=rows.findIndex(s=>norm(s.name)==='IQC');if(index>0)rows.unshift(rows.splice(index,1)[0])}
