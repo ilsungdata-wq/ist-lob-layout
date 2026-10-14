@@ -563,3 +563,10 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
 .lob-chart-head{min-height:38px;padding:0 16px!important;border:1px solid #17495a;border-radius:8px;background:#0d3342;color:#f3fffd!important;box-shadow:0 2px 7px #0b2b3518}
 .lob-chart-head span{display:block!important;color:inherit!important;font-size:11px!important;font-weight:800!important;line-height:38px;text-transform:uppercase;letter-spacing:.045em}
 @media(max-width:768px), (max-height:500px) and (max-width:950px){body[data-view="lob-summary"] .lob-summary-view{height:auto!important;overflow:visible!important;padding-bottom:32px}.lob-chart-head{display:none!important}}
+
+/* The compact phone layout opens directly in view mode; navigation controls are removed. */
+@media(max-width:768px), (max-height:500px) and (max-width:950px){
+  #mobileLayoutControls{display:none!important}
+  .mobile-layout-fullscreen #mobileLayoutControls{display:none!important}
+  .mobile-layout-fullscreen>.shapes-canvas-scroll{height:100dvh!important}
+}
