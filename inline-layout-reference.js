@@ -56,6 +56,7 @@
     if(bound)return;bound=true;
     $('layoutSourceSelect')?.addEventListener('change',event=>select(event.target.value));
     $('excelReferenceImage')?.addEventListener('load',sync);$('excelReferenceImage')?.addEventListener('error',sync);
+    $('layoutReferenceInline')?.addEventListener('wheel',event=>{const image=$('layoutReferenceInlineImage');if(sourceMode!=='reference'||!image||image.hidden)return;event.preventDefault();const current=image.getBoundingClientRect().width||image.naturalWidth||600,next=Math.max(280,Math.min((image.naturalWidth||current)*3,current*(event.deltaY<0?1.12:.89)));image.style.maxWidth='none';image.style.width=Math.round(next)+'px';},{passive:false});
     const baseRenderStudio=renderStudio;renderStudio=function(){baseRenderStudio();refresh()};
     const baseSwitchView=switchView;switchView=function(view){baseSwitchView(view);if(view==='overview')requestAnimationFrame(()=>requestAnimationFrame(queueFit))};
     const host=document.querySelector('.pro-canvas-host');

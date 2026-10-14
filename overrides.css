@@ -527,3 +527,7 @@ button,.btn,input,select,textarea{font-size:13px!important}
   .tree-collapsed .tree-toggle{right:-16px}
 }
 @media(max-width:768px), (max-height:500px) and (max-width:950px){.view-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}.view-tabs .view-tab{font-size:10px!important}}
+body[data-view="lob-summary"] #contextBar{display:none!important}
+body:not([data-view="lob-summary"]) #contextBar{width:100%;margin:0 0 14px;padding:9px 14px;border:1px solid #cbd9dc;border-radius:8px;background:#f4f8f7}
+body:not([data-view="lob-summary"]) #contextBar .global-context{margin-left:0}
+.layout-reference-inline{cursor:zoom-in}.layout-reference-inline img{cursor:zoom-in}
