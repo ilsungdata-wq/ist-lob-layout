@@ -598,3 +598,6 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
   body[data-view="lob-summary"] .lob-summary-view{height:calc(100dvh - 70px)!important;min-height:0!important;overflow:hidden!important}
   body[data-view="lob-summary"] .lob-model-chart{max-height:calc(100dvh - 410px);overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-gutter:stable}
 }
+
+/* Summary Model picker: editors can save the Viewer default without restricting Viewer search. */
+.lob-picker-search{box-sizing:border-box!important;width:100%!important;min-height:34px!important;padding:7px 9px!important;border:1px solid #b9d2cf!important;border-radius:5px!important;background:#fff!important;font:600 12px "Segoe UI",sans-serif!important}.lob-save-defaults{margin-top:5px;padding:8px 10px;border:1px solid #087e70;border-radius:6px;background:#087e70;color:#fff;font:800 12px "Segoe UI",sans-serif;cursor:pointer}.lob-default-hint{display:block;padding:3px 5px;color:#607981;font-size:10px;line-height:1.35}
