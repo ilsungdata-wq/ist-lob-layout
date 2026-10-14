@@ -477,7 +477,8 @@ body.layout-editing #professionalEditorShell .office-pan-x{position:fixed!import
 .layout-reference-inline>div{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1800px;margin:0 auto 10px;color:#193c48}
 .layout-reference-inline>div b{font-size:13px}.layout-reference-inline>div span{font-size:11px;color:#607982}
 .layout-reference-inline img{display:block;max-width:100%;height:auto;margin:auto;background:#fff;box-shadow:0 4px 18px #09252d30}
-body.layout-editing .layout-source-control,body.layout-editing .layout-reference-inline{display:none!important}
+/* Publishers choose the Viewer source while editing; the inline PDF preview stays out of the editor. */
+body.layout-editing .layout-reference-inline{display:none!important}
 @media(max-width:720px){.viewer-mode .zone-heading{flex-wrap:wrap}.layout-source-control{width:100%;margin-left:0;justify-content:space-between}.layout-reference-inline{min-height:360px;padding:7px}.layout-reference-inline>div{align-items:flex-start;flex-direction:column;gap:3px}}
 
 @media(max-width:768px), (max-height:500px) and (max-width:950px){
