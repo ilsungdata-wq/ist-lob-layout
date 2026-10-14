@@ -78,3 +78,4 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
  printOffice=function(mode){return mode==='detail'?detailPrint(mode):printOnePage('overview')};
  globalThis.ISTViewerPrinting={fitContent,printOnePage,reportContent};
 })();
+
