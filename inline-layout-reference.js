@@ -33,7 +33,7 @@
   function fitViewerCanvas(){
     if(document.body.dataset.view!=='overview'||document.body.classList.contains('layout-editing')||sourceMode==='reference'||!fabricLayoutCanvas)return;
     const host=document.querySelector('.pro-canvas-host');if(!host)return;const rect=host.getBoundingClientRect(),width=Math.floor(rect.width),height=Math.floor(rect.height);if(width<240||height<180)return;
-    const size=`${width}x${height}`;if(size===lastCanvasSize)return;fabricLayoutCanvas.setDimensions({width,height});fabricLayoutCanvas.calcOffset();lastCanvasSize=size;if(typeof proFitLayout==='function')proFitLayout();fabricLayoutCanvas.requestRenderAll();
+    const size=`${width}x${height}`;if(size===lastCanvasSize)return;lastCanvasSize=size;if(typeof resizeOfficeViewport==='function'){resizeOfficeViewport(true);return;}fabricLayoutCanvas.setDimensions({width,height});fabricLayoutCanvas.calcOffset();if(typeof proFitLayout==='function')proFitLayout();fabricLayoutCanvas.requestRenderAll();
   }
   function queueFit(){cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(fitViewerCanvas);}
   function bindReferenceNavigation(){const {panel,image}=reference();if(!panel||panel.dataset.referenceNavigation)return;panel.dataset.referenceNavigation='true';
@@ -46,7 +46,7 @@
   }
   function init(){
     if(bound)return;bound=true;$('layoutSourceSelect')?.addEventListener('change',event=>select(event.target.value));$('excelReferenceImage')?.addEventListener('load',sync);$('excelReferenceImage')?.addEventListener('error',sync);bindReferenceNavigation();
-    const baseRenderStudio=renderStudio;renderStudio=function(){baseRenderStudio();refresh();};const baseSwitchView=switchView;switchView=function(view){baseSwitchView(view);if(view==='overview')requestAnimationFrame(()=>requestAnimationFrame(queueFit));};
+    const baseRenderStudio=renderStudio;renderStudio=function(){baseRenderStudio();refresh();};const baseSwitchView=switchView;switchView=function(view){baseSwitchView(view);if(view==='overview'){lastCanvasSize='';requestAnimationFrame(()=>requestAnimationFrame(()=>{queueFit();setTimeout(queueFit,80)}));}};
     const host=document.querySelector('.pro-canvas-host');if(host){resizeObserver=new ResizeObserver(queueFit);resizeObserver.observe(host);}
   }
   document.addEventListener('DOMContentLoaded',init);

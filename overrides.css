@@ -588,3 +588,13 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
 /* Detail dialog uses the available viewport without horizontal scrolling. */
 #lobSummaryDetail{width:min(780px,calc(100vw - 32px));max-width:calc(100vw - 32px);overflow:hidden}.lob-summary-detail{box-sizing:border-box;min-width:0!important;width:100%!important;max-width:100%;padding:26px 28px!important;overflow:visible!important}.lob-summary-detail-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}.lob-summary-detail-metrics article{min-width:0;min-height:76px;padding:14px!important;background:linear-gradient(145deg,#fff,#eff8f6)!important}.lob-summary-detail-metrics b{overflow-wrap:anywhere}
 @media(max-width:768px), (max-height:500px) and (max-width:950px){.lob-summary-detail{padding:20px!important}.lob-summary-detail-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+
+.lob-summary-model-picker{position:relative;min-width:260px}.lob-summary-model-picker summary{min-height:38px;padding:9px 34px 9px 11px;border:1px solid #b9d2cf;border-radius:7px;background:#fff;color:#173b47;font-size:12px;font-weight:800;cursor:pointer;list-style:none}.lob-summary-model-picker summary:after{content:'⌄';position:absolute;right:12px;font-size:16px}.lob-summary-model-picker>div{position:absolute;z-index:90;top:calc(100% + 5px);left:0;display:grid;gap:4px;min-width:300px;max-height:360px;overflow:auto;padding:8px;border:1px solid #b7d0cc;border-radius:8px;background:#fff;box-shadow:0 14px 32px #123a4330}.lob-summary-model-picker label{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;color:#244852;font-size:12px;font-weight:650}.lob-summary-model-picker label:hover{background:#e8f6f2}.lob-summary-model-picker input{width:16px;height:16px;margin:0;accent-color:#0d8b79}.lob-picker-all{border-bottom:1px solid #dce9e6;font-weight:850!important}.lob-summary-kpis{grid-template-columns:repeat(5,minmax(0,220px))!important}
+@media(max-width:768px), (max-height:500px) and (max-width:950px){.lob-summary-model-picker{width:100%}.lob-summary-model-picker>div{position:static;min-width:0;max-height:250px}.lob-summary-kpis{grid-template-columns:1fr 1fr!important}}
+
+/* Dashboard controls remain fixed; only the Model rows scroll. */
+@media(min-width:769px){
+  body[data-view="lob-summary"]{overflow:hidden!important}
+  body[data-view="lob-summary"] .lob-summary-view{height:calc(100dvh - 70px)!important;min-height:0!important;overflow:hidden!important}
+  body[data-view="lob-summary"] .lob-model-chart{max-height:calc(100dvh - 410px);overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-gutter:stable}
+}
