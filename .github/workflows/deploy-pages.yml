@@ -84,6 +84,7 @@ jobs:
           node --check professional-editor.js
           node --check office-page-editor.js
           node --check supabase-integration.js
+          node --check st-info.js
       - name: Unit and workflow contract tests
         run: node --test tests/*.test.mjs
       - name: Verify generated worker
