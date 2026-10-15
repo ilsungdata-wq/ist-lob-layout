@@ -15,8 +15,8 @@ const appsScript=read('google-apps-script/st-sheet-sync/Code.gs');
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
- assert.match(html,/st-info\.css\?v=20261015-st-v6/);
- assert.match(html,/st-info\.js\?v=20261015-st-v6/);
+ assert.match(html,/st-info\.css\?v=20261015-st-v7/);
+ assert.match(html,/st-info\.js\?v=20261015-st-v7/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -78,7 +78,8 @@ test('Google Sheet sync reads only required columns and deduplicates before Supa
 
 test('S/T supports Block, R/D history, model export, and viewer password',()=>{
  const historical=read('supabase/migrations/20261015000200_st_history_and_block.sql');
- assert.match(html,/id="stModelFilter"/);
+ assert.match(html,/id="stModelPicker"/);
+ assert.match(html,/id="stModelAll"/);
  assert.match(html,/id="stExportModelBtn"/);
  assert.match(html,/id="stViewerPasswordDialog"/);
  assert.match(script,/typeForModel/);
@@ -96,6 +97,9 @@ test('S/T supports Block, R/D history, model export, and viewer password',()=>{
  assert.match(script,/Parent Code/);
  assert.match(script,/Net Price Avg/);
  assert.match(script,/S\/T Avg/);
+ assert.match(script,/selectedModels/);
+ assert.match(script,/renderHomeDashboard/);
+ assert.match(html,/id="stHomeDashboard"/);
 });
 
 test('incremental sync inserts new codes and writes history only for real S/T changes',()=>{
