@@ -69,6 +69,8 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: psql "$SUPABASE_DB_URL" --no-psqlrc --set=ON_ERROR_STOP=1 --file=supabase/verify_deployment_gate.sql
+      - name: Deploy S/T Google Sheet sync function
+        run: supabase functions deploy st-sheet-sync --project-ref "$SUPABASE_PROJECT_REF"
 
   test:
     name: Test application

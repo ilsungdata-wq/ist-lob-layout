@@ -1,11 +1,11 @@
-import{rpc}from'./services/supabase/client.js';
+import{rpc,supabaseRequest}from'./services/supabase/client.js';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const money=new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0});
 const decimal=new Intl.NumberFormat('vi-VN',{minimumFractionDigits:3,maximumFractionDigits:3});
 const PAGE_SIZE=40,CACHE_KEY='ist-st-catalog-v1',CACHE_MS=15*60*1000;
-let catalog=[],filtered=[],selectedCode='',page=1,loaded=false,loading=false,vocRows=[];
+let catalog=[],filtered=[],selectedCode='',page=1,loaded=false,loading=false,vocRows=[],sheetSyncRows=[];
 const historyCache=new Map();
 
 function dateLabel(value){if(!value)return'—';const date=new Date(value);return Number.isNaN(date.getTime())?esc(value):date.toLocaleDateString('vi-VN')}
@@ -20,7 +20,7 @@ async function loadCatalog({fresh=false}={}){
  try{
   if(!fresh){try{const cached=JSON.parse(sessionStorage.getItem(CACHE_KEY)||'null');if(cached&&Date.now()-cached.savedAt<CACHE_MS)catalog=cached.rows||[]}catch{}}
   if(!catalog.length||fresh){catalog=await rpc('get_st_catalog');sessionStorage.setItem(CACHE_KEY,JSON.stringify({savedAt:Date.now(),rows:catalog}))}
-  loaded=true;renderKpis();applyFilters();
+  loaded=true;renderKpis();applyFilters();if(canImport())$('stSheetSyncBtn').disabled=false;
  }catch(error){$('stTableHost').innerHTML=`<div class="st-error"><b>Không tải được dữ liệu S/T</b><span>${esc(error.message)}</span></div>`}
  finally{loading=false}
 }
@@ -86,15 +86,47 @@ async function applyVoc(event){
  try{const result=await rpc('apply_st_voc_batch',{p_rows:rows});$('stVocPreviewDialog').close();historyCache.clear();sessionStorage.removeItem(CACHE_KEY);catalog=[];await loadCatalog({fresh:true});toastMessage(`Đã ghi nhận ${result?.updated||0} thay đổi VOC.`)}catch(error){toastMessage('Không thể ghi nhận VOC: '+error.message)}finally{$('stVocConfirmBtn').disabled=false;$('stVocConfirmBtn').textContent='Ghi nhận VOC'}
 }
 
+function compareSheetRows(rows){
+ const current=new Map(catalog.map(row=>[row.product_code,row]));
+ return rows.map(row=>{const existing=current.get(row.product_code);let status='unchanged';if(!existing)status='new';else if(Number(existing.current_price)!==Number(row.net_price))status='price';else if(String(existing.model_name)!==String(row.model_name)||typeLabel(existing.product_type)!==typeLabel(row.product_type)||Number(existing.labor_cost)!==Number(row.labor_cost))status='mapping';return{...row,status}});
+}
+
+async function inspectGoogleSheet(){
+ const button=$('stSheetSyncBtn');button.disabled=true;button.textContent='Đang kiểm tra…';
+ try{
+  const response=await supabaseRequest('/functions/v1/st-sheet-sync',{method:'POST',body:{}}),payload=response.data;
+  sheetSyncRows=compareSheetRows(payload.rows||[]);renderSheetSyncPreview(payload);
+ }catch(error){toastMessage(error.message==='google_sheet_sync_not_configured'?'Chưa cấu hình cầu nối Google Sheet.':`Không thể kiểm tra Google Sheet: ${error.message}`)}
+ finally{button.disabled=false;button.textContent='Đồng bộ Google Sheet'}
+}
+
+function renderSheetSyncPreview(payload){
+ const counts=sheetSyncRows.reduce((result,row)=>(result[row.status]++,result),{new:0,price:0,mapping:0,unchanged:0}),changes=sheetSyncRows.filter(row=>row.status!=='unchanged');
+ $('stSheetSyncSummary').textContent=`Đã đọc ${Number(payload.stats?.erp_rows||0).toLocaleString('vi-VN')} dòng ERP và gộp thành ${sheetSyncRows.length.toLocaleString('vi-VN')} mã GH96 có Model, giá trên 1.000 VND.`;
+ $('stSheetSyncStats').innerHTML=[['Mã mới',counts.new],['Đổi giá',counts.price],['Đổi Model',counts.mapping],['Không đổi',counts.unchanged]].map(([label,value])=>`<article><span>${label}</span><b>${value.toLocaleString('vi-VN')}</b></article>`).join('');
+ $('stSheetSyncPreview').innerHTML=changes.length?`<table><thead><tr><th>Trạng thái</th><th>GH96</th><th>Model</th><th>Net Price</th><th>S/T mới</th></tr></thead><tbody>${changes.slice(0,100).map(row=>`<tr><td>${row.status==='new'?'Mã mới':row.status==='price'?'Đổi giá':'Đổi Model'}</td><td>${esc(row.product_code)}</td><td>${esc(row.model_name)}</td><td>${money.format(row.net_price)} ₫</td><td>${decimal.format(Number(row.net_price)/Number(row.labor_cost))}</td></tr>`).join('')}</tbody></table>`:'<div class="st-loading">Google Sheet không có mã mới hoặc dữ liệu thay đổi.</div>';
+ $('stSheetSyncConfirmBtn').disabled=!changes.length;$('stSheetSyncDialog').showModal();
+}
+
+async function applySheetSync(event){
+ event.preventDefault();const rows=sheetSyncRows.filter(row=>row.status!=='unchanged').map(({status,...row})=>row);if(!rows.length)return;
+ const button=$('stSheetSyncConfirmBtn');button.disabled=true;button.textContent='Đang ghi…';const totals={inserted:0,updated:0,mapping_updated:0,invalid:0};
+ try{
+  for(let start=0;start<rows.length;start+=1000){const result=await rpc('sync_st_erp_snapshot',{p_rows:rows.slice(start,start+1000)});for(const key of Object.keys(totals))totals[key]+=Number(result?.[key]||0)}
+  $('stSheetSyncDialog').close();historyCache.clear();sessionStorage.removeItem(CACHE_KEY);catalog=[];await loadCatalog({fresh:true});toastMessage(`Đồng bộ xong: ${totals.inserted} mã mới, ${totals.updated} thay đổi S/T, ${totals.mapping_updated} cập nhật Model.`);
+ }catch(error){toastMessage('Không thể ghi dữ liệu đồng bộ: '+error.message)}finally{button.disabled=false;button.textContent='Ghi thay đổi'}
+}
+
 function bind(){
  ['stSearch','stTypeFilter','stChangeFilter'].forEach(id=>$(id).addEventListener(id==='stSearch'?'input':'change',()=>{page=1;applyFilters()}));
  $('stRefreshBtn').onclick=()=>{sessionStorage.removeItem(CACHE_KEY);catalog=[];historyCache.clear();loadCatalog({fresh:true})};
+ $('stSheetSyncBtn').onclick=inspectGoogleSheet;$('stSheetSyncForm').onsubmit=applySheetSync;$('stSheetSyncCloseBtn').onclick=$('stSheetSyncCancelBtn').onclick=()=>$('stSheetSyncDialog').close();
  $('stVocImportBtn').onclick=()=>$('stVocFile').click();$('stVocFile').onchange=event=>{const file=event.target.files[0];if(file)readVocFile(file).catch(error=>toastMessage(error.message));event.target.value=''};
  $('stVocPreviewForm').onsubmit=applyVoc;$('stVocCloseBtn').onclick=$('stVocCancelBtn').onclick=()=>$('stVocPreviewDialog').close();
 }
 
 function activate(){
- $('stVocImportBtn').hidden=!canImport();if(!loaded&&!loading)loadCatalog();
+ const admin=canImport();$('stVocImportBtn').hidden=!admin;$('stSheetSyncBtn').hidden=!admin;$('stSheetSyncBtn').disabled=!loaded;if(!loaded&&!loading)loadCatalog();
 }
 
 bind();globalThis.ISTSTInfo={activate,refresh:()=>loadCatalog({fresh:true})};

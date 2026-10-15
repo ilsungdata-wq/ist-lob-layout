@@ -23,3 +23,12 @@ where email = 'approved-admin@company.example';
 Do not place database credentials or the service-role key in this repository or GitHub Pages.
 
 The optional `seed.sql` is not a migration and is never applied by `supabase db push` automatically.
+
+The S/T Google Sheet synchronization also requires two Edge Function secrets after deploying the Apps Script bridge in `google-apps-script/st-sheet-sync`:
+
+```bash
+supabase secrets set ST_GOOGLE_SYNC_URL="YOUR_APPS_SCRIPT_WEB_APP_URL" ST_GOOGLE_SYNC_TOKEN="YOUR_RANDOM_TOKEN"
+supabase functions deploy st-sheet-sync
+```
+
+The Google token is stored only in Apps Script and Supabase Function secrets. It is never included in GitHub Pages or browser storage.
