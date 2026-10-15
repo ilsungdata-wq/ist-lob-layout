@@ -2,6 +2,7 @@
 alter table public.st_products drop constraint if exists st_products_product_type_check;
 alter table public.st_products add constraint st_products_product_type_check check (product_type in ('Smart','Tab','Block'));
 
+drop function if exists public.get_st_catalog();
 create or replace function public.get_st_catalog()
 returns table(product_code text,model_name text,product_type text,labor_cost numeric,current_price numeric,current_st numeric,latest_gap_st numeric,change_count integer,last_change_at timestamptz,material_count integer)
 language sql stable security definer set search_path=pg_catalog,public as $$
