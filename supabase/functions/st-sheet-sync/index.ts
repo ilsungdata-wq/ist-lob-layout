@@ -35,16 +35,27 @@ Deno.serve(async request=>{
     const payload=await sourceResponse.json();
     if(payload?.ok!==true||!Array.isArray(payload.rows))return json({message:payload?.message||'invalid_google_sheet_response'},502);
 
-    const unique=new Map<string,{product_code:string;model_name:string;product_type:'Smart'|'Tab';labor_cost:number;net_price:number}>();
+    const unique=new Map<string,{product_code:string;model_name:string;product_type:'Smart'|'Tab'|'Block';labor_cost:number;net_price:number}>();
     for(const raw of payload.rows.slice(0,5000)){
       const productCode=String(raw?.product_code||'').trim().toUpperCase();
       const modelName=String(raw?.model_name||'').trim();
       const netPrice=Number(raw?.net_price);
-      const productType=String(raw?.product_type||'').toLowerCase()==='tab'?'Tab':'Smart';
+      const rawType=String(raw?.product_type||'').toLowerCase();
+      const productType=rawType==='block'?'Block':rawType==='tab'?'Tab':'Smart';
       if(!/^GH96-[A-Z0-9]+$/.test(productCode)||!modelName||!Number.isFinite(netPrice)||netPrice<=1000)continue;
       unique.set(productCode,{product_code:productCode,model_name:modelName,product_type:productType,labor_cost:productType==='Tab'?3566:3445,net_price:netPrice});
     }
-    return json({ok:true,generated_at:payload.generated_at||new Date().toISOString(),rows:[...unique.values()],stats:payload.stats||{}});
+    const historyRows=[];
+    for(const raw of (Array.isArray(payload.history_rows)?payload.history_rows:[]).slice(0,5000)){
+      const productCode=String(raw?.product_code||'').trim().toUpperCase();
+      const modelName=String(raw?.model_name||'').trim();
+      const netPrice=Number(raw?.net_price);
+      const rdDate=String(raw?.rd_date||'').slice(0,10);
+      const rawType=String(raw?.product_type||'').toLowerCase();
+      const productType=rawType==='block'?'Block':rawType==='tab'?'Tab':'Smart';
+      if(/^GH96-[A-Z0-9]+$/.test(productCode)&&modelName&&Number.isFinite(netPrice)&&netPrice>1000&&/^\d{4}-\d{2}-\d{2}$/.test(rdDate))historyRows.push({product_code:productCode,model_name:modelName,product_type:productType,labor_cost:productType==='Tab'?3566:3445,net_price:netPrice,rd_date:rdDate});
+    }
+    return json({ok:true,generated_at:payload.generated_at||new Date().toISOString(),rows:[...unique.values()],history_rows:historyRows,stats:payload.stats||{}});
   }catch(error){
     return json({message:'google_sheet_sync_failed',detail:error instanceof Error?error.message:String(error)},502);
   }

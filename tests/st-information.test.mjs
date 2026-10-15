@@ -15,8 +15,8 @@ const appsScript=read('google-apps-script/st-sheet-sync/Code.gs');
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
- assert.match(html,/st-info\.css\?v=20261015-st-v2/);
- assert.match(html,/st-info\.js\?v=20261015-st-v2/);
+ assert.match(html,/st-info\.css\?v=20261015-st-v3/);
+ assert.match(html,/st-info\.js\?v=20261015-st-v3/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -36,7 +36,7 @@ test('VOC import is admin-only and stores extracted changes rather than the work
  assert.match(script,/globalRole==='ADMIN'/);
  assert.match(script,/sheet_to_json/);
  assert.match(script,/rpc\('apply_st_voc_batch'/);
- assert.match(script,/không lưu toàn bộ file Excel/);
+ assert.match(script,/vocRows\.filter/);
  assert.match(migration,/if not public\.is_admin\(\) then/);
  assert.match(migration,/jsonb_array_length\(p_rows\) > 500/);
 });
@@ -67,12 +67,27 @@ test('Google Sheet sync reads only required columns and deduplicates before Supa
  assert.match(appsScript,/headerColumn_\(erpHeaders,'Net Price'\)/);
  assert.match(appsScript,/headerColumn_\(bomHeaders,'Parent Code'\)/);
  assert.match(appsScript,/headerColumn_\(bomHeaders,'Model'\)/);
- assert.match(appsScript,/latestPrice = new Map/);
+ assert.match(appsScript,/history_rows/);
+ assert.match(appsScript,/R\/D date/);
  assert.match(edgeFunction,/admin_required_to_sync_st/);
  assert.match(edgeFunction,/ST_GOOGLE_SYNC_TOKEN/);
  assert.match(edgeFunction,/unique=new Map/);
  assert.match(script,/compareSheetRows/);
- assert.match(script,/row\.status!=='unchanged'/);
+ assert.match(script,/status!=='unchanged'/);
+});
+
+test('S/T supports Block, R/D history, model export, and viewer password',()=>{
+ const historical=read('supabase/migrations/20261015000200_st_history_and_block.sql');
+ assert.match(html,/id="stModelFilter"/);
+ assert.match(html,/id="stExportModelBtn"/);
+ assert.match(html,/id="stViewerPasswordDialog"/);
+ assert.match(script,/typeForModel/);
+ assert.match(script,/get_st_model_history/);
+ assert.match(script,/import_st_erp_history/);
+ assert.match(script,/XLSX\.writeFile/);
+ assert.match(script,/inno@13579/);
+ assert.match(historical,/\('Smart','Tab','Block'\)/);
+ assert.match(css,/max-height:calc\(100vh - 280px\)/);
 });
 
 test('incremental sync inserts new codes and writes history only for real S/T changes',()=>{
