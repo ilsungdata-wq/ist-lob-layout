@@ -15,8 +15,8 @@ const appsScript=read('google-apps-script/st-sheet-sync/Code.gs');
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
- assert.match(html,/st-info\.css\?v=20261015-st-v5/);
- assert.match(html,/st-info\.js\?v=20261015-st-v5/);
+ assert.match(html,/st-info\.css\?v=20261015-st-v6/);
+ assert.match(html,/st-info\.js\?v=20261015-st-v6/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -93,6 +93,9 @@ test('S/T supports Block, R/D history, model export, and viewer password',()=>{
  assert.match(html,/id="stPeriodFilter"/);
  assert.match(script,/historyPoints/);
  assert.match(html,/Theo quý/);
+ assert.match(script,/Parent Code/);
+ assert.match(script,/Net Price Avg/);
+ assert.match(script,/S\/T Avg/);
 });
 
 test('incremental sync inserts new codes and writes history only for real S/T changes',()=>{
