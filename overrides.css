@@ -609,3 +609,4 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
 #processView .process-table td.status-cell{display:table-cell;white-space:nowrap}
 #processView .status-cell .grid-status{display:inline-block;vertical-align:middle;width:calc(100% - 38px);min-width:120px!important}
 #processView .status-cell .grid-delete{display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;margin-left:6px}
+.manage-mode #saveMetaBtn{display:block!important}
