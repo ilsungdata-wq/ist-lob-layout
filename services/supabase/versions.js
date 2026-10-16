@@ -1,4 +1,4 @@
-import{supabaseRequest,rpc}from'./client.js';
+import{supabaseRequest,rpc}from'./client.js?v=20261016-authoritative-name-v1';
 const one=data=>Array.isArray(data)?data[0]||null:data||null;
 export class RevisionConflictError extends Error{constructor(details){super('Layout changed by another user. Reload before saving.');this.name='RevisionConflictError';this.details=details}}
 export const versionsApi={

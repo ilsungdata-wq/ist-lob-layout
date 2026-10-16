@@ -12,6 +12,7 @@ const syncMigration=read('supabase/migrations/20261015000100_st_google_sync.sql'
 const edgeFunction=read('supabase/functions/st-sheet-sync/index.ts');
 const appsScript=read('google-apps-script/st-sheet-sync/Code.gs');
 const laborMigration=read('supabase/migrations/20261016000200_labor_cost_history_and_model_rename.sql');
+const nameMigration=read('supabase/migrations/20261016000300_force_layout_model_name.sql');
 
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
@@ -116,6 +117,11 @@ test('incremental sync inserts new codes and writes history only for real S/T ch
  assert.match(syncMigration,/if price_changed or next_st<>product\.current_st then/);
  assert.match(syncMigration,/jsonb_build_object\('inserted',inserted_count/);
 });
+test('saved and published layout payloads cannot restore an old model name',()=>{
+ assert.match(nameMigration,/create trigger layout_versions_force_model_name/);
+ assert.match(nameMigration,/before insert or update of model_id,layout_data,published_snapshot/);
+ assert.match(nameMigration,/jsonb_set\(coalesce\(new\.layout_data/);
+});
 test('Labor cost uses an effective-date history and keeps previous S/T records',()=>{
  assert.match(html,/id="stLaborCostBtn"/);
  assert.match(script,/rpc\('apply_st_labor_cost'/);
@@ -125,3 +131,4 @@ test('Labor cost uses an effective-date history and keeps previous S/T records',
  assert.match(laborMigration,/source in \('ERP','VOC','LABOR'\)/);
  assert.match(laborMigration,/create or replace function public\.rename_model/);
 });
+

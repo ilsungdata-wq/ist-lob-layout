@@ -1,5 +1,5 @@
-import{modelsApi}from'./supabase/models.js';
-import{versionsApi}from'./supabase/versions.js?v=20261013-layout-v23';
+import{modelsApi}from'./supabase/models.js?v=20261016-authoritative-name-v1';
+import{versionsApi}from'./supabase/versions.js?v=20261016-authoritative-name-v1';
 import{permissionsApi}from'./supabase/permissions.js';
 import{storageApi}from'./supabase/storage.js?v=20261012-reference-v20';
 import{profilesApi}from'./supabase/profiles.js';
