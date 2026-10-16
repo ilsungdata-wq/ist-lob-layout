@@ -7,7 +7,7 @@
   <meta name="description" content="Môi trường chỉnh sửa layout dây chuyền, T/T, nhân lực và chỉ số LOB.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d2633'/%3E%3Cpath d='M14 42h36M18 33h8v9h-8zm10-12h8v21h-8zm10 6h8v15h-8z' fill='%2334d399'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css?v=20261009-load-v8">
-  <link rel="stylesheet" href="./overrides.css?v=20261016-kpi-row-v4">
+  <link rel="stylesheet" href="./overrides.css?v=20261016-context-fit-v5">
   <link rel="stylesheet" href="./st-info.css?v=20261016-st-v17">
 </head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
@@ -158,7 +158,7 @@
     <div class="st-toolbar"><label class="st-search"><span>⌕</span><input id="stSearch" type="search" placeholder="Tìm Code hoặc Model…" autocomplete="off"></label><label class="st-model-picker-label">Model<details id="stModelPicker" class="st-model-picker"><summary id="stModelFilterLabel">Tất cả model</summary><div class="st-model-options"><label><input id="stModelAll" type="checkbox" checked> Tất cả model</label><div id="stModelOptions"></div></div></details></label><label>Loại<select id="stTypeFilter"><option value="">Tất cả</option><option value="Smart">Smart</option><option value="Tab">Tab</option><option value="Block">Block</option></select></label><label>Thay đổi<select id="stChangeFilter"><option value="">Tất cả</option><option value="changed">Đã thay đổi</option><option value="baseline">Chưa thay đổi</option></select></label><label>Từ ngày<input id="stDateFrom" type="date"></label><label>Đến ngày<input id="stDateTo" type="date"></label><label>Kỳ biểu đồ<select id="stPeriodFilter"><option value="month">Theo tháng</option><option value="quarter">Theo quý</option><option value="year">Theo năm</option></select></label><span id="stResultCount" class="st-result-count"></span></div>
     <div class="st-workspace">
       <section class="st-list-panel" aria-label="Danh sách Prod. Material"><div id="stTableHost" class="st-table-host"></div><nav id="stPager" class="st-pager" aria-label="Phân trang S/T"></nav></section>
-      <aside id="stDetailPanel" class="st-detail-panel" aria-live="polite"><div class="st-empty-detail"><b>Chọn một Prod. Material</b><span>Chi tiết giá, S/T và lịch sử thay đổi sẽ hiển thị tại đây.</span></div></aside>
+      <aside id="stDetailPanel" class="st-detail-panel" aria-live="polite"><div class="st-empty-detail"><b>Chọn Parent Code hoặc Model</b><span>Giá bình quân, S/T và lịch sử biến động sẽ tự hiển thị tại đây.</span></div></aside>
     </div>
   </section>
   <dialog id="lobSummaryDetail"><div class="lob-summary-detail"><button id="lobSummaryClose" class="dialog-close" type="button">×</button><span class="eyebrow">CHI TIẾT MODEL</span><h2 id="lobSummaryDetailTitle"></h2><div id="lobSummaryDetailMetrics" class="lob-summary-detail-metrics"></div><div class="dialog-actions"><button id="lobSummaryEdit" class="btn primary" type="button">Mở để chỉnh sửa LOB</button></div></div></dialog>
@@ -196,11 +196,11 @@
   <script src="./services/excel-import-utils.js?v=20261009-load-v8"></script>
   <script src="./services/excel-reference.js?v=20261013-layout-v22"></script>
   <script src="./services/reference-editor.js?v=20261013-layout-v22"></script>
-  <script src="./app.js?v=20261016-model-sync-v3"></script>
+  <script src="./app.js?v=20261016-revision-rename-v4"></script>
   <script src="./mobile-ux.js?v=20261013-mobile-v9"></script>
   <script src="./viewer-print-ux.js?v=20261014-layout-v9"></script>
   <script type="module" src="./st-info.js?v=20261016-st-v18"></script>
-  <script type="module" src="./supabase-integration.js?v=20261016-rename-fix-v3"></script>
+  <script type="module" src="./supabase-integration.js?v=20261016-rename-fix-v4"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
 </html>

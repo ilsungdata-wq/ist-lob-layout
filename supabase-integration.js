@@ -163,8 +163,9 @@ async function archive(document){const id=document._remote?.versionId;if(!id)thr
 async function reload(document){await loadWorkspace(document?._remote?.versionId)}
 async function history(document){return layoutService.listHistory(document._remote.versionId)}
 async function restoreHistory(document,historyId){const saved=await layoutService.restoreHistory(historyId,document._remote.revision);await loadWorkspace(saved.id);return saved}
+async function deleteHistory(document,historyId){requireRemoteId(document,'versionId','Version');await layoutService.deleteHistory(historyId)}
 function requireRemoteId(document,key,label){const value=document?._remote?.[key];if(!value)throw new Error(`${label} hiện tại chưa tồn tại trên Supabase.`);return value}
-async function renameModel(document,name){const modelId=requireRemoteId(document,'modelId','Model'),renamed=await layoutService.renameModel(modelId,name);document.name=renamed?.model_name||name;await loadWorkspace(document._remote.versionId);return renamed}
+async function renameModel(document,name){const modelId=requireRemoteId(document,'modelId','Model'),renamed=await layoutService.renameModel(modelId,name);document.name=renamed?.model_name||name;publicWorkspaceCache=null;await loadWorkspace(document._remote.versionId);return renamed}
 async function deleteModel(document){const modelId=requireRemoteId(document,'modelId','Model');await layoutService.deleteModel(modelId);await loadWorkspace()}
 async function renameVersion(document,name){const versionId=requireRemoteId(document,'versionId','Version');await layoutService.renameVersion(versionId,name);await loadWorkspace(versionId)}
 async function deleteVersion(document){const versionId=requireRemoteId(document,'versionId','Version');await layoutService.deleteVersion(versionId);await loadWorkspace()}
@@ -173,7 +174,7 @@ async function setCapability({userId,modelId,versionId,capability,active}){retur
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}
 async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
 
-const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,loadLobSummary:()=>getPublicWorkspace(),ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,saveCategoryVisibility,archive,reload,history,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
+const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,loadLobSummary:()=>getPublicWorkspace(),ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,saveCategoryVisibility,archive,reload,history,deleteHistory,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
 host.register(bridge);
 host.wireAuthentication(bridge);
 restore().then(async active=>{if(configured&&!active){host.setSession({role:'viewer',email:'',authenticated:false});try{await loadPublicWorkspace()}catch(error){host.replaceModels({'public:error':{name:'Không tải được dữ liệu Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'ERROR',permission:null}}},'public:error');host.authError(error.message)}}}).catch(error=>host.authError(error.message));
