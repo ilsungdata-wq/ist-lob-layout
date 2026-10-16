@@ -164,7 +164,7 @@ async function reload(document){await loadWorkspace(document?._remote?.versionId
 async function history(document){return layoutService.listHistory(document._remote.versionId)}
 async function restoreHistory(document,historyId){const saved=await layoutService.restoreHistory(historyId,document._remote.revision);await loadWorkspace(saved.id);return saved}
 function requireRemoteId(document,key,label){const value=document?._remote?.[key];if(!value)throw new Error(`${label} hiện tại chưa tồn tại trên Supabase.`);return value}
-async function renameModel(document,name){const modelId=requireRemoteId(document,'modelId','Model');await layoutService.renameModel(modelId,name);await loadWorkspace(document._remote.versionId)}
+async function renameModel(document,name){const modelId=requireRemoteId(document,'modelId','Model'),renamed=await layoutService.renameModel(modelId,name);document.name=renamed?.model_name||name;await loadWorkspace(document._remote.versionId);return renamed}
 async function deleteModel(document){const modelId=requireRemoteId(document,'modelId','Model');await layoutService.deleteModel(modelId);await loadWorkspace()}
 async function renameVersion(document,name){const versionId=requireRemoteId(document,'versionId','Version');await layoutService.renameVersion(versionId,name);await loadWorkspace(versionId)}
 async function deleteVersion(document){const versionId=requireRemoteId(document,'versionId','Version');await layoutService.deleteVersion(versionId);await loadWorkspace()}
