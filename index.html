@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d2633'/%3E%3Cpath d='M14 42h36M18 33h8v9h-8zm10-12h8v21h-8zm10 6h8v15h-8z' fill='%2334d399'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css?v=20261009-load-v8">
   <link rel="stylesheet" href="./overrides.css?v=20261014-category-persist-v2">
-  <link rel="stylesheet" href="./st-info.css?v=20261016-st-v15">
+  <link rel="stylesheet" href="./st-info.css?v=20261016-st-v16">
 </head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -47,7 +47,7 @@
     <aside class="sidebar">
       <div class="management-row"><button id="renameModelBtn" class="btn" type="button" data-i18n="renameModel">Đổi tên Model</button><button id="deleteModelBtn" class="btn danger" type="button" data-i18n="deleteModel">Xóa Model</button></div>
       <div class="management-row"><button id="renameVersionBtn" class="btn" type="button" data-i18n="renameVersion">Đổi tên Version</button><button id="deleteVersionBtn" class="btn danger" type="button" data-i18n="deleteVersion">Xóa Version</button></div>
-      <div class="model-meta"><label>Line<input id="lineMeta" type="number" min="1" step="1" value="1"></label><label>Type<select id="typeMeta"><option value="normal">Normal</option><option value="block">Block</option></select></label><button id="saveMetaBtn" class="btn full" type="button">Lưu thông tin model</button></div><button id="duplicateBtn" class="btn full">Nhân bản layout</button>
+      <div class="model-meta"><label>Line<input id="lineMeta" type="number" min="1" step="1" value="1"></label><label>Type<select id="typeMeta"><option value="Smart">Smart</option><option value="Tab">Tab</option><option value="Block">Block</option></select></label><button id="saveMetaBtn" class="btn full" type="button">Lưu thông tin model</button></div><button id="duplicateBtn" class="btn full">Nhân bản layout</button>
 
       <input id="fileInput" type="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12" hidden>
       <button id="templateBtn" type="button" hidden>Tải mẫu XLSX</button><button id="importBtn" type="button" hidden>Nhập Excel</button>
@@ -183,9 +183,9 @@
   <div id="stationContextMenu" class="station-context-menu" hidden><button data-context-action="edit">✏️ Chỉnh sửa công đoạn</button><button data-context-action="timer">⏱️ Bấm giờ đo T/T</button><button data-context-action="swap">🔁 Đổi chiều / Vị trí bàn</button><button data-context-action="delete" class="danger">🗑️ Xóa / Tắt trạm</button></div>  <script src="./xlsx.full.min.js?v=20261009-load-v8"></script>
   <script src="./catalog.js?v=20261009-load-v8"></script>
   <script src="./vendor/fabric.min.js?v=20261009-load-v8"></script>
-  <script src="./studio.js?v=20261016-meta-v2"></script>
+  <script src="./studio.js?v=20261016-meta-v3"></script>
   <script src="./inline-layout-reference.js?v=20261014-layout-v10"></script>
-  <script src="./lob-summary.js?v=20261014-v11"></script>
+  <script src="./lob-summary.js?v=20261016-home-v12"></script>
   <script src="./fabric-engine.js?v=20261013-layout-v22"></script>
   <script src="./professional-editor.js?v=20261014-layout-v23"></script>
   <script src="./services/editor-geometry.js?v=20261013-layout-v22"></script>
@@ -196,10 +196,10 @@
   <script src="./services/excel-import-utils.js?v=20261009-load-v8"></script>
   <script src="./services/excel-reference.js?v=20261013-layout-v22"></script>
   <script src="./services/reference-editor.js?v=20261013-layout-v22"></script>
-  <script src="./app.js?v=20261014-st-v1"></script>
+  <script src="./app.js?v=20261016-model-sync-v2"></script>
   <script src="./mobile-ux.js?v=20261013-mobile-v9"></script>
   <script src="./viewer-print-ux.js?v=20261014-layout-v9"></script>
-  <script type="module" src="./st-info.js?v=20261016-st-v15"></script>
+  <script type="module" src="./st-info.js?v=20261016-st-v16"></script>
   <script type="module" src="./supabase-integration.js?v=20261014-cpu-cache-v2"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>

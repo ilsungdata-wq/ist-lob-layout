@@ -594,9 +594,9 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
 
 /* Dashboard controls remain fixed; only the Model rows scroll. */
 @media(min-width:769px){
-  body[data-view="lob-summary"]{overflow:hidden!important}
-  body[data-view="lob-summary"] .lob-summary-view{height:calc(100dvh - 70px)!important;min-height:0!important;overflow:hidden!important}
-  body[data-view="lob-summary"] .lob-model-chart{max-height:calc(100dvh - 410px);overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-gutter:stable}
+  body[data-view="lob-summary"]{overflow-y:auto!important}
+  body[data-view="lob-summary"] .lob-summary-view{height:auto!important;min-height:calc(100dvh - 70px)!important;overflow:visible!important;padding-bottom:36px}
+  body[data-view="lob-summary"] .lob-model-chart{max-height:250px;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-gutter:stable}
 }
 
 /* Summary Model picker: editors can save the Viewer default without restricting Viewer search. */
