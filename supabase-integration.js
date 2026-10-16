@@ -1,5 +1,5 @@
 import{layoutService}from'./services/layout-service.js?v=20261013-layout-v23';
-import{isSupabaseConfigured}from'./services/supabase/client.js';
+import{isSupabaseConfigured}from'./services/supabase/client.js?v=20261016-cache-v2';
 import{RevisionConflictError}from'./services/supabase/versions.js';
 
 const host=globalThis.ISTAppHost;

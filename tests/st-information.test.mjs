@@ -11,12 +11,13 @@ const migration=read('supabase/migrations/20261014000400_st_information.sql');
 const syncMigration=read('supabase/migrations/20261015000100_st_google_sync.sql');
 const edgeFunction=read('supabase/functions/st-sheet-sync/index.ts');
 const appsScript=read('google-apps-script/st-sheet-sync/Code.gs');
+const laborMigration=read('supabase/migrations/20261016000200_labor_cost_history_and_model_rename.sql');
 
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
- assert.match(html,/st-info\.css\?v=20261016-st-v17/);
- assert.match(html,/st-info\.js\?v=20261016-st-v18/);
+ assert.match(html,/st-info\.css\?v=20261016-st-v19/);
+ assert.match(html,/st-info\.js\?v=20261016-st-v19/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -114,4 +115,13 @@ test('incremental sync inserts new codes and writes history only for real S/T ch
  assert.match(syncMigration,/if not price_changed and not mapping_changed then/);
  assert.match(syncMigration,/if price_changed or next_st<>product\.current_st then/);
  assert.match(syncMigration,/jsonb_build_object\('inserted',inserted_count/);
+});
+test('Labor cost uses an effective-date history and keeps previous S/T records',()=>{
+ assert.match(html,/id="stLaborCostBtn"/);
+ assert.match(script,/rpc\('apply_st_labor_cost'/);
+ assert.match(laborMigration,/create table if not exists public\.st_labor_cost_history/);
+ assert.match(laborMigration,/p_effective_date date/);
+ assert.match(laborMigration,/Cập nhật Labor cost/);
+ assert.match(laborMigration,/source in \('ERP','VOC','LABOR'\)/);
+ assert.match(laborMigration,/create or replace function public\.rename_model/);
 });
