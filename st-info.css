@@ -54,3 +54,4 @@ body[data-view="st-info"] .app-shell{overflow:visible!important}
 
 .st-chart-summary{display:flex;flex-wrap:wrap;justify-content:center;gap:7px 14px;margin:0 0 8px;color:#24455b;font-size:11px}.st-chart-summary b{font-weight:750}@media(max-width:768px),(max-height:500px) and (max-width:950px){.st-chart-summary{justify-content:flex-start;font-size:10px}}
 .st-chart-legend .gap i{background:#e98326}.st-history-chart .line.gap{stroke:#e98326;stroke-dasharray:6 4;stroke-width:2;fill:none}
+.st-home-metrics{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 14px 10px}.st-home-metrics b{display:grid;gap:3px;padding:7px 9px;border:1px solid #d5e6e3;border-radius:7px;background:#f3faf8;color:#648087;font-size:10px}.st-home-metrics strong{color:#0b4a57;font-size:14px}
