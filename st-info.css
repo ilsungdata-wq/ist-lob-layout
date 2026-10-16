@@ -32,3 +32,9 @@ body[data-view="st-info"] .app-shell{overflow:visible!important}
   .st-table tbody tr{content-visibility:auto;contain-intrinsic-size:118px}
   .st-chart-tooltip{display:none!important}
 }
+
+/* Keep chart details available on touch; avoid expensive continuous touch move handlers. */
+@media(max-width:768px),(max-height:500px) and (max-width:950px){
+  .st-chart-tooltip{display:block!important;max-width:calc(100vw - 42px)}
+  .st-history-chart .chart-point .dot{stroke-width:4px}
+}
