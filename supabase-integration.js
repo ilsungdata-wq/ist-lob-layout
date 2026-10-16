@@ -1,5 +1,5 @@
 import{layoutService}from'./services/layout-service.js?v=20261016-authoritative-name-v1';
-import{isSupabaseConfigured}from'./services/supabase/client.js?v=20261016-cache-v2';
+import{isSupabaseConfigured,rpc}from'./services/supabase/client.js?v=20261016-cache-v2';
 import{RevisionConflictError}from'./services/supabase/versions.js';
 
 const host=globalThis.ISTAppHost;
@@ -172,9 +172,9 @@ async function deleteVersion(document){const versionId=requireRemoteId(document,
 async function permissionData(){return{profiles:await layoutService.listProfiles(),grants:await layoutService.listCapabilityGrants()}}
 async function setCapability({userId,modelId,versionId,capability,active}){return layoutService.setCapability(userId,modelId||null,versionId||null,capability,active)}
 async function setProfileActive(userId,active){return layoutService.setProfileActive(userId,active)}
-async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
+async function loadDashboardDefaults(){return await rpc('get_dashboard_default_models')}async function saveDashboardDefaults(models){return await rpc('set_dashboard_default_models',{p_models:models})}async function logout(){await layoutService.auth.signOut();host.setSession({role:'viewer',email:'',authenticated:false});location.reload()}
 
-const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,loadLobSummary:()=>getPublicWorkspace(),ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,saveCategoryVisibility,archive,reload,history,deleteHistory,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
+const bridge={configured,login,restore,logout,loadWorkspace,loadPublicWorkspace,loadLobSummary:()=>getPublicWorkspace(),loadDashboardDefaults,saveDashboardDefaults,ensureLoaded,saveCurrent,createModel,createVersion,importCandidates,publish,saveCategoryVisibility,archive,reload,history,deleteHistory,restoreHistory,renameModel,deleteModel,renameVersion,deleteVersion,permissionData,setCapability,setProfileActive,uploadAsset:layoutService.uploadAsset,getAssetUrl:layoutService.getAssetUrl};
 host.register(bridge);
 host.wireAuthentication(bridge);
 restore().then(async active=>{if(configured&&!active){host.setSession({role:'viewer',email:'',authenticated:false});try{await loadPublicWorkspace()}catch(error){host.replaceModels({'public:error':{name:'Không tải được dữ liệu Published',version:'—',processes:[],layoutObjects:[],_remote:{status:'ERROR',permission:null}}},'public:error');host.authError(error.message)}}}).catch(error=>host.authError(error.message));

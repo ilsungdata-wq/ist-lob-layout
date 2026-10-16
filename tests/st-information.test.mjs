@@ -132,3 +132,16 @@ test('Labor cost uses an effective-date history and keeps previous S/T records',
  assert.match(laborMigration,/create or replace function public\.rename_model/);
 });
 
+
+test('Home model defaults are global and load independently of the active version',()=>{
+ const dashboardMigration=read('supabase/migrations/20261016000400_dashboard_default_models.sql');
+ const lobSummary=read('lob-summary.js');
+ const integration=read('supabase-integration.js');
+ assert.match(dashboardMigration,/dashboard_default_models jsonb/);
+ assert.match(dashboardMigration,/get_dashboard_default_models/);
+ assert.match(dashboardMigration,/set_dashboard_default_models\(p_models jsonb\)/);
+ assert.match(lobSummary,/persistenceBridge\.loadDashboardDefaults/);
+ assert.match(lobSummary,/persistenceBridge\.saveDashboardDefaults/);
+ assert.doesNotMatch(lobSummary,/model\(\)\.dashboardDefaultModels/);
+ assert.match(integration,/loadDashboardDefaults,saveDashboardDefaults/);
+});
