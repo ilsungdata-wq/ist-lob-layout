@@ -38,3 +38,16 @@ body[data-view="st-info"] .app-shell{overflow:visible!important}
   .st-chart-tooltip{display:block!important;max-width:calc(100vw - 42px)}
   .st-history-chart .chart-point .dot{stroke-width:4px}
 }
+
+/* Always expose all five app tabs on compact phones. */
+@media(max-width:768px),(max-height:500px) and (max-width:950px){
+  .view-tabs{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:stretch!important;gap:2px!important;width:100%;box-sizing:border-box;overflow:visible!important}
+  .view-tabs .view-tab{display:block!important;min-width:0!important;min-height:46px!important;height:auto!important;padding:5px 1px!important;overflow:hidden;color:transparent!important;font-size:0!important;white-space:normal!important;text-overflow:clip!important}
+  .view-tabs .view-tab:after{display:block;color:#527078;font:800 9px/1.2 "Segoe UI",sans-serif;text-align:center}
+  .view-tabs .view-tab.active:after{color:#087e70}
+  .view-tabs .view-tab:nth-child(1):after{content:'Trang chủ'}
+  .view-tabs .view-tab:nth-child(2):after{content:'Layout'}
+  .view-tabs .view-tab:nth-child(3):after{content:'LOB'}
+  .view-tabs .view-tab:nth-child(4):after{content:'Jig'}
+  .view-tabs .view-tab:nth-child(5):after{content:'S/T'}
+}
