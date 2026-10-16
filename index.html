@@ -151,7 +151,7 @@
   </section>
 
   <section id="jigView" class="process-view" hidden><div class="process-view-head"><div><span class="eyebrow">TAB 3 · EQM</span><h1 id="jigViewTitle">Thiết bị &amp; Jig theo model</h1><p>Thiết bị, Jig và thông số setup được đồng bộ trực tiếp với từng công đoạn trong Thông tin LOB.</p></div><button id="printJigsBtn" class="btn primary">In danh sách thiết bị</button></div><div class="lob-model-controls jig-model-controls legacy-context-controls" hidden><label>Model<select id="jigModelSelect"></select></label><label>Phiên bản<select id="jigVersionSelect"></select></label></div><div class="tab-file-actions"><b>Dữ liệu thiết bị · <span id="jigDataModel"></span></b><button id="jigXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel thiết bị</button><button id="jigXlsxImportBtn" class="btn" type="button">Nhập Excel thiết bị</button><button id="jigSaveBtn" class="btn primary" type="button">Lưu thiết bị</button><input id="jigXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div><div class="jig-add-bar"><label>Chọn công đoạn<select id="jigStationSelect"></select></label><button id="addInventoryJigBtn" class="btn primary" type="button">＋ Thêm thiết bị</button></div><div id="jigInventorySummary" class="process-summary"></div><div class="process-table-wrap"><table class="process-table jig-inventory-table"><thead><tr><th>STT</th><th>Công đoạn</th><th>Tên công đoạn</th><th>Loại thiết bị</th><th>Tên thiết bị</th><th>Code</th><th>Version</th><th>Vendor</th><th>Setup (phút)</th></tr></thead><tbody id="jigInventoryBody"></tbody></table></div><section id="mobileEquipmentPanel" class="mobile-equipment-panel" hidden></section></section>
-  <section id="lobSummaryView" class="lob-summary-view"><header><span class="eyebrow">TRANG CHỦ · TỔNG HỢP LOB</span><h1>Tổng hợp LOB theo Model</h1><div id="lobSummaryKpis" class="lob-summary-kpis"></div></header><div class="lob-summary-toolbar"><details id="lobSummaryModels" class="lob-summary-model-picker"><summary id="lobSummaryModelsLabel">Chọn Model</summary><div id="lobSummaryModelsList"></div></details><span id="lobSummaryStatus"></span></div><div id="lobSummaryGrid" class="lob-summary-grid"></div><section id="stHomeDashboard" class="st-home-dashboard" hidden><header><div><span class="eyebrow">STANDARD TIME</span><h2>Biến động đơn giá &amp; S/T</h2><p id="stHomeDashboardNote">Theo các Model đang chọn</p></div></header><div id="stHomeDashboardBody" class="st-home-dashboard-body"></div></section></section>
+  <section id="lobSummaryView" class="lob-summary-view"><header><span class="eyebrow" data-i18n="homeEyebrow">TRANG CHỦ · TỔNG HỢP LOB</span><h1 data-i18n="homeTitle">Tổng hợp LOB theo Model</h1><div id="lobSummaryKpis" class="lob-summary-kpis"></div></header><div class="lob-summary-toolbar"><details id="lobSummaryModels" class="lob-summary-model-picker"><summary id="lobSummaryModelsLabel" data-i18n="allModels">Tất cả Model</summary><div id="lobSummaryModelsList"></div></details><span id="lobSummaryStatus"></span></div><div id="lobSummaryGrid" class="lob-summary-grid"></div><section id="stHomeDashboard" class="st-home-dashboard" hidden><header><div><span class="eyebrow">STANDARD TIME</span><h2>Biến động đơn giá &amp; S/T</h2><p id="stHomeDashboardNote">Theo các Model đang chọn</p></div></header><div id="stHomeDashboardBody" class="st-home-dashboard-body"></div></section></section>
   <section id="stInfoView" class="st-info-view" hidden>
     <header class="st-page-head"><div><span class="eyebrow">STANDARD TIME</span><h1>Thông tin S/T</h1></div><div class="st-head-actions"><button id="stRefreshBtn" class="btn" type="button">Tải lại</button><button id="stExportModelBtn" class="btn" type="button">Xuất Excel</button><button id="stSheetSyncBtn" class="btn primary" type="button" hidden>Đồng bộ Google Sheet</button><button id="stVocImportBtn" class="btn" type="button" hidden>Nhập VOC Excel</button><input id="stVocFile" type="file" accept=".xlsx,.xlsm,.xls" hidden></div></header>
     <div id="stKpis" class="st-kpis" aria-label="Tổng hợp S/T"></div>
@@ -185,13 +185,13 @@
   <script src="./vendor/fabric.min.js?v=20261009-load-v8"></script>
   <script src="./studio.js?v=20261016-meta-v3"></script>
   <script src="./inline-layout-reference.js?v=20261014-layout-v10"></script>
-  <script src="./lob-summary.js?v=20261016-home-v12"></script>
+  <script src="./lob-summary.js?v=20261016-home-v13"></script>
   <script src="./fabric-engine.js?v=20261013-layout-v22"></script>
   <script src="./professional-editor.js?v=20261014-layout-v23"></script>
   <script src="./services/editor-geometry.js?v=20261013-layout-v22"></script>
   <script src="./office-page-editor.js?v=20261013-layout-v22"></script>
   <script src="./supabase-config.js?v=20261009-load-v8"></script>
-  <script src="./services/i18n.js?v=20261009-load-v8"></script>
+  <script src="./services/i18n.js?v=20261016-home-i18n-v2"></script>
   <script src="./services/capabilities.js?v=20261009-load-v8"></script>
   <script src="./services/excel-import-utils.js?v=20261009-load-v8"></script>
   <script src="./services/excel-reference.js?v=20261013-layout-v22"></script>
@@ -199,7 +199,7 @@
   <script src="./app.js?v=20261016-model-sync-v3"></script>
   <script src="./mobile-ux.js?v=20261013-mobile-v9"></script>
   <script src="./viewer-print-ux.js?v=20261014-layout-v9"></script>
-  <script type="module" src="./st-info.js?v=20261016-st-v17"></script>
+  <script type="module" src="./st-info.js?v=20261016-st-v18"></script>
   <script type="module" src="./supabase-integration.js?v=20261016-rename-fix-v3"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
