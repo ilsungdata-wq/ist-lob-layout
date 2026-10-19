@@ -11,11 +11,11 @@ insert into public.st_view_access_settings(singleton_id,password_hash)
 values (true,'b22107a060d0c38cf72c6ea24db9f5c072fd17320af5f25952445b21ce44bec0')
 on conflict (singleton_id) do nothing;
 create or replace function public.verify_st_view_password(p_password text)
-returns boolean language sql stable security definer set search_path=pg_catalog,public as $$
+returns boolean language sql stable security definer set search_path=pg_catalog,public,extensions as $$
   select coalesce((select password_hash=encode(digest('IST_ST_VIEW_V1:'||coalesce(p_password,''),'sha256'),'hex') from public.st_view_access_settings where singleton_id=true),false)
 $$;
 create or replace function public.get_st_view_password_status()
-returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public,extensions as $$
 declare v public.st_view_access_settings;
 begin
   if not public.has_capability('permission.manage',null,null) then raise exception 'permission_manage_required' using errcode='42501'; end if;
@@ -23,7 +23,7 @@ begin
   return jsonb_build_object('updated_at',v.updated_at);
 end $$;
 create or replace function public.set_st_view_password(p_password text)
-returns jsonb language plpgsql security definer set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security definer set search_path=pg_catalog,public,extensions as $$
 declare v_password text:=trim(coalesce(p_password,'')); v_updated timestamptz;
 begin
   if not public.has_capability('permission.manage',null,null) then raise exception 'permission_manage_required' using errcode='42501'; end if;
