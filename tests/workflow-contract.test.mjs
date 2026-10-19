@@ -245,6 +245,16 @@ test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts deskt
  assert.match(mobile,/officeProcessFacts/);
  assert.match(fabric,/inspectable=!editable/);
 });
+test('mobile PDF reference provides visible fit zoom fullscreen controls and touch pinch navigation',()=>{
+ const inline=fs.readFileSync(new URL('../inline-layout-reference.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(inline,/function ensureMobileControls\(/);
+ assert.match(inline,/data-reference-action=\"full\"/);
+ assert.match(inline,/referencePointers\.size===2/);
+ assert.match(inline,/reference-fullscreen/);
+ assert.match(css,/\.layout-reference-mobile-controls/);
+ assert.match(css,/\.layout-reference-inline\.reference-fullscreen/);
+});
 test('phase 2C stopwatch entry respects tt.measure and updates existing process workflow',()=>{
  const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');

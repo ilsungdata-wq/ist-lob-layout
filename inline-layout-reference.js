@@ -1,6 +1,6 @@
 /* Select the one layout published to Viewer: the web layout or the original PDF/Excel. */
 (()=>{
-  let sourceMode='edited',bound=false,lastWorkspace='',resizeFrame=0,lastCanvasSize='',resizeObserver,referenceZoom=1,drag;
+  let sourceMode='edited',bound=false,lastWorkspace='',resizeFrame=0,lastCanvasSize='',resizeObserver,referenceZoom=1,drag,referencePointers=new Map(),referencePinchDistance=0;
   const canChooseSource=()=>!!(can('layout.edit')||can('version.publish'));
   const hasEditedLayout=()=>shapeArray().length>0;
   const selectedMode=()=>model()?.viewerLayoutSource||(hasEditedLayout()?'edited':'reference');
@@ -10,9 +10,16 @@
   function referenceFit(){const {panel,image}=reference();if(!referenceActive())return false;referenceZoom=1;image.style.width='';image.style.maxWidth='';image.style.maxHeight='';panel.classList.remove('reference-zoomed');panel.scrollTo({left:0,top:0,behavior:'smooth'});updateZoomLabel();return true;}
   function referenceZoomBy(factor,event){const {panel,image}=reference();if(!referenceActive())return false;const before=image.getBoundingClientRect(),base=Math.max(260,Math.min(image.naturalWidth||before.width||600,Math.max(260,panel.clientWidth-24)));const next=Math.max(.35,Math.min(4,referenceZoom*factor));if(next===referenceZoom)return true;const pointerX=event?event.clientX-panel.getBoundingClientRect().left:panel.clientWidth/2,pointerY=event?event.clientY-panel.getBoundingClientRect().top:panel.clientHeight/2;const ratioX=before.width?Math.max(0,Math.min(1,(pointerX-(before.left-panel.getBoundingClientRect().left))/before.width)):.5,ratioY=before.height?Math.max(0,Math.min(1,(pointerY-(before.top-panel.getBoundingClientRect().top))/before.height)):.5;referenceZoom=next;image.style.width=Math.round(base*next)+'px';image.style.maxWidth='none';image.style.maxHeight='none';panel.classList.add('reference-zoomed');requestAnimationFrame(()=>{panel.scrollLeft=Math.max(0,ratioX*image.offsetWidth-pointerX);panel.scrollTop=Math.max(0,ratioY*image.offsetHeight-pointerY);});updateZoomLabel();return true;}
   globalThis.ISTReferenceViewer={active:referenceActive,fit:referenceFit,zoomIn:()=>referenceZoomBy(1.25),zoomOut:()=>referenceZoomBy(.8)};
+  function ensureMobileControls(){
+    const {panel}=reference();if(!panel||panel.querySelector('#layoutReferenceMobileControls'))return;
+    const controls=document.createElement('div');controls.id='layoutReferenceMobileControls';controls.className='layout-reference-mobile-controls';
+    controls.innerHTML='<button type="button" data-reference-action="out" aria-label="Thu nhỏ PDF">−</button><button type="button" data-reference-action="fit">Vừa màn hình</button><button type="button" data-reference-action="in" aria-label="Phóng to PDF">＋</button><button type="button" data-reference-action="full">Toàn màn hình</button>';
+    controls.addEventListener('click',event=>{const button=event.target.closest('[data-reference-action]');if(!button)return;const action=button.dataset.referenceAction;if(action==='out')referenceZoomBy(.8);if(action==='in')referenceZoomBy(1.25);if(action==='fit')referenceFit();if(action==='full'){panel.classList.toggle('reference-fullscreen');button.textContent=panel.classList.contains('reference-fullscreen')?'Thu nhỏ':'Toàn màn hình';requestAnimationFrame(referenceFit);}});
+    panel.insertBefore(controls,panel.querySelector('img'));
+  }
   function sync(){
     const panel=$('layoutReferenceInline'),image=$('layoutReferenceInlineImage'),status=$('layoutReferenceInlineStatus'),canvas=document.querySelector('.shapes-canvas-scroll'),office=$('professionalEditorShell'),source=$('excelReferenceImage'),control=$('layoutSourceControl'),select=$('layoutSourceSelect'),openReference=$('openExcelReferenceBtn');
-    if(!panel||!image||!status||!canvas)return;
+    if(!panel||!image||!status||!canvas)return;ensureMobileControls();
     const useReference=sourceMode==='reference',available=!!source?.getAttribute('src')&&!source.hidden;
     panel.hidden=!useReference;canvas.hidden=useReference;if(office)office.hidden=useReference;
     if(control)control.hidden=!canChooseSource();
@@ -39,9 +46,9 @@
   function bindReferenceNavigation(){const {panel,image}=reference();if(!panel||panel.dataset.referenceNavigation)return;panel.dataset.referenceNavigation='true';
     panel.addEventListener('wheel',event=>{if(!referenceActive())return;event.preventDefault();event.stopPropagation();referenceZoomBy(event.deltaY<0?1.16:1/1.16,event);},{passive:false,capture:true});
     panel.addEventListener('dblclick',event=>{if(!referenceActive())return;event.preventDefault();referenceFit();});
-    panel.addEventListener('pointerdown',event=>{if(!referenceActive()||referenceZoom<=1||event.button!==0)return;drag={id:event.pointerId,x:event.clientX,y:event.clientY,left:panel.scrollLeft,top:panel.scrollTop};panel.setPointerCapture(event.pointerId);panel.classList.add('reference-panning');event.preventDefault();});
-    panel.addEventListener('pointermove',event=>{if(!drag||drag.id!==event.pointerId)return;panel.scrollLeft=drag.left-(event.clientX-drag.x);panel.scrollTop=drag.top-(event.clientY-drag.y);});
-    const end=event=>{if(!drag||drag.id!==event.pointerId)return;if(panel.hasPointerCapture(event.pointerId))panel.releasePointerCapture(event.pointerId);drag=null;panel.classList.remove('reference-panning');};panel.addEventListener('pointerup',end);panel.addEventListener('pointercancel',end);
+    panel.addEventListener('pointerdown',event=>{if(!referenceActive()||event.button!==0&&event.pointerType!=='touch')return;referencePointers.set(event.pointerId,{x:event.clientX,y:event.clientY});if(event.pointerType==='touch'){if(referencePointers.size===2){const [a,b]=[...referencePointers.values()];referencePinchDistance=Math.hypot(a.x-b.x,a.y-b.y);}else drag={id:event.pointerId,x:event.clientX,y:event.clientY,left:panel.scrollLeft,top:panel.scrollTop};panel.setPointerCapture(event.pointerId);event.preventDefault();return}if(referenceZoom<=1)return;drag={id:event.pointerId,x:event.clientX,y:event.clientY,left:panel.scrollLeft,top:panel.scrollTop};panel.setPointerCapture(event.pointerId);panel.classList.add('reference-panning');event.preventDefault();});
+    panel.addEventListener('pointermove',event=>{if(!referencePointers.has(event.pointerId))return;referencePointers.set(event.pointerId,{x:event.clientX,y:event.clientY});if(referencePointers.size===2){const [a,b]=[...referencePointers.values()],distance=Math.hypot(a.x-b.x,a.y-b.y);if(referencePinchDistance){const center={clientX:(a.x+b.x)/2,clientY:(a.y+b.y)/2};referenceZoomBy(distance/referencePinchDistance,center);}referencePinchDistance=distance;event.preventDefault();return}if(!drag||drag.id!==event.pointerId)return;panel.scrollLeft=drag.left-(event.clientX-drag.x);panel.scrollTop=drag.top-(event.clientY-drag.y);panel.classList.add('reference-panning');event.preventDefault();});
+    const end=event=>{referencePointers.delete(event.pointerId);if(referencePointers.size<2)referencePinchDistance=0;if(!drag||drag.id!==event.pointerId)return;if(panel.hasPointerCapture(event.pointerId))panel.releasePointerCapture(event.pointerId);drag=null;panel.classList.remove('reference-panning');};panel.addEventListener('pointerup',end);panel.addEventListener('pointercancel',end);
     image?.addEventListener('load',()=>{if(referenceZoom===1)referenceFit();});
   }
   function init(){
