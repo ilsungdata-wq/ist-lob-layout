@@ -13,6 +13,7 @@ const edgeFunction=read('supabase/functions/st-sheet-sync/index.ts');
 const appsScript=read('google-apps-script/st-sheet-sync/Code.gs');
 const laborMigration=read('supabase/migrations/20261016000200_labor_cost_history_and_model_rename.sql');
 const nameMigration=read('supabase/migrations/20261016000300_force_layout_model_name.sql');
+const passwordMigration=read('supabase/migrations/20261019000100_st_view_password_management.sql');
 
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
@@ -88,7 +89,7 @@ test('S/T supports Block, R/D history, model export, and viewer password',()=>{
  assert.match(script,/get_st_model_history/);
  assert.match(script,/import_st_erp_history/);
  assert.match(script,/XLSX\.writeFile/);
- assert.match(script,/inno@13579/);
+ assert.match(script,/verify_st_view_password/);
  assert.match(historical,/\('Smart','Tab','Block'\)/);
  assert.match(css,/max-height:calc\(100vh - 280px\)/);
  assert.match(html,/id="stDateFrom"/);
@@ -108,6 +109,18 @@ test('S/T supports Block, R/D history, model export, and viewer password',()=>{
  assert.match(script,/\$\('stModelPicker'\)\.open=false/);
  assert.match(script,/autoFrom/);
  assert.match(script,/line gap/);
+});
+
+test('S/T viewer password is verified and changed only through protected RPCs',()=>{
+ assert.match(html,/id="stViewerPasswordManageDialog"/);
+ assert.match(script,/rpc\('verify_st_view_password'/);
+ assert.match(script,/rpc\('set_st_view_password'/);
+ assert.match(script,/openPasswordManager/);
+ assert.match(passwordMigration,/password_hash text not null/);
+ assert.match(passwordMigration,/has_capability\('permission.manage'/);
+ assert.match(passwordMigration,/grant execute on function public\.verify_st_view_password\(text\) to anon,authenticated/);
+ assert.doesNotMatch(script,/inno@13579/);
+ assert.match(read('app.js'),/st-password/);
 });
 
 test('incremental sync inserts new codes and writes history only for real S/T changes',()=>{
