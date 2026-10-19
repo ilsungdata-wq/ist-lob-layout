@@ -232,6 +232,7 @@ test('public Viewer exposes only the layout source selected for Pushlist',()=>{
  assert.match(inline,/canvas\.hidden=useReference/);
  assert.match(inline,/const canChooseSource=.*can\('layout\.edit'\).*can\('version\.publish'\)/);
  assert.match(inline,/openReference\.hidden=!canChooseSource\(\)/);
+ assert.match(inline,/workspace!==lastWorkspace\|\|!canChooseSource\(\)/);
 });
 test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');

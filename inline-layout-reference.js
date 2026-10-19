@@ -36,7 +36,7 @@
     sourceMode=mode;referenceZoom=1;model().viewerLayoutSource=mode;persistLocal();scheduleSave();renderExcelReference();sync();
     toast('Đã chọn '+(mode==='reference'?'PDF đã tải lên':'Layout vẽ trên webapp')+'. Lưu rồi Pushlist để phát hành cho người xem.');
   }
-  function refresh(){const workspace=`${model()?.name||''}:${model()?.version||''}`;if(workspace!==lastWorkspace){lastWorkspace=workspace;sourceMode=selectedMode();referenceZoom=1;lastCanvasSize='';}renderExcelReference();sync();}
+  function refresh(){const workspace=`${model()?.name||''}:${model()?.version||''}`,publishedSource=selectedMode();if(workspace!==lastWorkspace||!canChooseSource()){lastWorkspace=workspace;sourceMode=publishedSource;referenceZoom=1;lastCanvasSize='';}renderExcelReference();sync();}
   function fitViewerCanvas(){
     if(document.body.dataset.view!=='overview'||document.body.classList.contains('layout-editing')||sourceMode==='reference'||!fabricLayoutCanvas)return;
     const host=document.querySelector('.pro-canvas-host');if(!host)return;const rect=host.getBoundingClientRect(),width=Math.floor(rect.width),height=Math.floor(rect.height);if(width<240||height<180)return;
