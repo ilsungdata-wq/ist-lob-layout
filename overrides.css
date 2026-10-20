@@ -537,7 +537,7 @@ body:not([data-view="lob-summary"]) #contextBar .global-context{margin-left:0}
 .viewer-mode .layout-reference-inline.reference-zoomed{cursor:grab}
 .viewer-mode .layout-reference-inline.reference-panning{cursor:grabbing;user-select:none}
 .viewer-mode .layout-reference-inline.reference-zoomed img{max-width:none!important;max-height:none!important;object-fit:initial}
-.layout-reference-mobile-controls{display:none}
+.layout-reference-inline>.layout-reference-mobile-controls{display:none}
 
 /* Home dashboard: comparative horizontal chart, one clickable row for each model. */
 .lob-summary-grid{max-width:1400px}.lob-chart-head,.lob-model-row{display:grid;grid-template-columns:minmax(180px,1.15fr) minmax(150px,1fr) minmax(150px,1fr) minmax(150px,1fr) minmax(150px,.85fr);gap:14px;align-items:center}.lob-chart-head{padding:0 16px 8px;color:#607981;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.lob-model-chart{display:grid;gap:7px}.lob-model-row{width:100%;padding:12px 16px;border:1px solid #cfddda;border-radius:9px;background:#fff;color:#173b47;text-align:left;cursor:pointer;transition:border-color .16s,box-shadow .16s}.lob-model-row:hover{border-color:#0b8f7d;box-shadow:0 5px 14px #087d701c}.lob-model-row.empty{opacity:.58}.lob-model-name{display:grid;gap:3px;min-width:0}.lob-model-name b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lob-model-name small{color:#70868b}.lob-bar-cell{position:relative;display:grid;align-items:center;min-width:0;height:26px;padding:0 8px;border-radius:4px;background:#e5efed;overflow:hidden}.lob-bar-cell i{position:absolute;inset:0 auto 0 0;background:#13a48d}.lob-bar-cell.neck i{background:#e0a12b}.lob-bar-cell.uph i{background:#2685b4}.lob-bar-cell b{position:relative;color:#143842;font-size:12px}.lob-numbers{display:grid;gap:2px;font-size:12px}.lob-numbers b{font-weight:650}.lob-summary-card{display:none!important}
@@ -548,12 +548,16 @@ body:not([data-view="lob-summary"]) #contextBar .global-context{margin-left:0}
   .viewer-mode .layout-reference-inline{display:block;height:calc(100dvh - 184px)!important;min-height:390px;padding:0!important;background:#d8e2e0;touch-action:none}
   .viewer-mode .layout-reference-inline>div:first-child{position:sticky;top:0;z-index:3;display:flex;min-height:0;margin:0;padding:9px 10px 5px;background:#f5faf8;border-bottom:1px solid #bfd4d0}
   .viewer-mode .layout-reference-inline>div:first-child b{font-size:12px}.viewer-mode .layout-reference-inline>div:first-child span{font-size:10px}
-  .layout-reference-mobile-controls{position:sticky;top:48px;z-index:3;display:grid;grid-template-columns:40px minmax(92px,1fr) 40px minmax(0,1.2fr);gap:5px;padding:6px 8px;background:#f5faf8;border-bottom:1px solid #bfd4d0}
+  .layout-reference-inline>.layout-reference-mobile-controls{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:40px minmax(0,1fr) 40px minmax(0,1.2fr);align-items:stretch;gap:5px;margin:0;padding:4px 6px;background:#f5faf8;border-bottom:1px solid #bfd4d0;cursor:default;touch-action:manipulation}
   .layout-reference-mobile-controls button{min-width:0;min-height:38px;padding:5px;border:1px solid #85aaa3;border-radius:7px;background:#fff;color:#124650;font-size:11px!important;font-weight:800}
   .layout-reference-mobile-controls button:first-child,.layout-reference-mobile-controls button:nth-child(3){font-size:20px!important;line-height:1}
   .viewer-mode .layout-reference-inline img{display:block;width:auto;max-width:100%;height:auto;min-height:0;margin:10px auto;background:#fff;box-shadow:0 2px 12px #09252d35;touch-action:none}
   .viewer-mode .layout-reference-inline.reference-fullscreen{position:fixed;inset:0;z-index:100500;height:100dvh!important;min-height:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;background:#d4dedc}
-  .viewer-mode .layout-reference-inline.reference-fullscreen>div:first-child{top:0}.viewer-mode .layout-reference-inline.reference-fullscreen .layout-reference-mobile-controls{top:48px}
+  .viewer-mode .layout-reference-inline.reference-fullscreen>div:first-child{top:0}.viewer-mode .layout-reference-inline.reference-fullscreen .layout-reference-mobile-controls{top:0}
+  .viewer-mode .layout-reference-inline>div:first-child{display:none}
+  .viewer-mode .shapes-zone>.zone-heading{min-height:0;padding:6px 10px;gap:4px}
+  .viewer-mode .shapes-zone>.zone-heading>div:first-child>span{display:none}
+  .viewer-mode .shapes-zone>.zone-heading h2{margin:0;font-size:13px}
 }
 
 /* Model context belongs to the working pane, not the top shell. */
