@@ -19,7 +19,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261016-st-v19/);
- assert.match(html,/st-info\.js\?v=20261022-sync-auth-v1/);
+ assert.match(html,/st-info\.js\?v=20261022-trend-dates-v1/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -129,6 +129,25 @@ test('incremental sync inserts new codes and writes history only for real S/T ch
  assert.match(syncMigration,/if not price_changed and not mapping_changed then/);
  assert.match(syncMigration,/if price_changed or next_st<>product\.current_st then/);
  assert.match(syncMigration,/jsonb_build_object\('inserted',inserted_count/);
+});
+test('Google Sheet preview and completion identify each S/T direction and effective date',()=>{
+ assert.match(script,/old_price:old\?\.current_price/);
+ assert.match(script,/gap_st:oldSt==null\?null:newSt-oldSt/);
+ assert.match(script,/effective_date:r\.rd_date/);
+ assert.match(script,/Tăng S\/T/);
+ assert.match(script,/Giảm S\/T/);
+ assert.match(script,/S\/T cũ → mới/);
+ assert.match(script,/renderSheetSyncResult/);
+ assert.match(html,/id="stSheetSyncTitle"/);
+ assert.match(html,/id="stSheetSyncNote"/);
+});
+test('selected code chart keeps individual change dates and GAP instead of grouping by period',()=>{
+ assert.match(script,/function detailHistoryPoints/);
+ assert.match(script,/chartHtml\(history,\[\],true\)/);
+ assert.match(script,/data-gap=/);
+ assert.match(script,/GAP S\/T:/);
+ assert.match(script,/Ngày thay đổi thực tế/);
+ assert.match(script,/<th>Ngày đổi<\/th>/);
 });
 test('saved and published layout payloads cannot restore an old model name',()=>{
  assert.match(nameMigration,/create trigger layout_versions_force_model_name/);
