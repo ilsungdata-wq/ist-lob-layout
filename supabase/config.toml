@@ -1,1 +1,6 @@
 project_id = "ist-lob-layout"
+
+# Validate the user with Supabase Auth inside the function, then require is_admin.
+# Avoid the gateway's legacy JWT verification for rotated/asymmetric signing keys.
+[functions.st-sheet-sync]
+verify_jwt = false

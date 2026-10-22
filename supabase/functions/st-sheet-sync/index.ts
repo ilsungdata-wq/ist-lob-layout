@@ -20,6 +20,14 @@ Deno.serve(async request=>{
   if(!authorization.startsWith('Bearer '))return json({message:'authentication_required'},401);
   if(!supabaseUrl||!anonKey)return json({message:'supabase_runtime_not_configured'},500);
 
+  try{
+  const userResponse=await fetch(`${supabaseUrl}/auth/v1/user`,{
+    headers:{apikey:anonKey,Authorization:authorization},
+  });
+  if(!userResponse.ok)return json({message:'authentication_required'},userResponse.status>=500?503:401);
+  const user=await userResponse.json();
+  if(!user?.id)return json({message:'authentication_required'},401);
+
   const adminResponse=await fetch(`${supabaseUrl}/rest/v1/rpc/is_admin`,{
     method:'POST',headers:{apikey:anonKey,Authorization:authorization,'Content-Type':'application/json'},body:'{}',
   });
@@ -27,7 +35,6 @@ Deno.serve(async request=>{
   if(!isAdmin)return json({message:'admin_required_to_sync_st'},403);
   if(!syncUrl||!syncToken)return json({message:'google_sheet_sync_not_configured'},503);
 
-  try{
     const sourceResponse=await fetch(syncUrl,{
       method:'POST',redirect:'follow',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:syncToken}),
     });

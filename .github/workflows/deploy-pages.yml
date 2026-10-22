@@ -78,7 +78,11 @@ jobs:
     needs: migrate
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: JavaScript syntax
+        # node:module.stripTypeScriptTypes is used by the Edge Function auth tests.
         run: |
           node --check app.js
           node --check studio.js
