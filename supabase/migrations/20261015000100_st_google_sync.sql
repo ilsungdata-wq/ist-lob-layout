@@ -30,7 +30,7 @@ begin
   loop
     code := upper(trim(item->>'product_code'));
     next_model := trim(item->>'model_name');
-    next_type := case when lower(trim(item->>'product_type'))='tab' then 'Tab' else 'Smart' end;
+    next_type := case when lower(trim(item->>'product_type'))='tab' then 'Tab' when lower(trim(item->>'product_type'))='block' then 'Block' else 'Smart' end;
     next_labor := case when next_type='Tab' then 3566 else 3445 end;
     begin next_price := (item->>'net_price')::numeric; exception when others then next_price := null; end;
 
