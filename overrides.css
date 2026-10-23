@@ -576,6 +576,7 @@ body:not([data-view="lob-summary"]) #contextBar .global-context .select{min-heig
 html:has(body[data-view="lob-summary"]),body[data-view="lob-summary"]{height:auto!important;min-height:100%;overflow-y:auto!important}
 body[data-view="lob-summary"] .app-shell{overflow:visible!important}
 body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
+@media(min-width:769px){body[data-view="lob-summary"] .lob-summary-view>header{position:sticky;top:0;z-index:70;padding:12px 24px 14px;background:#eef4f3;box-shadow:0 7px 12px #153b4214}}
 
 /* Explicit column header keeps the comparison chart readable. */
 .lob-chart-head{min-height:38px;padding:0 16px!important;border:1px solid #17495a;border-radius:8px;background:#0d3342;color:#f3fffd!important;box-shadow:0 2px 7px #0b2b3518}

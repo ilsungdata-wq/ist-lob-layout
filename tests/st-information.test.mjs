@@ -18,8 +18,8 @@ const passwordMigration=read('supabase/migrations/20261019000100_st_view_passwor
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
- assert.match(html,/st-info\.css\?v=20261022-sticky-v1/);
- assert.match(html,/st-info\.js\?v=20261022-bom-mobile-v1/);
+ assert.match(html,/st-info\.css\?v=20261023-chart-v1/);
+ assert.match(html,/st-info\.js\?v=20261023-chart-v1/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -103,7 +103,7 @@ test('S/T supports Block, R/D history, model export, and viewer password',()=>{
  assert.match(script,/selectedModels/);
  assert.match(script,/renderHomeDashboard/);
  assert.match(html,/id="stHomeDashboard"/);
- assert.doesNotMatch(script,/st-chart-summary/);
+ assert.match(script,/st-chart-summary/);
  assert.match(script,/data-changes/);
  assert.match(script,/picker\?\.open/);
  assert.match(script,/\$\('stModelPicker'\)\.open=false/);
@@ -150,6 +150,8 @@ test('Google Sheet preview and completion identify each S/T direction and effect
 });
 test('selected code chart keeps individual change dates and GAP instead of grouping by period',()=>{
  assert.match(script,/function detailHistoryPoints/);
+ assert.match(script,/Gộp theo \$\{periodLabel\}/);
+ assert.match(script,/gap-bar/);
  assert.match(script,/chartHtml\(history,\[\],true\)/);
  assert.match(script,/data-gap=/);
  assert.match(script,/GAP S\/T:/);
