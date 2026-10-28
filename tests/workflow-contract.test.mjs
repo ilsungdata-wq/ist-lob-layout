@@ -243,11 +243,14 @@ test('Excel import reuses a Model that has no remaining visible Version',()=>{
 });
 test('LOB toolbar separates production and QC manpower from station names',()=>{
  const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
  assert.match(html,/id="lobWorkforceSummary"/);
  assert.match(app,/function lobWorkforce\(processes\)/);
  assert.match(app,/IQC\|OQC\)\\b\|VISION\\s\*LASER/);
  assert.match(app,/Nhân lực sản xuất/);
  assert.match(app,/Nhân lực QC/);
+ assert.match(css,/#processView>\.tab-file-actions/);
+ assert.match(css,/#processView #lobWorkforceSummary/);
 });
 test('Home LOB summary loads current process data and splits production from QC manpower',()=>{
  const summary=fs.readFileSync(new URL('../lob-summary.js',import.meta.url),'utf8');
