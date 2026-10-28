@@ -587,6 +587,9 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
 
 /* The compact phone layout opens directly in view mode, with touch controls retained. */
 @media(max-width:768px), (max-height:500px) and (max-width:950px){
+  .viewer-mode:not(.mobile-layout-manual) .upper-canvas{touch-action:pan-y!important}
+  .viewer-mode.mobile-layout-manual .upper-canvas{touch-action:none!important}
+  .viewer-mode:not(.mobile-layout-expanded) .shapes-canvas-scroll{overscroll-behavior:auto}
   #mobileLayoutControls{display:grid!important;grid-template-columns:40px minmax(82px,1fr) 40px minmax(0,1fr);gap:5px;padding:6px;background:#f4f8f7;border-top:1px solid #c8d9d6;border-bottom:1px solid #c8d9d6}
   #mobileLayoutControls button{min-height:44px;padding:6px;border:1px solid #85aaa3;border-radius:8px;background:#fff;color:#124650;font-size:11px!important;font-weight:800}
   #mobileLayoutControls button[data-mobile-zoom]{font-size:22px!important;line-height:1}
