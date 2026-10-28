@@ -24,6 +24,8 @@
     panel.hidden=!useReference;canvas.hidden=useReference;if(office)office.hidden=useReference;
     if(control)control.hidden=!canChooseSource();
     if(openReference)openReference.hidden=!canChooseSource();
+    const mobileReference=document.querySelector('[data-mobile-reference]');
+    if(mobileReference)mobileReference.hidden=!canChooseSource()||!available;
     if(select){select.value=sourceMode;select.querySelector('option[value="reference"]').disabled=!available;}
     if(!useReference){fitViewerCanvas();return;}
     if(available){if(image.src!==source.src){referenceZoom=1;image.removeAttribute('style');panel.classList.remove('reference-zoomed');}image.src=source.src;image.hidden=false;status.textContent=$('excelReferenceName')?.textContent||'File gốc đã Pushlist';updateZoomLabel();}

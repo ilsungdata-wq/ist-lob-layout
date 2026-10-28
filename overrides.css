@@ -585,11 +585,14 @@ body[data-view="lob-summary"] .lob-summary-grid{padding-bottom:32px}
 .lob-chart-head span{display:block!important;color:inherit!important;font-size:11px!important;font-weight:800!important;line-height:38px;text-transform:uppercase;letter-spacing:.045em}
 @media(max-width:768px), (max-height:500px) and (max-width:950px){body[data-view="lob-summary"] .lob-summary-view{height:auto!important;overflow:visible!important;padding-bottom:32px}.lob-chart-head{display:none!important}}
 
-/* The compact phone layout opens directly in view mode; navigation controls are removed. */
+/* The compact phone layout opens directly in view mode, with touch controls retained. */
 @media(max-width:768px), (max-height:500px) and (max-width:950px){
-  #mobileLayoutControls{display:none!important}
-  .mobile-layout-fullscreen #mobileLayoutControls{display:none!important}
-  .mobile-layout-fullscreen>.shapes-canvas-scroll{height:100dvh!important}
+  #mobileLayoutControls{display:grid!important;grid-template-columns:40px minmax(82px,1fr) 40px minmax(0,1fr);gap:5px;padding:6px;background:#f4f8f7;border-top:1px solid #c8d9d6;border-bottom:1px solid #c8d9d6}
+  #mobileLayoutControls button{min-height:44px;padding:6px;border:1px solid #85aaa3;border-radius:8px;background:#fff;color:#124650;font-size:11px!important;font-weight:800}
+  #mobileLayoutControls button[data-mobile-zoom]{font-size:22px!important;line-height:1}
+  #mobileLayoutControls button[hidden]{display:none!important}
+  .mobile-layout-fullscreen #mobileLayoutControls{display:grid!important;grid-template-columns:40px minmax(82px,1fr) 40px minmax(0,1fr)}
+  .mobile-layout-fullscreen>.shapes-canvas-scroll{height:100%!important}
 }
 
 /* Dashboard table: all operational values remain visible on one row. */

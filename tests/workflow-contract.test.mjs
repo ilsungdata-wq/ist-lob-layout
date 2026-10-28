@@ -210,10 +210,11 @@ test('phase 2C uses responsive mobile cards instead of desktop LOB and equipment
  const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
  assert.match(html,/id="mobileLobPanel"/);
  assert.match(html,/id="mobileEquipmentPanel"/);
- assert.match(html,/mobile-ux\.js\?v=20261013-mobile-v9/);
+ assert.match(html,/mobile-ux\.js\?v=20261028-mobile-layout-v1/);
  assert.match(mobile,/function renderMobileLobCards\(/);
  assert.match(mobile,/function renderMobileEquipment\(/);
  assert.match(mobile,/Number\(value\|\|0\)\.toFixed\(2\)/);
+ assert.match(mobile,/data-mobile-reference/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/\.process-table-wrap[^}]*display:none!important/);
  assert.match(css,/min-height:50px/);
