@@ -259,6 +259,8 @@ test('Home LOB summary loads current process data and splits production from QC 
  assert.match(summary,/persistenceBridge\.ensureLoaded/);
  assert.match(summary,/Nhân lực sản xuất/);
  assert.match(summary,/Nhân lực QC/);
+ assert.match(summary,/class="lob-workforce-head workforce-production"/);
+ assert.match(summary,/class="lob-workforce-head workforce-qc"/);
  assert.match(summary,/hasLiveRows\?Math\.max\(0,\.\.\.cycles\):n\(s\.neckTime\)/);
 });
 test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
