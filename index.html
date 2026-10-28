@@ -7,7 +7,7 @@
   <meta name="description" content="Môi trường chỉnh sửa layout dây chuyền, T/T, nhân lực và chỉ số LOB.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d2633'/%3E%3Cpath d='M14 42h36M18 33h8v9h-8zm10-12h8v21h-8zm10 6h8v15h-8z' fill='%2334d399'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css?v=20261009-load-v8">
-  <link rel="stylesheet" href="./overrides.css?v=20261028-mobile-layout-v2">
+  <link rel="stylesheet" href="./overrides.css?v=20261028-lob-workforce-v1">
   <link rel="stylesheet" href="./st-info.css?v=20261023-chart-v1">
 </head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
@@ -137,7 +137,7 @@
       <div class="process-head-actions"><div class="process-summary" id="processSummary"></div></div>
     </div>
     <div class="lob-model-controls" aria-label="Chọn Model và phiên bản LOB"><label>Model<select id="lobModelSelect"></select></label><label>Phiên bản<select id="lobVersionSelect"></select></label></div>
-    <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><label id="lobPublishWrap" class="publish-toggle"><input id="lobPublishToggle" type="checkbox"> Phát hành LOB</label><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
+    <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><div id="lobWorkforceSummary" class="lob-workforce-summary" aria-label="Tổng hợp nhân lực"></div><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><label id="lobPublishWrap" class="publish-toggle"><input id="lobPublishToggle" type="checkbox"> Phát hành LOB</label><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
     <div class="lob-analysis"><div class="lob-chart-panel"><h2>T/T (Avg.) & LOB · <span id="chartModel"></span></h2><p id="chartDataNote"></p><div id="lobChart" class="lob-chart" tabindex="0" aria-label="Biểu đồ T/T từng công đoạn"></div></div><div id="lobStats" class="lob-stats"></div></div>
     <div class="process-table-wrap">
       <table class="process-table">
@@ -197,7 +197,7 @@
   <script src="./services/excel-import-utils.js?v=20261009-load-v8"></script>
   <script src="./services/excel-reference.js?v=20261013-layout-v22"></script>
   <script src="./services/reference-editor.js?v=20261013-layout-v22"></script>
-  <script src="./app.js?v=20261019-keyguard-v1"></script>
+  <script src="./app.js?v=20261028-lob-workforce-v1"></script>
   <script src="./mobile-ux.js?v=20261028-mobile-layout-v2"></script>
   <script src="./viewer-print-ux.js?v=20261014-layout-v9"></script>
   <script type="module" src="./st-info.js?v=20261023-chart-v1"></script>

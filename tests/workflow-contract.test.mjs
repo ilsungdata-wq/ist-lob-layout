@@ -241,6 +241,14 @@ test('Excel import reuses a Model that has no remaining visible Version',()=>{
  assert.match(integration,/remoteModels\.find\(row=>importModelCode\(row\.model_code\)===code\)/);
  assert.match(integration,/models_model_code_key\|duplicate key/);
 });
+test('LOB toolbar separates production and QC manpower from station names',()=>{
+ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(html,/id="lobWorkforceSummary"/);
+ assert.match(app,/function lobWorkforce\(processes\)/);
+ assert.match(app,/IQC\|OQC\)\\b\|VISION\\s\*LASER/);
+ assert.match(app,/Nhân lực sản xuất/);
+ assert.match(app,/Nhân lực QC/);
+});
 test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
  const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
