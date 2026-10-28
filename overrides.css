@@ -319,6 +319,13 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
 }
 @media(max-height:500px) and (max-width:950px) and (orientation:landscape){#processView>.tab-file-actions{top:42px}}
 
+/* Viewer remains read-only but keeps the two workforce KPIs available. */
+@media screen and (min-width:769px){
+ .viewer-mode #processView>.tab-file-actions{display:flex!important;align-items:center;justify-content:flex-end;margin:0 0 12px}
+ .viewer-mode #processView>.tab-file-actions>:not(#lobWorkforceSummary){display:none!important}
+ .viewer-mode #processView #lobWorkforceSummary{display:flex!important;margin:0}
+}
+
 /* Desktop viewer: one viewport from the host through the Fabric surface. */
 @media screen and (min-width:769px){
  .viewer-mode #professionalEditorShell .pro-body{flex:none;height:auto;min-height:0}

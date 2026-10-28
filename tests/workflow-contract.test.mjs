@@ -251,6 +251,7 @@ test('LOB toolbar separates production and QC manpower from station names',()=>{
  assert.match(app,/Nhân lực QC/);
  assert.match(css,/#processView>\.tab-file-actions/);
  assert.match(css,/#processView #lobWorkforceSummary/);
+ assert.match(css,/\.viewer-mode #processView>\.tab-file-actions/);
 });
 test('Home LOB summary loads current process data and splits production from QC manpower',()=>{
  const summary=fs.readFileSync(new URL('../lob-summary.js',import.meta.url),'utf8');
