@@ -249,6 +249,14 @@ test('LOB toolbar separates production and QC manpower from station names',()=>{
  assert.match(app,/Nhân lực sản xuất/);
  assert.match(app,/Nhân lực QC/);
 });
+test('Home LOB summary loads current process data and splits production from QC manpower',()=>{
+ const summary=fs.readFileSync(new URL('../lob-summary.js',import.meta.url),'utf8');
+ assert.match(summary,/const workforceFor=processes/);
+ assert.match(summary,/persistenceBridge\.ensureLoaded/);
+ assert.match(summary,/Nhân lực sản xuất/);
+ assert.match(summary,/Nhân lực QC/);
+ assert.match(summary,/hasLiveRows\?Math\.max\(0,\.\.\.cycles\):n\(s\.neckTime\)/);
+});
 test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
  const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
