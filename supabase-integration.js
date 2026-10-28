@@ -125,8 +125,13 @@ async function attachSourceWorkbook(modelId,candidate,payload){
  }
 
 }
+const importModelCode=value=>String(value||'').toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);
 async function importCandidates(candidates,mode='new'){
  let selectedVersionId=null;
+ // A Model can remain in Supabase after its last Version is deleted. It is not
+ // present in the visible workspace at that point, so resolve it separately
+ // before importing a replacement Excel file.
+ const remoteModels=await layoutService.listModels();
  for(const candidate of candidates){
   const payload=clone(candidate.data);delete payload._remote;
   const existing=candidate.previousEntry?.[1],remote=existing?._remote;
@@ -136,7 +141,7 @@ async function importCandidates(candidates,mode='new'){
    const saved=await layoutService.saveRevision({versionId:remote.versionId,expectedRevision:remote.revision,layoutData:payload,module:'LAYOUT',changeNote:`Import Excel · ${candidate.sheetName}`});selectedVersionId=saved.id||remote.versionId;continue;
   }
   let modelId=remote?.modelId;
-  if(!modelId){const code=String(payload.modelCode||payload.name).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48);const row=await layoutService.createModel({modelCode:code,modelName:payload.name,description:`Import từ ${candidate.sheetName}`});modelId=row.id}
+  if(!modelId){const code=importModelCode(payload.modelCode||payload.name),known=remoteModels.find(row=>importModelCode(row.model_code)===code);if(known)modelId=known.id;else{try{const row=await layoutService.createModel({modelCode:code,modelName:payload.name,description:`Import từ ${candidate.sheetName}`});remoteModels.push(row);modelId=row.id}catch(error){if(!/models_model_code_key|duplicate key/i.test(error.message||''))throw error;const refreshed=await layoutService.listModels(),existingModel=refreshed.find(row=>importModelCode(row.model_code)===code);if(!existingModel)throw error;remoteModels.splice(0,remoteModels.length,...refreshed);modelId=existingModel.id}}}
   const version=await layoutService.createVersion({modelId,sourceVersionId:remote?.versionId||null,versionNumber:candidate.versionNumber,changeNote:`Import Excel · ${candidate.sheetName}`});
   await attachSourceWorkbook(modelId,candidate,payload);
   const saved=await layoutService.saveRevision({versionId:version.id,expectedRevision:version.revision,layoutData:payload,module:'LAYOUT',changeNote:`Import Excel · ${candidate.sheetName}`});selectedVersionId=saved.id||version.id;

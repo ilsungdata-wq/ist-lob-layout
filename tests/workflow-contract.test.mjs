@@ -235,6 +235,12 @@ test('public Viewer exposes only the layout source selected for Pushlist',()=>{
  assert.match(inline,/openReference\.hidden=!canChooseSource\(\)/);
  assert.match(inline,/workspace!==lastWorkspace\|\|!canChooseSource\(\)/);
 });
+test('Excel import reuses a Model that has no remaining visible Version',()=>{
+ const integration=fs.readFileSync(new URL('../supabase-integration.js',import.meta.url),'utf8');
+ assert.match(integration,/const remoteModels=await layoutService\.listModels\(\)/);
+ assert.match(integration,/remoteModels\.find\(row=>importModelCode\(row\.model_code\)===code\)/);
+ assert.match(integration,/models_model_code_key\|duplicate key/);
+});
 test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
  const mobile=fs.readFileSync(new URL('../mobile-ux.js',import.meta.url),'utf8');
