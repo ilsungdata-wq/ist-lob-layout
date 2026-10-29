@@ -1,4 +1,4 @@
-# IL-SUNG TECH LAYOUT & LOB — read-only MCP for ChatGPT
+# IL-SUNG TECH LAYOUT & LOB — read-only MCP with private S/T reports
 
 ## Purpose
 
@@ -19,8 +19,14 @@ The MCP function invokes these **same** anonymous RPCs using a Supabase publisha
 | compare_models_lob | Published KPIs for 2–20 selected models |
 | search_published_processes | Process T/T/MP in up to five published models |
 | get_st_sync_status | Latest S/T Google Sheets sync timestamp, snapshot/history counts, changed-code totals (no prices or labor costs) |
+| list_st_models | **OAuth + ADMIN:** Model overview, price/S/T/GAP averages |
+| search_st_parent_codes | **OAuth + ADMIN:** Search Parent Codes and Net Price, S/T, GAP, Labor Cost |
+| get_st_parent_code_report | **OAuth + ADMIN:** Parent Code current and ERP/VOC/LABOR history |
+| get_st_model_report | **OAuth + ADMIN:** One Model with every Parent Code and dated history |
+| compare_st_models | **OAuth + ADMIN:** Compare Model-level price/S/T/GAP |
+| get_st_labor_cost_history | **OAuth + ADMIN:** Labor Cost effective dates and prices |
 
-The server **does not** read private Drafts, employee/attendance/ERP data or live production output. A saved published layout is not real-time production.
+The public tools do not read private Drafts, attendance or live ERP output. S/T financial tools require OAuth and active ADMIN permission and use only approved read-only Supabase RPCs with the user's JWT. Published layouts are not live production results.
 
 ## Deploy to your existing Supabase project
 
@@ -67,7 +73,7 @@ Expect HTTP 200 with JSON-RPC result.tools or result.structuredContent.models. W
 
 1. Open ChatGPT on web → **Plugins** → **+** → **Add custom MCP server** (subject to account/workspace permissions).
 2. Name: **IL-SUNG LAYOUT & LOB**. Use the planned Supabase Edge Function HTTPS endpoint once deployed.
-3. Authentication: **No authentication**, *only* because this integration intentionally exposes public Published-only data. Review the access warning, create and install the plugin.
+3. Authentication: **OAuth or no authentication** (mixed). Public LAYOUT tools remain anonymous; private S/T report tools require Supabase OAuth. Review the access warning, create and install the plugin.
 4. In a new conversation type @ and choose **IL-SUNG LAYOUT & LOB**.
 
 Example questions:
@@ -93,16 +99,49 @@ node --test tests/lob-mcp.test.mjs
 ~~~
 
 
-## S/T module and authentication
+## Private S/T reporting in one MCP
 
-The S/T page displays sensitive business figures (Parent Code, Net Price, Labor Cost, S/T and price history). Its page-level viewer password currently gates the UI, but **several S/T read RPCs grant execute to the Supabase anon role** (for example get_st_catalog, get_st_history and get_st_model_history). This is not a complete backend authorization boundary and must be reviewed.
+The existing MCP URL and @mention can stay the same. The protected tools provide:
+- Model and Parent Code lookup with Net Price, S/T and GAP.
+- Parent Code detail and ERP/VOC/LABOR historical changes by R/D date.
+- Model comparison and labor cost history.
+- Pagination (at most 200 catalog rows per request); built-in history RPC limits still apply.
 
-**Do not add S/T financial reporting to this No-auth MCP.** The MCP intentionally exposes only get_st_sync_status, returning a sanitized set of audit numbers and timestamps. Never return arbitrary JSON from the underlying sync result.
+**Units:** Net Price and Labor Cost are in VND. S/T and GAP S/T are in minutes. Model averages are calculated per Parent Code, not total revenue.
 
-For secure S/T reporting in a later phase:
-1. Make authorization effective at the Supabase RPC/data boundary, not just inside the browser.
-2. Use a real per-user OAuth 2.1 flow for ChatGPT and validate authorization for each S/T tool invocation.
-3. Remove anon access to business-sensitive S/T read functions after adapting the webapp viewer to authenticated access, to avoid breaking production.
-4. Enable read-only tools for product-code lookup, S/T history, and Model price/S/T summary only after server-side auth and tests prove unauthenticated callers are denied.
+Example prompts:
 
-Do not paste S/T viewer passwords into ChatGPT prompts or use privileged service_role tokens to bypass authorization.
+- @IL-SUNG LAYOUT & LOB Báo cáo toàn bộ Parent Code Model F766 Main: Net Price, S/T, GAP và sắp xếp GAP giảm dần.
+- @IL-SUNG LAYOUT & LOB Báo cáo Parent Code GH96-XXXX: giá hiện tại, S/T, GAP, lịch sử ERP và VOC theo R/D Date.
+- @IL-SUNG LAYOUT & LOB So sánh Net Price và S/T giữa Model F731 Main và F741 Main.
+
+### Supabase OAuth setup is required
+
+GitHub deployment installs the code and consent page, **not** the OAuth server configuration. The authorized owner/admin needs to:
+
+1. Open Supabase project bykmtesrluziwxqfmhro → Authentication → OAuth Server, and enable OAuth 2.1 server.
+2. Enable dynamic client registration (or register the exact ChatGPT OAuth client with the redirect URI displayed in ChatGPT). Require explicit user consent.
+3. Configure an OAuth authorization path and Site URL for the consent page at https://ilsungdata-wq.github.io/ist-lob-layout/oauth/consent/. For example: Site URL = https://ilsungdata-wq.github.io/ist-lob-layout and Authorization Path = /oauth/consent. Review existing Auth Site URL and redirects first because changing them can affect other login flows.
+4. Prefer asymmetric JWT signing keys (RS256 or ES256), particularly if requesting the OIDC openid scope.
+5. In ChatGPT Plugins, recreate/reconfigure the custom MCP as **OAuth or no authentication** (mixed), using the **same** MCP URL:
+   https://bykmtesrluziwxqfmhro.supabase.co/functions/v1/lob-mcp
+6. When a protected S/T tool is called, sign in on the consent page with an active ADMIN account. Confirm the requesting client and approve.
+
+OAuth protected resource metadata:
+https://bykmtesrluziwxqfmhro.supabase.co/functions/v1/lob-mcp/.well-known/oauth-protected-resource
+
+OAuth authorization server:
+https://bykmtesrluziwxqfmhro.supabase.co/auth/v1
+
+### Security and limits
+
+- The server validates the incoming OAuth token using Supabase Auth, checks the OAuth client_id claim, then runs is_admin() under the user's JWT for every protected tool call. Non-ADMIN and anonymous requests cannot use the private tools.
+- Every S/T financial RPC uses the verified user's token; no service_role, arbitrary SQL or mutation tool is available.
+- The S/T webapp currently restricts viewing by a UI password, but some legacy S/T read RPCs have anonymous execute grants. This is **not** an adequate database authorization boundary. This MCP does not widen it; a future migration should close that existing exposure while preserving existing viewer workflows.
+- The published-only tools continue without authentication. Draft layouts, full editor JSON, employee/attendance and live ERP output are not part of this S/T phase.
+
+### Tests
+
+node --test tests/lob-mcp.test.mjs tests/st-mcp-private.test.mjs
+
+Check missing-token OAuth challenge, non-ADMIN denial, permitted ADMIN price/GAP query and two-page reporting before relying on production values.
