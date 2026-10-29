@@ -18,6 +18,7 @@ The MCP function invokes these **same** anonymous RPCs using a Supabase publisha
 | get_model_lob_report | Published KPIs, production/QC MP and process name/T/T/MP |
 | compare_models_lob | Published KPIs for 2–20 selected models |
 | search_published_processes | Process T/T/MP in up to five published models |
+| get_st_sync_status | Latest S/T Google Sheets sync timestamp, snapshot/history counts, changed-code totals (no prices or labor costs) |
 
 The server **does not** read private Drafts, employee/attendance/ERP data or live production output. A saved published layout is not real-time production.
 
@@ -90,3 +91,18 @@ Example questions:
 ~~~sh
 node --test tests/lob-mcp.test.mjs
 ~~~
+
+
+## S/T module and authentication
+
+The S/T page displays sensitive business figures (Parent Code, Net Price, Labor Cost, S/T and price history). Its page-level viewer password currently gates the UI, but **several S/T read RPCs grant execute to the Supabase anon role** (for example get_st_catalog, get_st_history and get_st_model_history). This is not a complete backend authorization boundary and must be reviewed.
+
+**Do not add S/T financial reporting to this No-auth MCP.** The MCP intentionally exposes only get_st_sync_status, returning a sanitized set of audit numbers and timestamps. Never return arbitrary JSON from the underlying sync result.
+
+For secure S/T reporting in a later phase:
+1. Make authorization effective at the Supabase RPC/data boundary, not just inside the browser.
+2. Use a real per-user OAuth 2.1 flow for ChatGPT and validate authorization for each S/T tool invocation.
+3. Remove anon access to business-sensitive S/T read functions after adapting the webapp viewer to authenticated access, to avoid breaking production.
+4. Enable read-only tools for product-code lookup, S/T history, and Model price/S/T summary only after server-side auth and tests prove unauthenticated callers are denied.
+
+Do not paste S/T viewer passwords into ChatGPT prompts or use privileged service_role tokens to bypass authorization.

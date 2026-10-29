@@ -26,9 +26,16 @@ const layout = {
 };
 function mockFetch(url, options) {
   assert.equal(options.method, "POST");
-  assert.match(url, /^https:\/\/example\.supabase\.co\/rest\/v1\/rpc\/get_published_(workspace|layout)$/);
+  assert.match(url, /^https:\/\/example\.supabase\.co\/rest\/v1\/rpc\/(get_published_(workspace|layout)|get_st_google_sync_status)$/);
   assert.equal(options.headers.apikey, env.SUPABASE_ANON_KEY);
   if (url.endsWith("get_published_workspace")) return Promise.resolve(Response.json([model]));
+  if (url.endsWith("get_st_google_sync_status")) return Promise.resolve(Response.json([{
+    synced_at: "2026-10-29T03:00:00Z",
+    source_generated_at: "2026-10-29T02:59:00Z",
+    snapshot_rows: 81,
+    history_rows: 7,
+    result: { inserted: 2, updated: 3, secret: "ST-PRICE-PRIVATE", raw: [{ net_price: 998877 }] }
+  }]));
   assert.deepEqual(JSON.parse(options.body), { p_version_id: model.id });
   return Promise.resolve(Response.json([layout]));
 }
@@ -50,7 +57,7 @@ test("MCP initialize and list tools are standard JSON-RPC", async () => {
   assert.equal(init.result.protocolVersion, "2025-06-18");
   const listed = await (await call("tools/list")).json();
   assert.deepEqual(listed.result.tools.map(x => x.name), [
-    "list_published_models", "get_model_lob_report", "compare_models_lob", "search_published_processes"
+    "list_published_models", "get_model_lob_report", "compare_models_lob", "get_st_sync_status", "search_published_processes"
   ]);
   assert.ok(listed.result.tools.every(x => x.annotations.readOnlyHint));
 });
@@ -104,4 +111,18 @@ test("upstream errors do not expose private information", async () => {
   const body = await response.json();
   assert.equal(body.result.isError, true);
   assert.ok(!JSON.stringify(body).includes("should-not-leak"));
+});
+
+test("S/T sync-status returns only safe audit fields (no price or arbitrary sync result)", async () => {
+  const res = await tool("get_st_sync_status", {});
+  assert.equal(res.isError, false);
+  assert.equal(res.structuredContent.snapshot_rows, 81);
+  assert.equal(res.structuredContent.updated_count, 3);
+  assert.ok(!JSON.stringify(res).includes("ST-PRICE-PRIVATE"));
+  assert.ok(!JSON.stringify(res).includes("998877"));
+});
+test("S/T catalog is not an exposed MCP tool", async () => {
+  const res = await call("tools/call", { name: "get_st_catalog", arguments: {} });
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).error.code, -32602);
 });
