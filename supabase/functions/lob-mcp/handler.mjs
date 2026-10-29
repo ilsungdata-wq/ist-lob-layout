@@ -45,6 +45,14 @@ const tools = [
     }
   },
   {
+    name: "get_st_sync_status",
+    description: "Check freshness of Standard Time (S/T) Google Sheets synchronization. Only timestamps, counts and safe change totals; never exposes Net Price, labor cost, individual Parent Codes, S/T values, or histories.",
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    inputSchema: {
+      type: "object", additionalProperties: false, properties: {}
+    }
+  },
+  {
     name: "search_published_processes",
     description: "Find process rows by name across up to 5 Published models, useful for T/T and manpower comparisons. Searches only saved published snapshots.",
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -164,6 +172,27 @@ function metricsFromProcesses(processes) {
 
 async function executeTool(name, params, env, fetchImpl) {
   if (!params || typeof params !== "object" || Array.isArray(params)) error("INVALID_TOOL_ARGUMENTS");
+  if (name === "get_st_sync_status") {
+    // This is the only S/T RPC approved for the anonymous MCP.
+    // Financial/catalog/history RPCs remain deliberately unexposed.
+    const result = await rpc(env, "get_st_google_sync_status", {}, fetchImpl);
+    const latest = Array.isArray(result) ? result[0] : result;
+    const safeCount = value => Number.isInteger(Number(value)) && Number(value) >= 0 ? Number(value) : null;
+    if (!latest || !latest.synced_at) return { module: "S/T", status: "no_recorded_sync", source: "Supabase get_st_google_sync_status", read_only: true };
+    return {
+      module: "S/T",
+      status: "recorded",
+      source: "Supabase get_st_google_sync_status",
+      read_only: true,
+      synced_at: latest.synced_at,
+      source_generated_at: latest.source_generated_at ?? null,
+      snapshot_rows: safeCount(latest.snapshot_rows),
+      history_rows: safeCount(latest.history_rows),
+      inserted_count: safeCount(latest.result?.inserted),
+      updated_count: safeCount(latest.result?.updated),
+      note: "Synchronization audit only. Does not certify completeness or freshness of the external ERP source, and does not reveal financial data."
+    };
+  }
   const rows = await workspace(env, fetchImpl);
 
   if (name === "list_published_models") {
