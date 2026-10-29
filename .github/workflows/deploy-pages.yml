@@ -123,7 +123,7 @@ jobs:
           node scripts/generate-supabase-config.mjs
           mkdir -p _site
           cp index.html *.js *.css *.png *.LICENSE _site/
-          cp -R assets vendor layout-reference services _site/
+          cp -R assets vendor layout-reference services oauth _site/
           touch _site/.nojekyll
           mv supabase-config.js _site/supabase-config.js
       - uses: actions/upload-pages-artifact@v3

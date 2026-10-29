@@ -5,6 +5,7 @@ on:
     paths:
       - 'supabase/functions/lob-mcp/**'
       - 'tests/lob-mcp.test.mjs'
+      - 'tests/st-mcp-private.test.mjs'
       - '.github/workflows/test-lob-mcp.yml'
   workflow_dispatch:
 
@@ -20,4 +21,4 @@ jobs:
         with:
           node-version: '22'
       - name: Check MCP JSON-RPC and published-only contract
-        run: node --test tests/lob-mcp.test.mjs
+        run: node --test tests/lob-mcp.test.mjs tests/st-mcp-private.test.mjs

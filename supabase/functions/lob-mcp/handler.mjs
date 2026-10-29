@@ -1,3 +1,4 @@
+import { stTools, stToolNames, executeStTool, ST_SCOPE } from "./st-tools.mjs";
 // Remote, read-only Model Context Protocol (MCP) handler.
 // Exposes ONLY the same published snapshots already available to anonymous viewers.
 // No service_role key, direct table access, Draft, or write tool is used.
@@ -245,6 +246,27 @@ async function executeTool(name, params, env, fetchImpl) {
   error("UNKNOWN_TOOL");
 }
 
+function oauthResource(env) {
+  const origin = String(env.SUPABASE_URL || "").replace(/\/+$/, "");
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(origin)) return "";
+  return origin + "/functions/v1/lob-mcp";
+}
+function oauthChallenge(env, code = "invalid_token") {
+  const resource = oauthResource(env);
+  return 'Bearer resource_metadata="' + resource + '/.well-known/oauth-protected-resource", scope="' + ST_SCOPE +
+    '", error="' + code + '", error_description="Sign in to your authorized S/T account"';
+}
+function oauthMetadata(env) {
+  const resource = oauthResource(env);
+  const origin = String(env.SUPABASE_URL || "").replace(/\/+$/, "");
+  return {
+    resource,
+    authorization_servers: [origin + "/auth/v1"],
+    scopes_supported: [ST_SCOPE],
+    resource_documentation: "https://ilsungdata-wq.github.io/ist-lob-layout/"
+  };
+}
+
 const jsonResponse = (value, status = 200, extra = {}) =>
   new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...extra } });
 const jsonrpc = (id, result) => ({ jsonrpc: "2.0", id, result });
@@ -252,6 +274,7 @@ const jsonrpcError = (id, code, message) => ({ jsonrpc: "2.0", id, error: { code
 
 export async function handleRequest(request, env, fetchImpl = fetch) {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { "Allow": "POST, OPTIONS" } });
+  if (request.method === "GET" && new URL(request.url).pathname.endsWith("/.well-known/oauth-protected-resource")) return jsonResponse(oauthMetadata(env));
   // Streamable HTTP permits a server without a GET SSE stream to return 405.
   if (request.method !== "POST") return jsonResponse({ error: "MCP requires POST" }, 405, { "Allow": "POST, OPTIONS" });
   const text = await request.text();
@@ -267,19 +290,30 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   if (message.method === "initialize") {
     const requested = params.protocolVersion;
     const version = ["2025-03-26", "2025-06-18", "2025-11-25"].includes(requested) ? requested : PROTOCOL_VERSION;
-    return jsonResponse(jsonrpc(id, { protocolVersion: version, capabilities: { tools: { listChanged: false } }, serverInfo: { name: "IL-SUNG TECH LAYOUT & LOB (Published Reports)", version: "1.0.0" } }));
+    return jsonResponse(jsonrpc(id, { protocolVersion: version, capabilities: { tools: { listChanged: false } }, serverInfo: { name: "IL-SUNG TECH LAYOUT & LOB Reports", version: "1.1.0" } }));
   }
   if (message.method === "ping") return jsonResponse(jsonrpc(id, {}));
-  if (message.method === "tools/list") return jsonResponse(jsonrpc(id, { tools }));
+  if (message.method === "tools/list") return jsonResponse(jsonrpc(id, { tools: [...tools, ...stTools] }));
   if (message.method === "tools/call") {
     const name = params.name;
-    if (typeof name !== "string" || !tools.some(x => x.name === name)) return jsonResponse(jsonrpcError(id, -32602, "Unknown tool"), 400);
+    if (typeof name !== "string" || (!tools.some(x => x.name === name) && !stToolNames.has(name))) return jsonResponse(jsonrpcError(id, -32602, "Unknown tool"), 400);
     try {
-      const data = await executeTool(name, params.arguments || {}, env, fetchImpl);
+      const data = stToolNames.has(name)
+        ? await executeStTool(name, params.arguments || {}, request, env, fetchImpl)
+        : await executeTool(name, params.arguments || {}, env, fetchImpl);
       return jsonResponse(jsonrpc(id, { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: data, isError: false }));
     } catch (e) {
       const msg = String(e.message || "");
-      const known = /^(MODEL_|PUBLISHED_|INVALID_|QUERY_|DUPLICATE_|UNKNOWN_|MCP_NOT_CONFIGURED)/.test(msg) ? msg : "PUBLISHED_REPORT_UNAVAILABLE";
+      if (stToolNames.has(name) && msg === "ST_OAUTH_REQUIRED") {
+        const challenge = oauthChallenge(env);
+        return jsonResponse(jsonrpc(id, {
+          content: [{ type: "text", text: "ST_OAUTH_REQUIRED" }],
+          isError: true,
+          _meta: { "mcp/www_authenticate": [challenge] }
+        }), 200, { "WWW-Authenticate": challenge });
+      }
+      const known = /^(MODEL_|PUBLISHED_|INVALID_|QUERY_|DUPLICATE_|UNKNOWN_|MCP_NOT_CONFIGURED|ST_ADMIN_PERMISSION_REQUIRED|ST_(INVALID|MODEL|PARENT|DUPLICATE|UNKNOWN|AUTH|MCP_NOT))/i.test(msg)
+        ? msg : "REPORT_UNAVAILABLE";
       return jsonResponse(jsonrpc(id, { content: [{ type: "text", text: known }], isError: true }));
     }
   }

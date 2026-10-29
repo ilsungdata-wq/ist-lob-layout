@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IL-SUNG TECH — Xác thực kết nối báo cáo</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#152435;background:#f2f5fa}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px}
+main{background:#fff;max-width:500px;width:100%;padding:28px;border-radius:18px;box-shadow:0 14px 40px #132d4520}
+small{font-weight:700;color:#3170b7;letter-spacing:.07em}h1{font-size:23px;margin:8px 0 12px}
+p{line-height:1.55;color:#48576a}label{font-size:14px;font-weight:600;display:block;margin:14px 0 6px}
+input{padding:12px;width:100%;font-size:15px;border:1px solid #bdc8d7;border-radius:10px}
+button{border:0;border-radius:10px;font-weight:650;padding:13px 17px;cursor:pointer}
+.primary{background:#134b80;color:white}.secondary{background:#edf2f8;color:#173b5b}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+[hidden]{display:none!important}#message{margin-top:14px;color:#b32b33}
+.scope{padding:14px;border-radius:10px;background:#f4f7fa;font-size:14px;color:#253b52}
+</style>
+</head>
+<body>
+<main>
+<small>IL-SUNG TECH · SUPABASE AUTH</small>
+<h1>Kết nối báo cáo S/T với ChatGPT</h1>
+<p>Đăng nhập bằng tài khoản LAYOUT &amp; LOB và kiểm tra quyền truy cập trước khi cho phép công cụ AI đọc dữ liệu Net Price, Parent Code, S/T và GAP.</p>
+<section id="login">
+  <form id="form">
+    <label for="email">Email công ty</label><input id="email" type="email" required autocomplete="username">
+    <label for="password">Mật khẩu</label><input id="password" type="password" required autocomplete="current-password">
+    <div class="actions"><button class="primary" type="submit">Đăng nhập</button></div>
+  </form>
+</section>
+<section id="consent" hidden>
+  <p><strong id="clientName"></strong> muốn truy cập dữ liệu S/T được cấp quyền.</p>
+  <div class="scope"><strong>Chỉ đọc:</strong> Model, Parent Code, Net Price, S/T, GAP, lịch sử giá ERP/VOC và Labor Cost. Không cho phép sửa hay xóa dữ liệu.<p id="scopeText"></p></div>
+  <p>Tài khoản: <strong id="userEmail"></strong>. Dữ liệu giá chỉ dành cho người có quyền ADMIN trong webapp. Bạn có thể từ chối kết nối.</p>
+  <div class="actions">
+    <button type="button" class="primary" id="approve">Cho phép truy cập</button>
+    <button type="button" class="secondary" id="deny">Từ chối</button>
+  </div>
+</section>
+<p id="message" role="alert"></p>
+</main>
+<script src="../../supabase-config.js"></script>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const $ = id => document.getElementById(id);
+const id = new URL(location.href).searchParams.get("authorization_id");
+const message = text => $("message").textContent = text || "";
+const cfg = window.IST_LOB_CONFIG?.supabase;
+if (!id || !/^[a-zA-Z0-9_-]{8,256}$/.test(id)) {
+  message("Thiếu mã yêu cầu cấp quyền (authorization_id). Hãy kết nối từ ChatGPT.");
+} else if (!cfg?.url || !(cfg.publishableKey || cfg.anonKey)) {
+  message("Webapp chưa cấu hình kết nối Supabase.");
+} else {
+  const client = createClient(cfg.url, cfg.publishableKey || cfg.anonKey, {
+    auth: { autoRefreshToken:true, persistSession:true, detectSessionInUrl:false, storageKey:"ilsung-mcp-consent-auth" }
+  });
+  const login = $("login"), consent = $("consent");
+  async function showConsent() {
+    const {data: {user}, error:userError} = await client.auth.getUser();
+    if (userError || !user) {login.hidden=false;consent.hidden=true;return;}
+    const {data, error} = await client.auth.oauth.getAuthorizationDetails(id);
+    if (error) {message("Không tải được yêu cầu OAuth: " + error.message);return;}
+    const { data: isAdmin, error: roleError } = await client.rpc("is_admin");
+    if (roleError || isAdmin !== true) { message("Tài khoản không có quyền ADMIN để xuất báo cáo S/T. Liên hệ quản trị webapp."); return; }
+    const details = data || {};
+    $("clientName").textContent = details.client?.client_name || details.client?.name || details.client_name || "Một ứng dụng kết nối";
+    $("scopeText").textContent = "Quyền OAuth yêu cầu: " + String(details.scope || details.scopes?.join(" ") || "email");
+    $("userEmail").textContent = user.email || "Tài khoản đã đăng nhập";
+    login.hidden=true;consent.hidden=false;
+  }
+  $("form").onsubmit=async event=>{
+    event.preventDefault();message("");
+    const submit=$("form").querySelector("button");submit.disabled=true;
+    const {error}=await client.auth.signInWithPassword({email:$("email").value,password:$("password").value});
+    $("password").value="";submit.disabled=false;
+    if(error){message("Đăng nhập thất bại: " + error.message);return;}
+    await showConsent();
+  };
+  async function decide(approve) {
+    message("");
+    $("approve").disabled=true;$("deny").disabled=true;
+    const result = approve ? await client.auth.oauth.approveAuthorization(id) : await client.auth.oauth.denyAuthorization(id);
+    if(result.error){message("Không thể xử lý yêu cầu: " + result.error.message);$("approve").disabled=false;$("deny").disabled=false;return;}
+    if(!result.data?.redirect_url){message("OAuth không trả về địa chỉ chuyển tiếp.");return;}
+    const redirect = new URL(result.data.redirect_url);
+    if(redirect.protocol!=="https:"){message("OAuth redirect không hợp lệ.");return;}
+    location.assign(redirect.href);
+  }
+  $("approve").onclick=()=>decide(true);
+  $("deny").onclick=()=>decide(false);
+  showConsent().catch(()=>message("Không thể khởi tạo phiên đăng nhập OAuth."));
+}
+</script>
+</body>
+</html>

@@ -57,7 +57,9 @@ test("MCP initialize and list tools are standard JSON-RPC", async () => {
   assert.equal(init.result.protocolVersion, "2025-06-18");
   const listed = await (await call("tools/list")).json();
   assert.deepEqual(listed.result.tools.map(x => x.name), [
-    "list_published_models", "get_model_lob_report", "compare_models_lob", "get_st_sync_status", "search_published_processes"
+    "list_published_models", "get_model_lob_report", "compare_models_lob", "get_st_sync_status", "search_published_processes",
+    "list_st_models", "search_st_parent_codes", "get_st_parent_code_report",
+    "get_st_model_report", "compare_st_models", "get_st_labor_cost_history"
   ]);
   assert.ok(listed.result.tools.every(x => x.annotations.readOnlyHint));
 });

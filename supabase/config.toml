@@ -5,7 +5,7 @@ project_id = "ist-lob-layout"
 [functions.st-sheet-sync]
 verify_jwt = false
 
-# MCP tools are deliberately restricted to the existing ANONYMOUS Published
-# read RPCs. ChatGPT connects without OAuth in this first read-only phase.
+# Mixed-mode MCP: public Published layout tools and protected S/T financial
+# reporting tools. Edge Function performs OAuth validation and ADMIN checks.
 [functions.lob-mcp]
 verify_jwt = false
