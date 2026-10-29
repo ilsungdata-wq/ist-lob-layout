@@ -7,7 +7,7 @@ const source=stripTypeScriptTypes(fs.readFileSync(new URL('../supabase/functions
 function setup({valid=true,admin=true}={}){
  let handler;const calls=[];
  const env={SUPABASE_URL:'https://example.supabase.co',SUPABASE_ANON_KEY:'public-key',ST_GOOGLE_SYNC_URL:'https://sheet.example/sync',ST_GOOGLE_SYNC_TOKEN:'private-sync-token'};
- vm.runInNewContext(source,{Deno:{env:{get:k=>env[k]},serve:fn=>handler=fn},Response,fetch:async(url,options)=>{calls.push({url,options});if(url.endsWith('/auth/v1/user'))return Response.json(valid?{id:'user-id'}:{message:'invalid token'},{status:valid?200:401});if(url.endsWith('/rpc/is_admin'))return Response.json(admin);return Response.json({ok:true,rows:[],history_rows:[]});}});
+ vm.runInNewContext(source,{Deno:{env:{get:k=>env[k]},serve:fn=>handler=fn},Response,AbortController,DOMException,setTimeout,clearTimeout,fetch:async(url,options)=>{calls.push({url,options});if(url.endsWith('/auth/v1/user'))return Response.json(valid?{id:'user-id'}:{message:'invalid token'},{status:valid?200:401});if(url.endsWith('/rpc/is_admin'))return Response.json(admin);return Response.json({ok:true,rows:[],history_rows:[]});}});
  return {calls,request:(token)=>handler(new Request('https://edge.example',{method:'POST',headers:token?{Authorization:`Bearer ${token}`}:{}}))};
 }
 test('sync rejects missing bearer without contacting Sheet',async()=>{const s=setup();assert.equal((await s.request()).status,401);assert.equal(s.calls.length,0)});

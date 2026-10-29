@@ -35,9 +35,17 @@ Deno.serve(async request=>{
   if(!isAdmin)return json({message:'admin_required_to_sync_st'},403);
   if(!syncUrl||!syncToken)return json({message:'google_sheet_sync_not_configured'},503);
 
-    const sourceResponse=await fetch(syncUrl,{
-      method:'POST',redirect:'follow',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:syncToken}),
-    });
+    const sourceAbort=new AbortController();
+    const sourceTimeout=setTimeout(()=>sourceAbort.abort(),45000);
+    let sourceResponse:Response;
+    try{
+      sourceResponse=await fetch(syncUrl,{
+        method:'POST',redirect:'follow',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:syncToken}),signal:sourceAbort.signal,
+      });
+    }catch(error){
+      if(error instanceof DOMException&&error.name==='AbortError')return json({message:'google_sheet_source_timeout'},504);
+      throw error;
+    }finally{clearTimeout(sourceTimeout)}
     if(!sourceResponse.ok)return json({message:'google_sheet_source_unavailable',status:sourceResponse.status},502);
     const payload=await sourceResponse.json();
     if(payload?.ok!==true||!Array.isArray(payload.rows))return json({message:payload?.message||'invalid_google_sheet_response'},502);
