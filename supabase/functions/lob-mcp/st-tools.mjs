@@ -114,7 +114,7 @@ export async function authorizeSt(request, env, fetchImpl = fetch) {
   const claims = oauthClaim(token);
   if (!claims || typeof claims.client_id !== "string" || !claims.client_id ||
       claims.sub !== user.id || claims.iss !== url + "/auth/v1" ||
-      claims.exp <= Math.floor(Date.now() / 1000)) error("ST_OAUTH_REQUIRED");
+      typeof claims.exp !== "number" || claims.exp <= Math.floor(Date.now() / 1000)) error("ST_OAUTH_REQUIRED");
   let allowed = false;
   try {
     allowed = await fetchJson(fetchImpl, url + "/rest/v1/rpc/is_admin", {
