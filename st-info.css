@@ -5,6 +5,7 @@ body.tree-collapsed .st-info-view{margin-left:42px;width:calc(100% - 42px)}
 body.tree-hidden .st-info-view{margin-left:0;width:100%}
 .st-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;max-width:1500px;margin:0 auto 18px}
 .st-page-head h1{margin:4px 0 5px;font-size:26px;color:#0c3744}.st-page-head p{margin:0;color:#617b84;font-size:13px}.st-head-actions{display:flex;gap:8px;flex:none}
+.st-sync-status{display:inline-flex;align-items:center;min-height:28px;margin-top:7px!important;padding:5px 10px;border:1px solid #b9dcd4;border-radius:999px;background:#effaf7;color:#17685d!important;font-size:11px!important;font-weight:750}
 .st-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;max-width:1500px;margin:0 auto 14px}
 .st-kpis article{padding:15px 16px;border:1px solid #d8e5e4;border-radius:12px;background:#fff;box-shadow:0 5px 16px #1538460b}.st-kpis span{display:block;color:#6b8188;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.st-kpis b{display:block;margin-top:6px;color:#0e3d49;font-size:24px}.st-kpis small{color:#7e9298;font-size:10px}
 .st-toolbar{display:grid;grid-template-columns:minmax(220px,1fr) 170px 120px 150px auto;align-items:end;gap:9px;max-width:1500px;margin:0 auto 12px;padding:11px;border:1px solid #d7e4e3;border-radius:11px;background:#fff}
