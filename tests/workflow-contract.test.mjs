@@ -262,6 +262,9 @@ test('Home LOB summary loads current process data and splits production from QC 
  assert.match(summary,/class="lob-workforce-head workforce-production"/);
  assert.match(summary,/class="lob-workforce-head workforce-qc"/);
  assert.match(summary,/hasLiveRows\?Math\.max\(0,\.\.\.cycles\):n\(s\.neckTime\)/);
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(css,/\.lob-chart-head>span:nth-child\(5\)/);
+ assert.match(css,/\.viewer-mode #stHomeDashboard/);
 });
 test('phase 2C mobile layout is a pan zoom inspect viewer and never mounts desktop edit chrome',()=>{
  const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');

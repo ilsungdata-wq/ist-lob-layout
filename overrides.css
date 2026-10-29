@@ -326,6 +326,11 @@ body.layout-editing #professionalEditorShell .pro-body{flex:0 0 auto!important;h
  .viewer-mode #processView #lobWorkforceSummary{display:flex!important;margin:0}
 }
 
+/* Home workforce columns: center the numeric comparison and keep visual breathing room. */
+.lob-chart-head>span:nth-child(5),.lob-chart-head>span:nth-child(6),.lob-chart-head>span:nth-child(7),.lob-model-row>.lob-plain{justify-self:stretch;text-align:center}
+.lob-model-row>.lob-plain{padding-inline:8px}
+.viewer-mode #stHomeDashboard{display:none!important}
+
 /* Desktop viewer: one viewport from the host through the Fabric surface. */
 @media screen and (min-width:769px){
  .viewer-mode #professionalEditorShell .pro-body{flex:none;height:auto;min-height:0}
