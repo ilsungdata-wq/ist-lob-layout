@@ -23,7 +23,9 @@ The server **does not** read private Drafts, employee/attendance/ERP data or liv
 
 ## Deploy to your existing Supabase project
 
-From a machine with the Supabase CLI and permission to deploy in your own Supabase account:
+**Automatic:** After this change is merged to main, the existing GitHub Actions workflow 'Migrate, verify and deploy production' deploys the lob-mcp Edge Function using its configured Supabase project credentials. Check the workflow run and verify the endpoint before adding a ChatGPT plugin.
+
+**Manual fallback:** From a machine with the Supabase CLI and permission to deploy in your own Supabase account:
 
 ~~~sh
 supabase login
