@@ -4,3 +4,8 @@ project_id = "ist-lob-layout"
 # Avoid the gateway's legacy JWT verification for rotated/asymmetric signing keys.
 [functions.st-sheet-sync]
 verify_jwt = false
+
+# MCP tools are deliberately restricted to the existing ANONYMOUS Published
+# read RPCs. ChatGPT connects without OAuth in this first read-only phase.
+[functions.lob-mcp]
+verify_jwt = false
