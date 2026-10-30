@@ -7,4 +7,8 @@ This Apps Script runs under the Google account that can read both source spreads
 3. Deploy as a Web app, execute as the project owner, and allow access to anyone who has the URL. The token is still required for every request.
 4. Store the deployment URL as Supabase Function secret `ST_GOOGLE_SYNC_URL` and the same token as `ST_GOOGLE_SYNC_TOKEN`.
 
+## Daily automatic sync
+
+Set one additional Script Property named `ST_EDGE_SYNC_URL` to `https://YOUR_PROJECT.supabase.co/functions/v1/st-sheet-sync`. Then run `installDailyStSync` once in the Apps Script editor and authorize it. The trigger runs each day around 12:00 using the same private token; it writes only new Parent Codes, changed Models, or changed prices and records the completed run time.
+
 The browser never receives the token or direct Google Sheet access. The Supabase Edge Function accepts authenticated Admin users only.
