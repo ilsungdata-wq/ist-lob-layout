@@ -85,3 +85,4 @@ $$;
 revoke all on function public.sync_st_bom_catalog(jsonb),public.get_st_bom_price_entry_catalog(),public.apply_st_manual_price(text,numeric,date,text),public.get_st_model_layout_metrics(text) from public;
 grant execute on function public.sync_st_bom_catalog(jsonb),public.get_st_bom_price_entry_catalog(),public.apply_st_manual_price(text,numeric,date,text) to authenticated;
 grant execute on function public.get_st_model_layout_metrics(text) to anon,authenticated;
+
