@@ -19,7 +19,8 @@ begin
   next_type:=case lower(trim(item->>'product_type')) when 'tab' then 'Tab' when 'block' then 'Block' else 'Smart' end;
   if code !~ '^GH96-[A-Z0-9]+$' or coalesce(next_model,'')='' then invalid_count:=invalid_count+1; continue; end if;
   if exists(select 1 from public.st_bom_catalog where product_code=code) then
-   update public.st_bom_catalog as b set model_name=next_model,product_type=next_type,updated_at=now()`r`n    where b.product_code=code and (b.model_name,b.product_type) is distinct from (next_model,next_type);
+   update public.st_bom_catalog as b set model_name=next_model,product_type=next_type,updated_at=now();
+    where b.product_code=code and (b.model_name,b.product_type) is distinct from (next_model,next_type);
    if found then updated_count:=updated_count+1; end if;
   else
    insert into public.st_bom_catalog(product_code,model_name,product_type) values(code,next_model,next_type); inserted_count:=inserted_count+1;
@@ -84,5 +85,6 @@ $$;
 revoke all on function public.sync_st_bom_catalog(jsonb),public.get_st_bom_price_entry_catalog(),public.apply_st_manual_price(text,numeric,date,text),public.get_st_model_layout_metrics(text) from public;
 grant execute on function public.sync_st_bom_catalog(jsonb),public.get_st_bom_price_entry_catalog(),public.apply_st_manual_price(text,numeric,date,text) to authenticated;
 grant execute on function public.get_st_model_layout_metrics(text) to anon,authenticated;
+
 
 
