@@ -20,7 +20,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261029-sync-feedback-v2/);
- assert.match(html,/st-info\.js\?v=20261103-google-sync-v5/);
+ assert.match(html,/st-info\.js\?v=20261103-bom-price-v6/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -202,3 +202,25 @@ test('Home model defaults are global and load independently of the active versio
  assert.doesNotMatch(lobSummary,/model\(\)\.dashboardDefaultModels/);
  assert.match(integration,/loadDashboardDefaults,saveDashboardDefaults/);
 });
+
+test('BOM catalog supports unpriced Parent Codes, manual price entry, and layout staffing metrics',()=>{
+ const bomCatalogMigration=read('supabase/migrations/20261103000100_st_bom_catalog_and_model_metrics.sql');
+ assert.match(html,/id="stManualPriceBtn"/);
+ assert.match(html,/id="stManualPriceDialog"/);
+ assert.match(html,/Net Price mới/);
+ assert.match(script,/get_st_bom_price_entry_catalog/);
+ assert.match(script,/apply_st_manual_price/);
+ assert.match(script,/Net price old/);
+ assert.match(script,/Net price new/);
+ assert.match(script,/get_st_model_layout_metrics/);
+ assert.match(script,/S\/T Avg \/ Direct MP/);
+ assert.match(bomCatalogMigration,/create table if not exists public\.st_bom_catalog/);
+ assert.match(bomCatalogMigration,/sync_st_bom_catalog/);
+ assert.match(bomCatalogMigration,/parent_code_not_found_in_bom/);
+ assert.match(bomCatalogMigration,/get_st_model_layout_metrics/);
+ assert.match(appsScript,/typeColumn=headerColumnOptional_/);
+ assert.match(appsScript,/bom_rows/);
+ assert.match(edgeFunction,/bomRows/);
+ assert.match(edgeFunction,/sync_st_bom_catalog/);
+});
+
