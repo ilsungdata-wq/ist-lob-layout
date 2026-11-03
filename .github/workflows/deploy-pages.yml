@@ -69,9 +69,25 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: psql "$SUPABASE_DB_URL" --no-psqlrc --set=ON_ERROR_STOP=1 --file=supabase/verify_deployment_gate.sql
+      - name: Detect Edge Function changes
+        id: edge_changes
+        shell: bash
+        run: |
+          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- supabase/functions/st-sheet-sync; then
+            echo "st_sync=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "st_sync=true" >> "$GITHUB_OUTPUT"
+          fi
+          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- supabase/functions/lob-mcp; then
+            echo "lob_mcp=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "lob_mcp=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Deploy S/T Google Sheet sync function
+        if: steps.edge_changes.outputs.st_sync == 'true'
         run: supabase functions deploy st-sheet-sync --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
       - name: Deploy published-only LOB MCP function
+        if: steps.edge_changes.outputs.lob_mcp == 'true'
         run: supabase functions deploy lob-mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
 
   test:
