@@ -64,7 +64,14 @@ jobs:
       - name: Preview pending migrations
         run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
       - name: Apply pending migrations
-        run: supabase db push --db-url "$SUPABASE_DB_URL"
+        shell: bash
+        run: |
+          set +e
+          output="$(supabase db push --db-url "$SUPABASE_DB_URL" 2>&1)"
+          status=$?
+          printf '%s\n' "$output"
+          if [ "$status" -ne 0 ]; then
+            safe_output="${output//
       - name: Lint production schema
         run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error
       - name: Verify production workflow schema
@@ -163,3 +170,106 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+\n'/ }"
+            echo "::error title=Supabase migration failed::$safe_output"
+            exit "$status"
+          fi
+      - name: Lint production schema
+        run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error
+      - name: Verify production workflow schema
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: psql "$SUPABASE_DB_URL" --no-psqlrc --set=ON_ERROR_STOP=1 --file=supabase/verify_deployment_gate.sql
+      - name: Detect Edge Function changes
+        id: edge_changes
+        shell: bash
+        run: |
+          if git diff --quiet HEAD^ HEAD -- supabase/functions/st-sheet-sync; then
+            echo "st_sync=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "st_sync=true" >> "$GITHUB_OUTPUT"
+          fi
+          if git diff --quiet HEAD^ HEAD -- supabase/functions/lob-mcp; then
+            echo "lob_mcp=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "lob_mcp=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Deploy S/T Google Sheet sync function
+        if: steps.edge_changes.outputs.st_sync == 'true'
+        run: supabase functions deploy st-sheet-sync --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+      - name: Deploy published-only LOB MCP function
+        if: steps.edge_changes.outputs.lob_mcp == 'true'
+        run: supabase functions deploy lob-mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+
+  test:
+    name: Test application
+    runs-on: ubuntu-latest
+    needs: migrate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: JavaScript syntax
+        # node:module.stripTypeScriptTypes is used by the Edge Function auth tests.
+        run: |
+          node --check app.js
+          node --check studio.js
+          node --check fabric-engine.js
+          node --check professional-editor.js
+          node --check office-page-editor.js
+          node --check supabase-integration.js
+          node --check st-info.js
+      - name: Unit and workflow contract tests
+        run: node --test tests/*.test.mjs
+      - name: Verify generated worker
+        run: |
+          node build-worker.mjs
+          node --check dist/server/index.js
+          git diff --exit-code -- dist
+
+  build:
+    name: Build GitHub Pages artifact
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Validate Supabase runtime configuration
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" || (echo "Missing repository variable SUPABASE_URL" && exit 1)
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || (echo "Missing repository secret SUPABASE_PUBLISHABLE_KEY" && exit 1)
+      - name: Assemble static site
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          node scripts/generate-supabase-config.mjs
+          mkdir -p _site
+          cp index.html *.js *.css *.png *.LICENSE _site/
+          cp -R assets vendor layout-reference services oauth _site/
+          touch _site/.nojekyll
+          mv supabase-config.js _site/supabase-config.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
