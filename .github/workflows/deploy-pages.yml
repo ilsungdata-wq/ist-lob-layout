@@ -64,8 +64,7 @@ jobs:
       - name: Preview pending migrations
         run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
       - name: Apply pending migrations
-        run: supabase db push --db-url "$SUPABASE_DB_URL"
-      - name: Lint production schema
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --yes      - name: Lint production schema
         run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error
       - name: Verify production workflow schema
         env:
@@ -163,3 +162,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
