@@ -20,7 +20,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261029-sync-feedback-v2/);
- assert.match(html,/st-info\.js\?v=20261104-model-summary-v7/);
+ assert.match(html,/st-info\.js\?v=20261104-person-card-v8/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -229,6 +229,7 @@ test('model summary puts Set Person, average price and per-person price above S/
  const modelSummaryMigration=read('supabase/migrations/20261104000100_st_model_summary_metrics.sql');
  assert.match(html,/id="stModelSummary"/);
  assert.match(script,/get_st_all_model_layout_metrics/);
+ assert.match(script,/Net Price Avg \/ Direct MP/);
  assert.match(script,/Net Price \/ người/);
  assert.match(script,/st-model-summary-table/);
  assert.match(modelSummaryMigration,/get_st_all_model_layout_metrics/);
