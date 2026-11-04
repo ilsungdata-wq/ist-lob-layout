@@ -74,7 +74,8 @@ jobs:
             message="$(printf '%s' "$output" | tail -n 1)"
             echo "::error title=Supabase migration failed::$message"
             exit "$status"
-          fi      - name: Lint production schema
+          fi
+      - name: Lint production schema
         run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error
       - name: Verify production workflow schema
         env:
@@ -172,4 +173,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
 
