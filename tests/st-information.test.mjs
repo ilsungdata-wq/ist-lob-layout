@@ -20,7 +20,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261104-kpi-row-v3/);
- assert.match(html,/st-info\.js\?v=20261104-jwt-refresh-v10/);
+ assert.match(html,/st-info\.js\?v=20261104-fast-sync-v11/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -137,7 +137,7 @@ test('S/T shows and records the most recent Google Sheet synchronization',()=>{
  assert.match(script,/rpc\('record_st_google_sync'/);
  assert.match(script,/Đồng bộ Google Sheet gần nhất/);
  assert.match(script,/google_sheet_source_timeout/);
- assert.match(script,/Xác nhận “Ghi thay đổi” để hoàn tất đồng bộ/);
+ assert.match(script,/Đồng bộ nhanh xong/);
  assert.match(css,/\.st-sync-status/);
  assert.match(syncStatusMigration,/create table if not exists public\.st_google_sync_runs/);
  assert.match(syncStatusMigration,/create or replace function public\.get_st_google_sync_status/);
@@ -232,6 +232,7 @@ test('model summary puts Set Person, average price and per-person price above S/
  assert.match(script,/Net Price Avg \/ Direct MP/);
  assert.match(script,/Chưa có Direct MP/);
  assert.match(script,/refreshStSession/);
+ assert.match(script,/body:\{mode:\x27apply\x27\}/);
  assert.match(script,/jwtExpired/);
  assert.match(script,/Net Price \/ người/);
  assert.match(script,/st-model-summary-table/);
