@@ -63,3 +63,11 @@ test('capability grant saves the exact account/model/version scope and reloads',
  assert.deepEqual(calls[0].body,{p_user_id:'u2',p_model_id:'m1',p_version_id:'v1',p_capability:'layout.edit',p_active:true});
  assert.equal(grants[0].capability,'layout.edit');assert.equal(grants[0].is_active,true);
 });
+
+test('concurrent session refresh requests share one token rotation',async()=>{
+ let calls=0;
+ globalThis.fetch=async()=>{calls++;await new Promise(resolve=>setTimeout(resolve,2));return new Response(JSON.stringify({access_token:'fresh',refresh_token:'refresh-2',expires_at:9999999999}),{status:200,headers:{'content-type':'application/json'}})};
+ localStorage.setItem('ist-lob-supabase-session-v1',JSON.stringify({access_token:'old',refresh_token:'refresh-1',expires_at:0}));
+ await Promise.all([auth.refresh(),auth.refresh()]);
+ assert.equal(calls,1);
+});

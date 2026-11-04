@@ -1,5 +1,5 @@
 import{auth}from'./services/supabase/auth.js';
-import{rpc,supabaseRequest}from'./services/supabase/client.js?v=20261016-cache-v2';
+import{rpc as supabaseRpc,supabaseRequest}from'./services/supabase/client.js?v=20261016-cache-v2';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0}),decimal=new Intl.NumberFormat('vi-VN',{minimumFractionDigits:3,maximumFractionDigits:3});
 const PAGE_SIZE=40,CACHE_KEY='ist-st-catalog-v2',CACHE_MS=15*60*1000,VIEW_KEY='ist-st-view-unlocked-v1';
@@ -9,7 +9,7 @@ const dateTimeLabel=v=>{if(!v)return'—';const d=new Date(v);return Number.isNa
 const typeLabel=v=>v==='Block'?'Block':String(v||'Smart').toLowerCase()==='tab'?'Tab':'Smart';
 const typeForModel=model=>/\bblock\s*\d+\b/i.test(String(model||''))?'Block':/^(P6|T|X)/i.test(String(model||''))?'Tab':'Smart';
 const deltaLabel=v=>`${Number(v||0)>0?'+':''}${decimal.format(Number(v||0))} phút`;
-const toastMessage=m=>typeof toast==='function'?toast(m):console.info(m);const currentSession=()=>globalThis.ISTAppHost?.session?.()||{};const canImport=()=>currentSession().globalRole==='ADMIN';
+const toastMessage=m=>typeof toast==='function'?toast(m):console.info(m);const jwtExpired=e=>/jwt expired|invalid jwt|token.*expired/i.test(String(e?.message||''));let stRefreshInFlight=null;async function refreshStSession(){if(!stRefreshInFlight)stRefreshInFlight=auth.refresh().finally(()=>{stRefreshInFlight=null});return stRefreshInFlight}async function rpc(name,args={}){await auth.restore();try{return await supabaseRpc(name,args)}catch(error){if(!jwtExpired(error))throw error;const renewed=await refreshStSession();if(!renewed)throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');return supabaseRpc(name,args)}}const currentSession=()=>globalThis.ISTAppHost?.session?.()||{};const canImport=()=>currentSession().globalRole==='ADMIN';
 function canView(){return canImport()||sessionStorage.getItem(VIEW_KEY)==='1'}
 function lockView(){sessionStorage.removeItem(VIEW_KEY);loaded=false;catalog=[];$('stInfoView').hidden=true}
 function renderSyncStatus(row){const target=$('stSyncStatus');if(!target)return;if(!row?.synced_at){target.textContent='Chưa có lần đồng bộ Google Sheet được ghi nhận.';return}const changed=Number(row.result?.updated||0),added=Number(row.result?.inserted||0);target.textContent=`Đồng bộ Google Sheet gần nhất: ${dateTimeLabel(row.synced_at)} · ${Number(row.snapshot_rows||0).toLocaleString('vi-VN')} mã${added||changed?` · ${added} mới, ${changed} thay đổi`:''}`}
