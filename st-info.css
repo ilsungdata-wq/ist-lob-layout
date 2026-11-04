@@ -6,7 +6,7 @@ body.tree-hidden .st-info-view{margin-left:0;width:100%}
 .st-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;max-width:1500px;margin:0 auto 18px}
 .st-page-head h1{margin:4px 0 5px;font-size:26px;color:#0c3744}.st-page-head p{margin:0;color:#617b84;font-size:13px}.st-head-actions{display:flex;gap:8px;flex:none}
 .st-sync-status{display:inline-flex;align-items:center;min-height:28px;margin-top:7px!important;padding:5px 10px;border:1px solid #b9dcd4;border-radius:999px;background:#effaf7;color:#17685d!important;font-size:11px!important;font-weight:750}
-.st-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;max-width:1500px;margin:0 auto 14px}
+.st-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;max-width:1500px;margin:0 auto 14px}
 .st-kpis article{padding:15px 16px;border:1px solid #d8e5e4;border-radius:12px;background:#fff;box-shadow:0 5px 16px #1538460b}.st-kpis span{display:block;color:#6b8188;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.st-kpis b{display:block;margin-top:6px;color:#0e3d49;font-size:24px}.st-kpis small{color:#7e9298;font-size:10px}
 .st-toolbar{display:grid;grid-template-columns:minmax(220px,1fr) 170px 120px 150px auto;align-items:end;gap:9px;max-width:1500px;margin:0 auto 12px;padding:11px;border:1px solid #d7e4e3;border-radius:11px;background:#fff}
 .st-toolbar label{display:grid;gap:4px;color:#607a82;font-size:10px;font-weight:800}.st-toolbar input,.st-toolbar select{box-sizing:border-box;width:100%;height:40px;padding:0 10px;border:1px solid #c8d9d7;border-radius:8px;background:#fff;color:#173b46;font:600 13px inherit}.st-search{position:relative}.st-search span{position:absolute;left:12px;bottom:10px;color:#789098;font-size:18px}.st-search input{padding-left:37px}.st-result-count{align-self:center;color:#607a82;font-size:11px;font-weight:700;white-space:nowrap}
@@ -21,7 +21,6 @@ body.tree-hidden .st-info-view{margin-left:0;width:100%}
   body[data-view="st-info"] .st-page-head{position:static!important;padding-top:2px}
   body[data-view="st-info"] .st-head-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   body[data-view="st-info"] .st-head-actions .btn{width:100%;min-width:0;margin:0;padding:8px 6px;font-size:12px;white-space:normal}
-  body[data-view="st-info"] .st-kpis article:last-child{grid-column:1/-1}
   body[data-view="st-info"] .st-table td:nth-child(7){display:inline-block;margin-top:8px}
   body[data-view="st-info"] .st-table td:nth-child(7):before{content:'Ngày đổi ';color:#7a8e94}
   body[data-view="st-info"] .st-chart-legend{flex-wrap:wrap;gap:8px 12px;margin-left:0}
