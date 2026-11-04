@@ -156,7 +156,7 @@
   <section id="lobSummaryView" class="lob-summary-view"><header><span class="eyebrow" data-i18n="homeEyebrow">TRANG CHỦ · TỔNG HỢP LOB</span><h1 data-i18n="homeTitle">Tổng hợp LOB theo Model</h1><div id="lobSummaryKpis" class="lob-summary-kpis"></div></header><div class="lob-summary-toolbar"><details id="lobSummaryModels" class="lob-summary-model-picker"><summary id="lobSummaryModelsLabel" data-i18n="allModels">Tất cả Model</summary><div id="lobSummaryModelsList"></div></details><span id="lobSummaryStatus"></span></div><div id="lobSummaryGrid" class="lob-summary-grid"></div><section id="stHomeDashboard" class="st-home-dashboard" hidden><header><div><span class="eyebrow">STANDARD TIME</span><h2>Biến động đơn giá &amp; S/T</h2><p id="stHomeDashboardNote">Theo các Model đang chọn</p></div></header><div id="stHomeDashboardBody" class="st-home-dashboard-body"></div></section></section>
   <section id="stInfoView" class="st-info-view" hidden>
     <header class="st-page-head"><div><span class="eyebrow">STANDARD TIME</span><h1>Thông tin S/T</h1><p id="stSyncStatus" class="st-sync-status" aria-live="polite">Đang tải thời điểm đồng bộ Google Sheet…</p></div><div class="st-head-actions"><button id="stRefreshBtn" class="btn" type="button">Tải lại</button><button id="stExportModelBtn" class="btn" type="button">Xuất Excel</button><button id="stLaborCostBtn" class="btn" type="button" hidden>Cập nhật Labor cost</button><button id="stManualPriceBtn" class="btn" type="button" hidden>Nhập giá Parent Code</button><button id="stSheetSyncBtn" class="btn primary" type="button" hidden>Đồng bộ Google Sheet</button><button id="stVocImportBtn" class="btn" type="button" hidden>Nhập VOC Excel</button><input id="stVocFile" type="file" accept=".xlsx,.xlsm,.xls" hidden></div></header>
-    <div id="stKpis" class="st-kpis" aria-label="Tổng hợp S/T"></div>
+    <div id="stKpis" class="st-kpis" aria-label="Tổng hợp S/T"></div><section id="stModelSummary" class="st-model-summary" aria-label="Tổng hợp Set và Person theo Model"></section>
     <div class="st-toolbar"><label class="st-search"><span>⌕</span><input id="stSearch" type="search" placeholder="Tìm Code hoặc Model…" autocomplete="off"></label><label class="st-model-picker-label">Model<details id="stModelPicker" class="st-model-picker"><summary id="stModelFilterLabel">Tất cả model</summary><div class="st-model-options"><label><input id="stModelAll" type="checkbox" checked> Tất cả model</label><div id="stModelOptions"></div></div></details></label><label>Loại<select id="stTypeFilter"><option value="">Tất cả</option><option value="Smart">Smart</option><option value="Tab">Tab</option><option value="Block">Block</option></select></label><label>Thay đổi<select id="stChangeFilter"><option value="">Tất cả</option><option value="changed">Đã thay đổi</option><option value="baseline">Chưa thay đổi</option></select></label><label>Từ ngày<input id="stDateFrom" type="date"></label><label>Đến ngày<input id="stDateTo" type="date"></label><label>Kỳ biểu đồ<select id="stPeriodFilter"><option value="month">Theo tháng</option><option value="quarter">Theo quý</option><option value="year">Theo năm</option></select></label><span id="stResultCount" class="st-result-count"></span></div>
     <div class="st-workspace">
       <section class="st-list-panel" aria-label="Danh sách Prod. Material"><div id="stTableHost" class="st-table-host"></div><nav id="stPager" class="st-pager" aria-label="Phân trang S/T"></nav></section>
@@ -202,9 +202,10 @@
   <script src="./app.js?v=20261103-release-v2"></script>
   <script src="./mobile-ux.js?v=20261028-mobile-layout-v2"></script>
   <script src="./viewer-print-ux.js?v=20261014-layout-v9"></script>
-  <script type="module" src="./st-info.js?v=20261103-bom-price-v6"></script>
+  <script type="module" src="./st-info.js?v=20261104-model-summary-v7"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
 </html>
+
 
