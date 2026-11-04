@@ -62,19 +62,10 @@ jobs:
       - name: Inspect migration history
         run: supabase migration list --db-url "$SUPABASE_DB_URL"
       - name: Preview pending migrations
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --yes --dry-run
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
       - name: Apply pending migrations
-        shell: bash
-        run: |
-          set +e
-          output="$(supabase db push --db-url "$SUPABASE_DB_URL" 2>&1)"
-          status=$?
-          printf '%s\n' "$output"
-          if [ "$status" -ne 0 ]; then
-            message="$(printf '%s' "$output" | tail -n 1)"
-            echo "::error title=Supabase migration failed::$message"
-            exit "$status"
-          fi      - name: Lint production schema
+        run: supabase db push --db-url "$SUPABASE_DB_URL"
+      - name: Lint production schema
         run: supabase db lint --db-url "$SUPABASE_DB_URL" --level error --fail-on error
       - name: Verify production workflow schema
         env:
@@ -172,5 +163,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-
