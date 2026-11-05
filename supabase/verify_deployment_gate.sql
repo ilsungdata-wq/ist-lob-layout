@@ -13,7 +13,7 @@ begin
   if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='layout_versions' and column_name='published_revision') then missing := array_append(missing,'layout_versions.published_revision'); end if;
   if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='models' and column_name='deleted_at') then missing := array_append(missing,'models.deleted_at'); end if;
   if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='layout_versions' and column_name='deleted_at') then missing := array_append(missing,'layout_versions.deleted_at'); end if;
-  foreach fn in array array['has_capability','get_my_capabilities','save_layout_revision','restore_layout_revision','get_published_versions','set_capability_grant','set_profile_active','rename_model','soft_delete_model','rename_layout_version','soft_delete_layout_version','publish_layout_version','archive_layout_version','get_st_catalog','get_st_history','apply_st_voc_batch','sync_st_erp_snapshot','sync_st_bom_catalog','get_st_bom_price_entry_catalog','apply_st_manual_price','get_st_model_layout_metrics','get_st_all_model_layout_metrics'] loop
+  foreach fn in array array['has_capability','get_my_capabilities','save_layout_revision','restore_layout_revision','get_published_versions','set_capability_grant','set_profile_active','rename_model','soft_delete_model','rename_layout_version','soft_delete_layout_version','publish_layout_version','archive_layout_version','get_st_catalog','get_st_history','apply_st_voc_batch','sync_st_erp_snapshot','sync_st_bom_catalog','get_st_bom_price_entry_catalog','apply_st_manual_price','get_st_model_layout_metrics','get_st_all_model_layout_metrics','get_st_all_model_report_metrics'] loop
     if not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname=fn) then missing := array_append(missing,'function '||fn); end if;
   end loop;
   if not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname='capability_grants' and c.relrowsecurity) then missing := array_append(missing,'RLS capability_grants'); end if;
@@ -27,4 +27,5 @@ begin
   if cardinality(missing)>0 then raise exception 'Deployment verification failed: %',array_to_string(missing,', '); end if;
 end $$;
 select 'permissions_revisions_workflow' as check_name,'PASS' as status,now() as verified_at;
+
 
