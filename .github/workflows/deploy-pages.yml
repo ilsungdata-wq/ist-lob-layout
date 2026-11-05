@@ -75,7 +75,7 @@ jobs:
         id: edge_changes
         shell: bash
         run: |
-          if git diff --quiet HEAD^ HEAD -- supabase/functions/st-sheet-sync; then
+          if git diff --quiet HEAD^ HEAD -- supabase/functions/st-sheet-sync .github/workflows/deploy-pages.yml; then
             echo "st_sync=false" >> "$GITHUB_OUTPUT"
           else
             echo "st_sync=true" >> "$GITHUB_OUTPUT"
@@ -87,10 +87,9 @@ jobs:
           fi
       - name: Deploy S/T Google Sheet sync function
         if: steps.edge_changes.outputs.st_sync == 'true'
-        # config.toml already sets verify_jwt=false. Do not block the static web release if
-        # the Supabase Function API is temporarily unavailable; the last healthy function stays live.
-        continue-on-error: true
-        run: supabase functions deploy st-sheet-sync --project-ref "$SUPABASE_PROJECT_REF"
+        # config.toml already sets verify_jwt=false. Use the current remote deploy syntax,
+        # keep diagnostics visible, and fail the release if the synchronization backend is unavailable.
+        run: supabase functions deploy st-sheet-sync --remote="$SUPABASE_PROJECT_REF" --yes --debug
       - name: Deploy published-only LOB MCP function
         if: steps.edge_changes.outputs.lob_mcp == 'true'
         run: supabase functions deploy lob-mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
