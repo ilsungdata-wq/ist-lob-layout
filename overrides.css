@@ -674,3 +674,7 @@ body,button,input,select,textarea{font-family:var(--app-font)!important;letter-s
 #processView .status-cell .grid-status{display:inline-block;vertical-align:middle;width:calc(100% - 38px);min-width:120px!important}
 #processView .status-cell .grid-delete{display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;margin-left:6px}
 .manage-mode #saveMetaBtn{display:block!important}
+
+/* Keep the new compact font, but retain the established teal application palette. */
+:root{--erp-navy:#0d2633;--erp-ink:#123b46;--erp-line:#d5e4e1;--erp-surface:#fff;--erp-page:#eef4f3;--erp-primary:#0d8b79}
+.topbar{background:#0d2633!important;border-bottom-color:#17c5a5!important}.btn.primary{background:#0d8b79!important;border-color:#0d8b79!important}.btn.danger{border-color:#dd5b54!important;color:#c7423b!important}.lob-summary-view,.st-info-view,body{background:#eef4f3!important;color:#123b46}.st-table thead th,.lob-summary-table thead th{background:#0d3947!important}.view-tree{background:#0d2633!important;border-right-color:#244755!important}.view-tree .view-tab:hover{background:#174657!important}.view-tree .view-tab.active{background:#0d8b79!important}.view-tree .view-tab.active span{color:#0d8b79!important}.lob-summary-kpis article,.st-kpis article{background:#fff!important}
