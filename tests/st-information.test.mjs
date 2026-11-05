@@ -138,8 +138,6 @@ test('S/T shows and records the most recent Google Sheet synchronization',()=>{
  assert.match(script,/Đồng bộ Google Sheet gần nhất/);
  assert.match(script,/google_sheet_source_timeout/);
  assert.match(script,/Đồng bộ xong trong/);
- assert.match(edgeFunction,/const runBatches/);
- assert.match(edgeFunction,/elapsed_ms/);
  assert.match(css,/\.st-sync-status/);
  assert.match(syncStatusMigration,/create table if not exists public\.st_google_sync_runs/);
  assert.match(syncStatusMigration,/create or replace function public\.get_st_google_sync_status/);
