@@ -75,7 +75,7 @@ test('Google Sheet sync reads only required columns and deduplicates before Supa
  assert.match(appsScript,/R\/D date/);
  assert.match(edgeFunction,/admin_required_to_sync_st/);
  assert.match(edgeFunction,/ST_GOOGLE_SYNC_TOKEN/);
- assert.match(edgeFunction,/unique=new Map/);
+ assert.match(edgeFunction,/unique\s*=\s*new Map/);
  assert.match(script,/compareSheetRows/);
  assert.match(script,/status!=='unchanged'/);
 });
@@ -137,7 +137,9 @@ test('S/T shows and records the most recent Google Sheet synchronization',()=>{
  assert.match(script,/rpc\('record_st_google_sync'/);
  assert.match(script,/Đồng bộ Google Sheet gần nhất/);
  assert.match(script,/google_sheet_source_timeout/);
- assert.match(script,/Đồng bộ nhanh xong/);
+ assert.match(script,/Đồng bộ xong trong/);
+ assert.match(edgeFunction,/const runBatches/);
+ assert.match(edgeFunction,/elapsed_ms/);
  assert.match(css,/\.st-sync-status/);
  assert.match(syncStatusMigration,/create table if not exists public\.st_google_sync_runs/);
  assert.match(syncStatusMigration,/create or replace function public\.get_st_google_sync_status/);
