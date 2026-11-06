@@ -697,3 +697,6 @@ h1,h2,h3,h4,h5,h6,.field-label,.tree-title,.st-kpis span,.lob-summary-kpis span,
 
 /* Report headings share the same dark title color and navy table heading. */
 .eyebrow,.st-report-dialog .eyebrow,.st-report-status,.st-report-kpis span,.st-report-model-picker summary{color:#111827!important}.st-report-table thead th,.st-report-table thead th *{background:#0b376d!important;color:#fff!important;font-weight:700!important}
+
+/* Viewer state is conveyed by the Viewer button; keep only the status dot. */
+body.readonly #saveState{font-size:0!important}
