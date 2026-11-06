@@ -30,7 +30,7 @@ function readSheetColumns_(spreadsheetId,sheetName,columns,rowCount) {
     let response=original,code=response.getResponseCode();
     if ([429,500,502,503,504].includes(code)) {
       Utilities.sleep(500+(index%3)*250);
-      response=UrlFetchApp.fetch(requests[index]);
+      response=UrlFetchApp.fetch(requests[index].url,requests[index]);
       code=response.getResponseCode();
     }
     if (code!==200) throw new Error('Google Sheets API ('+code+') '+sheetName+' part '+(index+1)+': '+response.getContentText().slice(0,240));
