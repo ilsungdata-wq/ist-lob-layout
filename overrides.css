@@ -706,3 +706,10 @@ body.readonly #saveState{font-size:0!important}
 
 /* Menu panels are white, so their labels must use the normal dark ink. */
 .topbar .shell-menu>div,.topbar .shell-menu>div *,.topbar .shell-menu button{color:#111827!important}.topbar .shell-menu button:hover{background:#eaf2fb!important;color:#0b376d!important}
+
+/* S/T GAP polarity: negative = red, positive = green, zero = neutral.
+   Override the general dark table-cell colors declared earlier in this file. */
+.st-info-view .st-table tbody td.st-gap.down,
+.st-info-view .st-history-table td.st-gap.down{color:#dc2626!important}
+.st-info-view .st-table tbody td.st-gap.up,
+.st-info-view .st-history-table td.st-gap.up{color:#15803d!important}
