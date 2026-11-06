@@ -700,3 +700,6 @@ h1,h2,h3,h4,h5,h6,.field-label,.tree-title,.st-kpis span,.lob-summary-kpis span,
 
 /* Viewer state is conveyed by the Viewer button; keep only the status dot. */
 body.readonly #saveState{font-size:0!important}
+
+/* Smart, Tab and Block use distinct, accessible family colors. */
+.st-type-kpi{display:inline-flex!important;margin:0 4px 4px 0;padding:4px 9px;border:1px solid #86b7ef;border-radius:999px;background:#dbeafe;color:#174f95!important;font-size:14px;font-weight:700!important}.st-type-kpi.tab{border-color:#c4b5fd;background:#ede9fe;color:#6d28d9!important}.st-type-kpi.block{border-color:#f6c453;background:#fff4cc;color:#92400e!important}

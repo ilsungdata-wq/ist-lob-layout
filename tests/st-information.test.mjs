@@ -10,6 +10,7 @@ const shellCss=read('overrides.css');
 const migration=read('supabase/migrations/20261014000400_st_information.sql');
 const syncMigration=read('supabase/migrations/20261015000100_st_google_sync.sql');
 const syncStatusMigration=read('supabase/migrations/20261029000100_st_google_sync_status.sql');
+const syncAuditFixMigration=read('supabase/migrations/20261106000200_fix_google_sync_audit_service_role.sql');
 const edgeFunction=read('supabase/functions/st-sheet-sync/index.ts');
 const appsScript=read('google-apps-script/st-sheet-sync/Code.gs');
 const laborMigration=read('supabase/migrations/20261016000200_labor_cost_history_and_model_rename.sql');
@@ -20,7 +21,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261105-model-filter-v5/);
- assert.match(html,/st-info\.js\?v=20261106-report-models-v16/);
+ assert.match(html,/st-info\.js\?v=20261106-sync-export-v17/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -90,6 +91,9 @@ test('S/T supports Block, R/D history, model export, and viewer password',()=>{
  assert.match(script,/get_st_model_history/);
  assert.match(script,/import_st_erp_history/);
  assert.match(script,/XLSX\.writeFile/);
+ assert.match(script,/Tong hop Model/);
+ assert.match(script,/Chi tiet Parent Code/);
+ assert.match(script,/Danh sách code/);
  assert.match(script,/verify_st_view_password/);
  assert.match(historical,/\('Smart','Tab','Block'\)/);
  assert.match(css,/max-height:calc\(100vh - 280px\)/);
@@ -143,6 +147,8 @@ test('S/T shows and records the most recent Google Sheet synchronization',()=>{
  assert.match(syncStatusMigration,/create or replace function public\.get_st_google_sync_status/);
  assert.match(syncStatusMigration,/create or replace function public\.record_st_google_sync/);
  assert.match(syncStatusMigration,/grant execute on function public\.get_st_google_sync_status\(\) to anon, authenticated/);
+ assert.match(syncAuditFixMigration,/auth\.role\(\) <> 'service_role'/);
+ assert.match(syncAuditFixMigration,/to authenticated,service_role/);
 });
 test('BOM mapping preserves Block models and is applied by the production sync migration',()=>{
  const bomMappingMigration=read('supabase/migrations/20261022000100_fix_st_bom_mapping.sql');
