@@ -21,7 +21,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261105-model-filter-v5/);
- assert.match(html,/st-info\.js\?v=20261106-model-cards-v18/);
+ assert.match(html,/st-info\.js\?v=20261106-new-code-filter-v19/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -282,4 +282,19 @@ test('S/T model filter reuses the Home default selection and admins can save it'
  assert.match(script,/set_dashboard_default_models/);
  assert.match(script,/get_dashboard_default_models/);
  assert.match(script,/UPH/);
+});
+
+
+test('S/T latest sync exposes and filters only newly inserted Parent Codes',()=>{
+ const latest=read('supabase/migrations/20261106000400_latest_st_sync_new_codes.sql');
+ assert.match(latest,/create or replace function public\.get_st_google_sync_status\(\)/);
+ assert.match(latest,/Thêm mã mới từ Google Sheet/);
+ assert.match(latest,/h\.created_at<=r\.synced_at/);
+ assert.match(latest,/previous_sync/);
+ assert.match(latest,/new_codes/);
+ assert.match(html,/<option value="new-latest">Mã mới - đồng bộ gần nhất<\/option>/);
+ assert.match(script,/latestSyncNewCodes=new Set/);
+ assert.match(script,/change==='new-latest'/);
+ assert.match(script,/latestSyncNewCodes\.has\(String\(r\.product_code\)/);
+ assert.match(script,/await loadSyncStatus\(\);historyCache\.clear\(\)/);
 });
