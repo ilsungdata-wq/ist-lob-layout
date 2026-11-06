@@ -2,6 +2,24 @@ const ERP_SPREADSHEET_ID = '1BJTaqs76rJlYZHQFzDgpZiZJsBJCenKmbfenba1YdIw';
 const ERP_SHEET_NAME = 'DATA BASE ERP';
 const BOM_SPREADSHEET_ID = '1hA6a9EJsPOnhjbJUWtJmg7NSZGWaTKFAyvdEdmnZwuY';
 const BOM_SHEET_NAME = 'BOM';
+
+// Safe source smoke test: checks the two Sheets and the Sheets API with
+// 5 rows only. Does not write data to either Google Sheet or Supabase.
+function testStSourceAccess() {
+  const sources=[
+    [ERP_SPREADSHEET_ID,ERP_SHEET_NAME],
+    [BOM_SPREADSHEET_ID,BOM_SHEET_NAME]
+  ];
+  sources.forEach(([id,name])=>{
+    const sheet=SpreadsheetApp.openById(id).getSheetByName(name);
+    if (!sheet) throw new Error('Không tìm thấy sheet '+name);
+    const count=Math.min(5,Math.max(0,sheet.getLastRow()-1));
+    const values=readSheetColumns_(id,name,[1],count);
+    console.log('PASS S/T source '+name+' | rows='+sheet.getLastRow()+' | sample='+values[0].length);
+  });
+  console.log('PASS: nguồn ERP, BOM và quyền Google Sheets API hoạt động.');
+}
+
 function runDailyStSync(){const token=PropertiesService.getScriptProperties().getProperty('ST_SYNC_TOKEN'),url=PropertiesService.getScriptProperties().getProperty('ST_EDGE_SYNC_URL');if(!token||!url)throw new Error('Thiếu ST_SYNC_TOKEN hoặc ST_EDGE_SYNC_URL');const response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify({mode:'apply',token:token}),muteHttpExceptions:true});if(response.getResponseCode()<200||response.getResponseCode()>=300)throw new Error('Tự động đồng bộ thất bại: '+response.getContentText().slice(0,500));}
 function installDailyStSync(){ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='runDailyStSync').forEach(t=>ScriptApp.deleteTrigger(t));ScriptApp.newTrigger('runDailyStSync').timeBased().everyDays(1).atHour(12).create();}
 function doPost(event){try{const body=JSON.parse((event&&event.postData&&event.postData.contents)||'{}'),expected=PropertiesService.getScriptProperties().getProperty('ST_SYNC_TOKEN');if(!expected||body.token!==expected)return output_({ok:false,message:'unauthorized'});return output_(buildSnapshot_(body.include_history===true))}catch(error){return output_({ok:false,message:String(error&&error.message||error)})}}
