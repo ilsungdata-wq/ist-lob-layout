@@ -4,6 +4,12 @@ import fs from'node:fs';
 
 const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
 const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
+
+test('layout summary automatically excludes skilled workers from Total and refreshes equipment and Jig',()=>{
+ assert.match(fabric,/total:Math\.max\(0,workers-skill\)/);
+ assert.match(fabric,/alwaysAutomatic=new Set\(\['total','equipment','jig'\]\)/);
+ assert.match(fabric,/input\.disabled=isAutomatic\|\|!canEditLayout\(\)/);
+});
 const css=fs.readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 
 test('Phase 2D Save commits Fabric transforms and keeps revision save explicit',()=>{
