@@ -20,8 +20,8 @@ const passwordMigration=read('supabase/migrations/20261019000100_st_view_passwor
 test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
- assert.match(html,/st-info\.css\?v=20261105-model-filter-v5/);
- assert.match(html,/st-info\.js\?v=20261106-auto-overview-v21/);
+ assert.match(html,/st-info\.css\?v=20261106-lob-compact-v7/);
+ assert.match(html,/st-info\.js\?v=20261106-lob-kpi-v22/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -234,7 +234,7 @@ test('BOM catalog supports unpriced Parent Codes, manual price entry, and layout
 test('model summary puts Set Person, average price and per-person price above S/T filters',()=>{
  const modelSummaryMigration=read('supabase/migrations/20261104000100_st_model_summary_metrics.sql');
  assert.match(html,/id="stModelSummary"/);
- assert.match(script,/get_st_all_model_layout_metrics/);
+ assert.match(script,/get_st_all_model_report_metrics/);
  assert.match(script,/Net Price Avg \/ Direct MP/);
  assert.match(script,/Chưa có Direct MP/);
  assert.match(script,/refreshStSession/);
@@ -307,9 +307,27 @@ test('S/T GAP always displays a numeric value even for baseline codes',()=>{
  assert.match(shellCss,/\.st-gap\.up\{color:#15803d!important\}/);
 });
 
-test('S/T opens the saved Model overview and removes the inaccurate large per-person KPI',()=>{
+test('S/T opens the saved Model overview and recomputes accurate Net Price per person KPI',()=>{
  assert.match(script,/const loadCatalogBase=loadCatalog/);
  assert.match(script,/hasSpecificModels\(\)\)await showModelOverview\(\)/);
  assert.match(script,/textContent\.trim\(\)==='Net Price \/ người'/);
- assert.match(script,/perPerson\?\.remove\(\)/);
+ assert.match(script,/Net Price\/người Avg/);
+});
+
+
+test('S/T compact cards use Published Block 3 LOB and count SX plus QC manpower',()=>{
+ const migration=read('supabase/migrations/20261106000500_st_published_lob_mp_metrics.sql');
+ assert.match(script,/const lobModelKey=v=>modelKey\(v\)/);
+ assert.match(script,/replace\(\/\\bblock\\s\*3\\b\/g,'block'\)/);
+ assert.match(script,/MP trực tiếp \(SX \+ QC\)/);
+ assert.match(script,/Net Price\/người Avg/);
+ assert.match(script,/netPerPersonAvg|avgPerson/);
+ assert.match(script,/const showModelOverviewBase=showModelOverview/);
+ assert.match(script,/overview\.appendChild\(section\)/);
+ assert.match(script,/lobModelKey\(name\)/);
+ assert.doesNotMatch(script,/perPerson\?\.remove\(\)/);
+ assert.match(migration,/get_st_all_model_report_metrics/);
+ assert.match(migration,/where coalesce\(p\.value->>'isActive','true'\)<>'false'/);
+ assert.match(migration,/computed LOB|Compute LOB using actual active operations/);
+ assert.match(css,/Compact Published LOB summary cards/);
 });
