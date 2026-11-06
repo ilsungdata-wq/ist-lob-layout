@@ -694,3 +694,6 @@ body,button,input,select,textarea{color:#111827!important;font-weight:400!import
 
 /* Use one title system across every page: dark ink, bold, and blue table headers. */
 h1,h2,h3,h4,h5,h6,.field-label,.tree-title,.st-kpis span,.lob-summary-kpis span,.st-toolbar label,.st-sync-result-title,.st-chart-title h3,.st-model-summary-head h2,.process-view-head h1,.zone-heading h2,dialog legend,dialog h2{color:#111827!important;font-weight:700!important}.st-table thead th,.st-table thead th *,.lob-summary-table thead th,.lob-summary-table thead th *{color:#fff!important;font-weight:700!important}.topbar .brand strong,.topbar .shell-menu>summary,.view-tree .tree-title,.view-tree .view-tab{color:#fff!important}.st-detail-head h2,.st-detail-head span{color:#fff!important;font-weight:700!important}
+
+/* Report headings share the same dark title color and navy table heading. */
+.eyebrow,.st-report-dialog .eyebrow,.st-report-status,.st-report-kpis span,.st-report-model-picker summary{color:#111827!important}.st-report-table thead th,.st-report-table thead th *{background:#0b376d!important;color:#fff!important;font-weight:700!important}

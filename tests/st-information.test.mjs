@@ -20,7 +20,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261105-model-filter-v5/);
- assert.match(html,/st-info\.js\?v=20261105-sync-diagnostics-v14/);
+ assert.match(html,/st-info\.js\?v=20261106-report-fix-v15/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -242,6 +242,7 @@ test('model summary puts Set Person, average price and per-person price above S/
 
 test('full model report presents financial, S/T and layout metrics in one compact view',()=>{
  const reportMigration=read('supabase/migrations/20261105000100_st_model_summary_report.sql');
+ const reportFixMigration=read('supabase/migrations/20261106000100_fix_st_report_lob_and_mp.sql');
  assert.match(html,/id="stReportBtn"/);
  assert.match(html,/id="stReportDialog"/);
  assert.match(html,/Net Price \/ người/);
@@ -255,6 +256,10 @@ test('full model report presents financial, S/T and layout metrics in one compac
  assert.match(reportMigration,/get_st_all_model_report_metrics/);
  assert.match(reportMigration,/published_snapshot/);
  assert.match(reportMigration,/grant execute/);
+ assert.match(script,/percentValue/);
+ assert.match(reportFixMigration,/saved_lob<=1 then calculated\.saved_lob\*100/);
+ assert.match(reportFixMigration,/sum\(coalesce.*direct_mp/);
+ assert.doesNotMatch(reportFixMigration,/filter\s*\(where lower/);
 });
 
 
