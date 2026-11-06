@@ -21,7 +21,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
  assert.match(html,/data-view="st-info"/);
  assert.match(html,/id="stInfoView"/);
  assert.match(html,/st-info\.css\?v=20261105-model-filter-v5/);
- assert.match(html,/st-info\.js\?v=20261106-sync-export-v17/);
+ assert.match(html,/st-info\.js\?v=20261106-model-cards-v18/);
  assert.match(css,/@media\(max-width:768px\)/);
  assert.match(css,/body\[data-view="st-info"\] #printBtn/);
  assert.match(shellCss,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
@@ -258,6 +258,9 @@ test('full model report presents financial, S/T and layout metrics in one compac
  assert.match(script,/LOB Avg/);
  assert.match(html,/id="stReportModelPicker"/);
  assert.match(script,/renderReportModelPicker/);
+ assert.match(script,/showModelOverviewBase/);
+ assert.match(script,/Net Price \/ người/);
+ assert.match(script,/Set \/ Person/);
  assert.match(script,/metricNameByKey/);
  assert.match(script,/catalogNameByKey/);
  assert.match(script,/modelKey/);

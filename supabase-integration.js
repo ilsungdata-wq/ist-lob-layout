@@ -34,9 +34,9 @@ function workspaceDocument(row,version,permission,capabilities){
  const canEdit=capabilities.some(value=>['layout.edit','lob.edit','equipment.edit','jig.edit','version.manage'].includes(value));
  return{name:row.model_name||row.model_code,modelCode:row.model_code,description:row.description||'',version:version.version_number,processes:[],layoutObjects:[],published:version.status==='PUBLISHED',isLatest:false,_remote:{modelId:row.id,versionId:version.id,revision:version.revision,status:version.status,permission,capabilities,updatedAt:version.updated_at,publishedRevision:version.published_revision,lazy:true,canEdit}};
 }
-async function ensureLoaded(document){
+async function ensureLoaded(document,{fresh=false}={}){
  const remote=document?._remote;
- if(!remote?.lazy)return document;
+ if(!remote||!fresh&&!remote.lazy)return document;
  const version=remote.public
   ?await layoutService.getPublicVersion(remote.versionId)
   :await layoutService.getVersion(remote.versionId);
