@@ -18,25 +18,31 @@ function columnLetters_(column) {
 function readSheetColumns_(spreadsheetId,sheetName,columns,rowCount) {
   if (!rowCount) return columns.map(()=>[]);
   const quoted="'"+sheetName.replace(/'/g,"''")+"'";
-  const ranges=columns.map(column=>'ranges='+encodeURIComponent(quoted+'!'+columnLetters_(column)+'2:'+columnLetters_(column)+(rowCount+1))).join('&');
-  const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(spreadsheetId)+'/values:batchGet?'+ranges+'&valueRenderOption=FORMATTED_VALUE';
-  const started=Date.now();
-  const response=UrlFetchApp.fetch(url,{
-    method:'get',muteHttpExceptions:true,
-    headers:{Authorization:'Bearer '+ScriptApp.getOAuthToken()}
-  });
-  if (response.getResponseCode()!==200) {
-    throw new Error('Google Sheets API ('+response.getResponseCode()+'): '+response.getContentText().slice(0,240));
+  const TOKEN=ScriptApp.getOAuthToken(),PAGE_SIZE=12000,requests=[];
+  for (let offset=0;offset<rowCount;offset+=PAGE_SIZE) {
+    const first=offset+2,last=Math.min(rowCount+1,offset+PAGE_SIZE+1);
+    const ranges=columns.map(column=>'ranges='+encodeURIComponent(quoted+'!'+columnLetters_(column)+first+':'+columnLetters_(column)+last)).join('&');
+    const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(spreadsheetId)+'/values:batchGet?'+ranges+'&valueRenderOption=FORMATTED_VALUE';
+    requests.push({url,method:'get',headers:{Authorization:'Bearer '+TOKEN},muteHttpExceptions:true});
   }
-  const data=JSON.parse(response.getContentText());
-  if (!Array.isArray(data.valueRanges)||data.valueRanges.length!==columns.length) {
-    throw new Error('Google Sheets API: kết quả đọc cột không đầy đủ.');
-  }
-  console.log('S/T source '+sheetName+': '+rowCount+' rows, '+columns.length+' columns, '+(Date.now()-started)+' ms');
-  return columns.map((_,i)=>{
-    const rows=data.valueRanges[i].values||[];
-    return Array.from({length:rowCount},(_,j)=>String(rows[j]?.[0]??''));
+  const started=Date.now(),responses=UrlFetchApp.fetchAll(requests),output=columns.map(()=>Array(rowCount).fill(''));
+  responses.forEach((original,index)=>{
+    let response=original,code=response.getResponseCode();
+    if ([429,500,502,503,504].includes(code)) {
+      Utilities.sleep(500+(index%3)*250);
+      response=UrlFetchApp.fetch(requests[index]);
+      code=response.getResponseCode();
+    }
+    if (code!==200) throw new Error('Google Sheets API ('+code+') '+sheetName+' part '+(index+1)+': '+response.getContentText().slice(0,240));
+    const data=JSON.parse(response.getContentText());
+    if (!Array.isArray(data.valueRanges)||data.valueRanges.length!==columns.length) throw new Error('Google Sheets API: thiếu dữ liệu cột của '+sheetName);
+    const offset=index*PAGE_SIZE;
+    data.valueRanges.forEach((range,col)=>{
+      const values=range.values||[];
+      for(let j=0;j<values.length&&offset+j<rowCount;j++) output[col][offset+j]=String(values[j]?.[0]??'');
+    });
   });
+  console.log('S/T source '+sheetName+': '+rowCount+' rows, '+columns.length+' columns, '+responses.length+' chunks, '+(Date.now()-started)+' ms');
+  return output;
 }
-
 function headerColumn_(headers,name){const i=headers.findIndex(v=>normalize_(v)===normalize_(name));if(i<0)throw new Error('Thiếu cột '+name);return i+1}function headerColumnAny_(headers,names){const i=headerColumnOptional_(headers,names);if(!i)throw new Error('Thiếu cột R/D date');return i}function headerColumnOptional_(headers,names){for(const n of names){const i=headers.findIndex(v=>normalize_(v)===normalize_(n));if(i>=0)return i+1}return 0}function normalize_(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}function number_(v){const x=String(v||'').trim().replace(/\s/g,'');if(!x)return NaN;if(/^\d{1,3}([.,]\d{3})+$/.test(x))return Number(x.replace(/[.,]/g,''));return Number(x.replace(',','.'))}function date_(v){if(v instanceof Date&&!isNaN(v))return Utilities.formatDate(v,Session.getScriptTimeZone(),'yyyy-MM-dd');const x=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(x))return x;const m=x.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);return m?`${m[3]}-${('0'+m[2]).slice(-2)}-${('0'+m[1]).slice(-2)}`:''}function typeFromBom_(value,model){const normalized=normalize_(value);if(normalized.includes('block'))return'Block';if(normalized.includes('tab'))return'Tab';if(normalized.includes('smart'))return'Smart';return type_(model)}function type_(model){return /\bblock\s*\d+\b/i.test(model)?'Block':/^(P6|T|X)/i.test(model)?'Tab':'Smart'}function output_(v){return ContentService.createTextOutput(JSON.stringify(v)).setMimeType(ContentService.MimeType.JSON)}
