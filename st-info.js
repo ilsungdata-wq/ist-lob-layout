@@ -82,8 +82,41 @@ const renderKpisBase=renderKpis;renderKpis=function(rows=catalog){renderKpisBase
  perPerson.title='Bình quân Net Price theo Parent Code của từng Model / MP SX + QC từ bản LOB Published';
 }const typeCard=cards.find(card=>card.querySelector('span')?.textContent.trim()==='Type'),value=typeCard?.querySelector('b');if(!value)return;const types=[...new Set(rows.map(row=>typeLabel(row.product_type)).filter(Boolean))];value.innerHTML=types.length?types.map(type=>`<span class="st-type-kpi ${type.toLowerCase()}">${esc(type)}</span>`).join(' '):'—'};
 
-// Selected Model cards reuse every metric shown in the consolidated report.
-const showModelOverviewBase=showModelOverview;showModelOverview=async function(){const requested=selectedModels();await showModelOverviewBase();if(requested.join('|')!==selectedModels().join('|'))return;await loadModelReportMetrics();const metricByModel=new Map(modelReportMetricRows.map(row=>[modelKey(row.model_name),row]));$('stDetailPanel')?.querySelectorAll('.st-layout-metrics').forEach((section,index)=>{const name=requested[index],rows=catalog.filter(row=>modelKey(row.model_name)===modelKey(name)),metric=metricByModel.get(modelKey(name))||{},avg=field=>rows.length?rows.reduce((sum,row)=>sum+Number(row[field]||0),0)/rows.length:null,net=avg('current_price'),st=avg('current_st'),direct=Number(metric.direct_mp||0),moneyPer=direct>0&&net!=null?net/direct:null,setPerson=direct>0&&st!=null?st/direct:null;section.querySelector('h3').textContent=`Tổng hợp · ${name}`;section.querySelector('.st-layout-metrics-grid').innerHTML=[['Net Price Avg',net==null?'—':money.format(net)+' ₫'],['S/T Avg',st==null?'—':decimal.format(st)+' phút'],['LOB',Number(metric.lob)?percent(metric.lob)+'%':'—'],['MP trực tiếp',direct||'—'],['Net Price / người',moneyPer==null?'—':money.format(moneyPer)+' ₫/MP'],['Set / Person',setPerson==null?'—':decimal.format(setPerson)+' phút/MP'],['UPH',Number(metric.uph)?money.format(metric.uph):'—'],['Layout',`${metric.type_value||'—'} · Line ${metric.line_value||'—'}`],['Version',metric.version_number||'—'],['Parent Code',rows.length]].map(([label,value])=>`<article><span>${esc(label)}</span><b>${esc(value)}</b></article>`).join('')})};
+// Compact cards for S/T models, reading their matched Published LOB (including QC).
+const showModelOverviewBase=showModelOverview;
+showModelOverview=async function(){
+ const requested=selectedModels();
+ await showModelOverviewBase();
+ if(requested.join('|')!==selectedModels().join('|'))return;
+ await loadModelReportMetrics();
+ const overview=$('stDetailPanel')?.querySelector('.st-model-overview');
+ if(!overview)return;
+ const metricByModel=new Map(modelReportMetricRows.map(row=>[lobModelKey(row.model_name),row]));
+ overview.querySelectorAll('.st-layout-metrics').forEach(section=>section.remove());
+ for(const name of requested){
+  const rows=catalog.filter(row=>modelKey(row.model_name)===modelKey(name));
+  if(!rows.length)continue;
+  const metric=metricByModel.get(lobModelKey(name))||{};
+  const avg=field=>rows.reduce((sum,row)=>sum+Number(row[field]||0),0)/rows.length;
+  const net=avg('current_price'),st=avg('current_st'),direct=Number(metric.direct_mp||0);
+  const moneyPer=direct>0?net/direct:null,setPerson=direct>0?st/direct:null;
+  const cards=[
+   ['Net Price Avg',money.format(net)+' ₫'],
+   ['S/T Avg',decimal.format(st)+' phút'],
+   ['LOB',Number(metric.lob)>0?percent(metric.lob)+'%':'—'],
+   ['MP trực tiếp (SX + QC)',direct>0?money.format(direct):'—'],
+   ['Net Price/người Avg',moneyPer==null?'—':money.format(moneyPer)+' ₫/MP'],
+   ['Set / Person',setPerson==null?'—':decimal.format(setPerson)+' phút/MP'],
+   ['UPH',Number(metric.uph)>0?money.format(metric.uph):'—'],
+   ['Version',metric.version_number||'—'],
+   ['Parent Code',rows.length]
+  ];
+  const section=document.createElement('section');
+  section.className='st-layout-metrics';
+  section.innerHTML=`<h3>Tổng hợp · ${esc(name)}</h3><div class="st-layout-metrics-grid">${cards.map(([label,value])=>`<article><span>${esc(label)}</span><b>${esc(value)}</b></article>`).join('')}</div>`;
+  overview.appendChild(section);
+ }
+};
 
 // Opening or refreshing S/T immediately renders the overview for the saved Model selection.
 const loadCatalogBase=loadCatalog;loadCatalog=async function(options){const result=await loadCatalogBase(options);if(canView()&&hasSpecificModels())await showModelOverview();return result};
