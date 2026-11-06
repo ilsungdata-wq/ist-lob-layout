@@ -302,7 +302,7 @@ test('S/T latest sync exposes and filters only newly inserted Parent Codes',()=>
 
 test('S/T GAP always displays a numeric value even for baseline codes',()=>{
  assert.match(script,/title="\$\{changed\?'GAP S\/T so với lần thay đổi gần nhất':'Chưa thay đổi S\/T từ mốc ban đầu'\}"/);
- assert.match(script,/>$\{deltaLabel\(gap\)\}<\/td>/m);
+ assert.match(script,/>\$\{deltaLabel\(gap\)\}<\/td>/m);
  assert.doesNotMatch(script,/changed\?deltaLabel\(gap\):'—'/);
  assert.match(shellCss,/\.st-gap\.down\{color:#dc2626!important\}/);
  assert.match(shellCss,/\.st-gap\.up\{color:#15803d!important\}/);
