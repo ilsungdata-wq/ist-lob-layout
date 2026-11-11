@@ -713,3 +713,16 @@ body.readonly #saveState{font-size:0!important}
 .st-info-view .st-history-table td.st-gap.down{color:#dc2626!important}
 .st-info-view .st-table tbody td.st-gap.up,
 .st-info-view .st-history-table td.st-gap.up{color:#15803d!important}
+
+/* Layout summary: automatic counts, manual overrides and per-card reset. */
+.shape-summary-cards article{position:relative;grid-template-rows:auto minmax(24px,auto) auto;align-content:center}
+.shape-summary-cards [data-layout-summary]{font-variant-numeric:tabular-nums}
+.shape-summary-cards input.summary-manual{color:#a3540d!important;background:#fff8e7!important;outline-color:#d6a359!important}
+.shape-summary-cards input.summary-mismatch{outline:2px solid #d94832!important}
+.shape-summary-cards [data-summary-auto]{display:block;min-height:17px;white-space:nowrap;line-height:1.2}
+.shape-summary-cards [data-summary-auto]:disabled{opacity:.55}
+.shape-summary-cards [data-summary-auto].manual{font-weight:750;color:#b45309}
+.shape-summary-help{padding:5px 12px;background:#f4f7f6;color:#46646c;font-size:11px;border-bottom:1px solid #cadbd8}
+@media(max-width:900px){.shape-summary-cards{grid-template-columns:repeat(5,minmax(112px,1fr));overflow-x:auto}}
+@media(max-width:570px){.shape-summary-help{font-size:10px}}
+@media print{.shape-summary-cards [data-summary-auto],.shape-summary-help{display:none!important}}
