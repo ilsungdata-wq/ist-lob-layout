@@ -3,7 +3,10 @@
   let sourceMode='edited',bound=false,lastWorkspace='',resizeFrame=0,lastCanvasSize='',resizeObserver,referenceZoom=1,drag,referencePointers=new Map(),referencePinchDistance=0;
   const canChooseSource=()=>!!(can('layout.edit')||can('version.publish'));
   const hasEditedLayout=()=>shapeArray().length>0;
-  const selectedMode=()=>model()?.viewerLayoutSource||(hasEditedLayout()?'edited':'reference');
+  // Respect the explicitly published source; for older versions without the field,
+  // prefer an uploaded reference over the generated canvas.
+  const hasSavedReference=()=>{const m=model();return !!(m?.referenceAsset?.path||m?.referenceImage||m?.referenceSourceAsset?.path||m?.sourceExcelAsset?.path);};
+  const selectedMode=()=>{const saved=model()?.viewerLayoutSource;return saved==='reference'||saved==='edited'?saved:(hasSavedReference()?'reference':hasEditedLayout()?'edited':'reference');};
   const reference=()=>({panel:$('layoutReferenceInline'),image:$('layoutReferenceInlineImage')});
   const referenceActive=()=>{const {panel,image}=reference();return sourceMode==='reference'&&!!panel&&!panel.hidden&&!!image?.src&&!image.hidden};
   function updateZoomLabel(){const label=$('shapeZoomReset');if(label&&referenceActive())label.textContent=Math.round(referenceZoom*100)+'%';}
@@ -21,6 +24,9 @@
     const panel=$('layoutReferenceInline'),image=$('layoutReferenceInlineImage'),status=$('layoutReferenceInlineStatus'),canvas=document.querySelector('.shapes-canvas-scroll'),office=$('professionalEditorShell'),source=$('excelReferenceImage'),control=$('layoutSourceControl'),select=$('layoutSourceSelect'),openReference=$('openExcelReferenceBtn');
     if(!panel||!image||!status||!canvas)return;ensureMobileControls();
     const useReference=sourceMode==='reference',available=!!source?.getAttribute('src')&&!source.hidden;
+    const loadingReference=useReference&&!available&&/Đang tải|Đang tạo/i.test($('excelReferenceName')?.textContent||'');
+    const mobileCanvasControls=$('mobileLayoutControls');
+    if(mobileCanvasControls)mobileCanvasControls.hidden=useReference;
     panel.hidden=!useReference;canvas.hidden=useReference;if(office)office.hidden=useReference;
     if(control)control.hidden=!canChooseSource();
     if(openReference)openReference.hidden=!canChooseSource();
@@ -29,7 +35,7 @@
     if(select){select.value=sourceMode;select.querySelector('option[value="reference"]').disabled=!available;}
     if(!useReference){fitViewerCanvas();return;}
     if(available){if(image.src!==source.src){referenceZoom=1;image.removeAttribute('style');panel.classList.remove('reference-zoomed');}image.src=source.src;image.hidden=false;status.textContent=$('excelReferenceName')?.textContent||'File gốc đã Pushlist';updateZoomLabel();}
-    else {image.removeAttribute('src');image.hidden=true;status.textContent='Phiên bản này chưa có file PDF/Excel gốc.';}
+    else {image.removeAttribute('src');image.hidden=true;status.textContent=loadingReference?'Đang tải PDF / ảnh Layout đã lưu…':'Không tải được PDF / ảnh Layout của phiên bản này. Kiểm tra quyền truy cập hoặc tải lại.';}
   }
   function select(mode){
     if(!canChooseSource())return;
@@ -38,7 +44,7 @@
     sourceMode=mode;referenceZoom=1;model().viewerLayoutSource=mode;persistLocal();scheduleSave();renderExcelReference();sync();
     toast('Đã chọn '+(mode==='reference'?'PDF đã tải lên':'Layout vẽ trên webapp')+'. Lưu rồi Pushlist để phát hành cho người xem.');
   }
-  function refresh(){const workspace=`${model()?.name||''}:${model()?.version||''}`,publishedSource=selectedMode();if(workspace!==lastWorkspace||!canChooseSource()){lastWorkspace=workspace;sourceMode=publishedSource;referenceZoom=1;lastCanvasSize='';}renderExcelReference();sync();}
+  function refresh(){const workspace=`${model()?.id||model()?.name||''}:${model()?.versionId||model()?.version||''}`,publishedSource=selectedMode();if(workspace!==lastWorkspace||!canChooseSource()){lastWorkspace=workspace;sourceMode=publishedSource;referenceZoom=1;lastCanvasSize='';}renderExcelReference();sync();}
   function fitViewerCanvas(){
     if(document.body.dataset.view!=='overview'||document.body.classList.contains('layout-editing')||sourceMode==='reference'||!fabricLayoutCanvas)return;
     const host=document.querySelector('.pro-canvas-host');if(!host)return;const rect=host.getBoundingClientRect(),width=Math.floor(rect.width),height=Math.floor(rect.height);if(width<240||height<180)return;
