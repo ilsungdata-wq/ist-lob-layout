@@ -726,3 +726,6 @@ body.readonly #saveState{font-size:0!important}
 @media(max-width:900px){.shape-summary-cards{grid-template-columns:repeat(5,minmax(112px,1fr));overflow-x:auto}}
 @media(max-width:570px){.shape-summary-help{font-size:10px}}
 @media print{.shape-summary-cards [data-summary-auto],.shape-summary-help{display:none!important}}
+
+/* Legacy cached Layout helper must never appear in Viewer or Editor. */
+.shape-summary-help{display:none!important}
