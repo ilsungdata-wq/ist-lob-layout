@@ -1,12 +1,127 @@
 /* Fabric.js professional canvas adapter. The application state remains the source of truth. */
 let fabricLayoutCanvas=null,fabricSyncing=false;
+// Layout badges count the active LOB stations when present, otherwise the
+// visible people/equipment/jig symbols on the drawing. Manual values are
+// persisted per Model/Version and never written into the LOB source.
 function fabricTypeCounts(items){
- const layers=new Map((model().layoutDocument?.layers||[]).map(l=>[l.id,l])),visible=items.filter(o=>o.visible!==false&&layers.get(o.layerId)?.visible!==false),category=(o,value)=>o.metadata?.factoryCategory===value,count=(types,value)=>visible.filter(o=>types.includes(o.type)||category(o,value)).length,processes=model().processes||[],named=word=>processes.filter(process=>norm(process.name).includes(word)).reduce((sum,process)=>sum+(Number(process.mp)||0),0),configuredJigs=processes.flatMap(process=>typeof getJigs==='function'?getJigs(process):process.jigs||[]),jigClass=item=>typeof jigType==='function'?jigType(item):/press/i.test(String(item.type||item.name||''))?'press':'tool',hasEquipment=processes.filter(process=>process.equipment||process.eqType||(process.jigs||[]).length).length;
- const leader=named('LEADER')||count(['worker-leader'],'leader'),support=named('SUPPORT')||count(['worker-support'],'support'),iqc=named('IQC'),oqc=named('OQC'),pqc=named('PQC'),workers=processes.length?processes.reduce((sum,process)=>sum+(Number(process.mp)||0),0):count(['worker','worker-pink','worker-leader','worker-support'],'operator'),skill=processes.length?processes.filter(process=>typeof stationSkills==='function'&&stationSkills(process).length).length:count(['star'],'skill'),machine=hasEquipment||count(['laser','machine-frame','machine','equipment','auto','vinyl','vision'],'machine'),jig= configuredJigs.length?configuredJigs.filter(item=>jigClass(item)!=='press').length:count(['jig-attach','jig-cclip','jig-dino','jig-test','tester-dmc','tester-wlt','tester-vswr'],'jig'),press=configuredJigs.length?configuredJigs.filter(item=>jigClass(item)==='press').length:count(['jig-v0','jig-v3'],'press');
- return{leader,support,iqc,oqc,pqc,skill,workers,total:Math.max(0,workers-skill),process:processes.length||count(['process-station'],'process'),tables:count(['table','station'],'table'),machine,equipment:machine+press,jig,press}
+ const doc=model(),stations=(doc.processes||[]).filter(s=>s.isActive!==false);
+ const layers=new Map((doc.layoutDocument?.layers||[]).map(l=>[l.id,l]));
+ const visible=(items||[]).filter(o=>o.visible!==false&&layers.get(o.layerId)?.visible!==false);
+ const count=types=>visible.filter(o=>types.includes(o.type)).length;
+ const normalized=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+ const role=s=>{
+  const name=normalized(s.name||s.stationName);
+  if(/\bLEADER\b/.test(name))return'leader';
+  if(/\bSUPPORT\b/.test(name))return'support';
+  if(/\bIQC\b/.test(name))return'iqc';
+  if(/\bOQC\b/.test(name))return'oqc';
+  if(/\bPQC\b/.test(name))return'pqc';
+  return'mp';
+ };
+ const roles={leader:0,support:0,mp:0,iqc:0,oqc:0,pqc:0};
+ if(stations.length){
+  for(const station of stations){
+   roles[role(station)]+=Math.max(0,Number(station.mp??station.manpower)||0);
+  }
+  // Roles that are drawn explicitly but not recorded in LOB still count.
+  for(const [key,type] of [['leader','worker-leader'],['support','worker-support']]){
+   if(!roles[key])roles[key]=count([type]);
+  }
+ }else{
+  for(const person of visible){
+   if(!['worker','worker-pink','worker-leader','worker-support'].includes(person.type)&&person.metadata?.factoryCategory!=='operator')continue;
+   const name=normalized(person.text||person.metadata?.factoryCategory||'');
+   const key=person.type==='worker-leader'||/\bLEADER\b/.test(name)?'leader'
+      :person.type==='worker-support'||/\bSUPPORT\b/.test(name)?'support'
+      :/\bIQC\b/.test(name)?'iqc':/\bPQC\b/.test(name)?'pqc'
+      :person.type==='worker-pink'||/\bOQC\b|\bQC\b/.test(name)?'oqc':'mp';
+   roles[key]++;
+  }
+ }
+ const skills=stations.filter(s=>typeof stationSkills==='function'&&stationSkills(s).length).length;
+ const skillShapes=count(['star','star-4','star-6','star-8']);
+ const declaredJigs=stations.flatMap(s=>typeof getJigs==='function'?getJigs(s):s.jigs||[]);
+ const jigShapeTypes=['jig-v0','jig-v3','jig-attach','jig-cclip','jig-dino','jig-test','tester-dmc','tester-wlt','tester-vswr'];
+ const jigs=declaredJigs.length?declaredJigs.length:count(jigShapeTypes);
+ const machines=stations.filter(s=>s.equipment||s.equipmentName||s.machineName||s.auto).length;
+ const drawingMachines=count(['laser','machine-frame','machine','equipment','auto','vinyl','vision']);
+ const pressJigs=declaredJigs.filter(j=>typeof jigType==='function'?jigType(j)==='press':/press/i.test(String(j.type||j.name||''))).length;
+ return{
+  ...roles,dkn:Math.max(skills,skillShapes),
+  total:Object.values(roles).reduce((a,v)=>a+v,0),
+  equipment:machines||drawingMachines||pressJigs,
+  jig:jigs,
+  process:stations.length||count(['process-station']),
+  tables:count(['table','station'])
+ };
 }
-function bindLayoutSummaryCards(){const box=$('shapeSummaryCards');if(!box||box.dataset.bound)return;box.dataset.bound='true';box.addEventListener('change',event=>{const input=event.target.closest('[data-layout-summary]');if(!input||!canEditLayout())return;const manual=model().layoutSummaryManual||(model().layoutSummaryManual={});manual[input.dataset.layoutSummary]=Math.max(0,Number(input.value)||0);persistLocal();scheduleSave();renderShapeSummary(shapeArray())});box.addEventListener('click',event=>{const button=event.target.closest('[data-summary-auto]');if(!button||!canEditLayout())return;const manual=model().layoutSummaryManual||{};delete manual[button.dataset.summaryAuto];persistLocal();scheduleSave();renderShapeSummary(shapeArray())})}
-renderShapeSummary=function(items){const n=fabricTypeCounts(items),manual=model().layoutSummaryManual||{},alwaysAutomatic=new Set(['total','equipment','jig']);bindLayoutSummaryCards();for(const key of ['leader','dkn','support','mp','iqc','oqc','pqc','total','equipment','jig']){const isAutomatic=alwaysAutomatic.has(key),value=!isAutomatic&&Object.hasOwn(manual,key)?manual[key]:n[key==='dkn'?'skill':key==='mp'?'workers':key],input=document.querySelector(`[data-layout-summary="${key}"]`),button=document.querySelector(`[data-summary-auto="${key}"]`);if(isAutomatic&&Object.hasOwn(manual,key))delete manual[key];if(input&&document.activeElement!==input)input.value=Number(value)||0;if(input)input.disabled=isAutomatic||!canEditLayout();if(button){button.disabled=isAutomatic||!canEditLayout();button.textContent=!isAutomatic&&Object.hasOwn(manual,key)?'Tự sửa':'Auto';button.classList.toggle('manual',!isAutomatic&&Object.hasOwn(manual,key))}}};
+const layoutSummaryKeys=['leader','dkn','support','mp','iqc','oqc','pqc','total','equipment','jig'];
+function resolvedLayoutSummaryCounts(auto,manual={}){
+ const effective={};
+ for(const key of layoutSummaryKeys){
+  const override=manual[key],numeric=Number(override);
+  const valid=Object.prototype.hasOwnProperty.call(manual,key)&&override!==null&&override!==''&&Number.isInteger(numeric)&&numeric>=0;
+  if(key!=='total')effective[key]=valid?numeric:auto[key]||0;
+ }
+ const calculated=effective.leader+effective.support+effective.mp+effective.iqc+effective.oqc+effective.pqc;
+ const raw=manual.total,number=Number(raw);
+ effective.total=Object.prototype.hasOwnProperty.call(manual,'total')&&raw!==null&&raw!==''&&Number.isInteger(number)&&number>=0?number:calculated;
+ return effective;
+}
+function bindLayoutSummaryCards(){
+ const box=$('shapeSummaryCards');if(!box||box.dataset.bound)return;
+ box.dataset.bound='true';
+ box.addEventListener('change',event=>{
+  const input=event.target.closest('[data-layout-summary]');
+  if(!input||!canEditLayout())return;
+  const value=Number(input.value);
+  if(!input.value.trim()||!Number.isSafeInteger(value)||value<0||value>99999){
+   renderShapeSummary(shapeArray());
+   toast('Chỉ nhập số nguyên từ 0 đến 99.999.');
+   return;
+  }
+  snapshot();
+  const manual=model().layoutSummaryManual||(model().layoutSummaryManual={});
+  const key=input.dataset.layoutSummary,previous=manual[key];
+  manual[key]=value;
+  recordAudit('Sửa số lượng Layout '+key,key,previous??'Auto',value);
+  persistLocal();scheduleSave();renderShapeSummary(shapeArray());
+ });
+ box.addEventListener('click',event=>{
+  const button=event.target.closest('[data-summary-auto]');
+  if(!button||!canEditLayout())return;
+  const manual=model().layoutSummaryManual||{},key=button.dataset.summaryAuto;
+  if(!Object.prototype.hasOwnProperty.call(manual,key))return;
+  snapshot();const previous=manual[key];delete manual[key];
+  recordAudit('Khôi phục tự động Layout '+key,key,previous,'Auto');
+  persistLocal();scheduleSave();renderShapeSummary(shapeArray());
+ });
+}
+renderShapeSummary=function(items){
+ const auto=fabricTypeCounts(items),manual=model().layoutSummaryManual||{};
+ const counts=resolvedLayoutSummaryCounts(auto,manual);
+ const calculated=counts.leader+counts.support+counts.mp+counts.iqc+counts.oqc+counts.pqc;
+ bindLayoutSummaryCards();
+ for(const key of layoutSummaryKeys){
+  const input=document.querySelector('[data-layout-summary="'+key+'"]');
+  const button=document.querySelector('[data-summary-auto="'+key+'"]');
+  const isManual=Object.prototype.hasOwnProperty.call(manual,key);
+  if(input){
+   if(document.activeElement!==input)input.value=counts[key];
+   input.disabled=!canEditLayout();
+   input.title=(isManual?'Đã chỉnh tay. ':'Tự đếm. ')+(key==='total'?'Total = Leader + Support + MP + IQC + OQC + PQC; ĐKN không cộng vào Total.':key==='mp'?'MP sản xuất; QC và Leader/Support tính riêng.':'Dữ liệu từ LOB/đối tượng Layout.');
+   input.classList.toggle('summary-manual',isManual);
+   input.classList.toggle('summary-mismatch',key==='total'&&isManual&&counts.total!==calculated);
+  }
+  if(button){
+   button.hidden=!canEditLayout();
+   button.disabled=!isManual||!canEditLayout();
+   button.textContent=isManual?'↺ Auto':'Auto';
+   button.title=isManual?'Bỏ số chỉnh tay, quay lại tự đếm':'Đang tự đếm';
+   button.classList.toggle('manual',isManual);
+  }
+ }
+};
 function fabricLabel(o){return String(o.text||'').trim()}
 function fabricWorker(o,color='#00aeef'){const fill=o.fillColor&&o.fillColor!=='none'?o.fillColor:color,w=Math.max(32,o.width),h=Math.max(44,o.height),stroke=o.strokeColor&&o.strokeColor!=='none'?o.strokeColor:fill,line=Math.max(2.5,Math.min(w,h)*.08),cx=w/2,head=new fabric.Circle({left:cx-h*.105,top:h*.04,radius:h*.105,fill,stroke,strokeWidth:Math.max(1,line*.35)}),torso=new fabric.Polygon([{x:cx-h*.12,y:h*.3},{x:cx+h*.12,y:h*.3},{x:cx+h*.16,y:h*.64},{x:cx-h*.16,y:h*.64}],{fill,stroke,strokeWidth:Math.max(1,line*.3),strokeLineJoin:'round'}),armA=new fabric.Line([cx-h*.1,h*.35,w*.12,h*.56],{stroke,strokeWidth:line,strokeLineCap:'round'}),armB=new fabric.Line([cx+h*.1,h*.35,w*.88,h*.56],{stroke,strokeWidth:line,strokeLineCap:'round'}),legA=new fabric.Line([cx-h*.07,h*.62,w*.28,h*.94],{stroke,strokeWidth:line,strokeLineCap:'round'}),legB=new fabric.Line([cx+h*.07,h*.62,w*.72,h*.94],{stroke,strokeWidth:line,strokeLineCap:'round'});return new fabric.Group([head,torso,armA,armB,legA,legB],{left:o.x,top:o.y,angle:o.rotation||0,objectCaching:false})}
 function fabricTable(o,common){const fill=o.fillColor&&o.fillColor!=='none'?o.fillColor:'#1f6687',stroke=o.strokeColor&&o.strokeColor!=='none'?o.strokeColor:'#0c415b',rect=new fabric.Rect({width:o.width,height:o.height,fill,stroke,strokeWidth:Math.max(2,+o.strokeWidth||3)}),label=fabricLabel(o);const members=[rect];if(label&&!/^(table|work table|bàn)$/i.test(label))members.push(new fabric.Textbox(label,{left:6,top:Math.max(4,o.height/2-12),width:Math.max(20,o.width-12),fontSize:o.style?.fontSize||Math.min(16,Math.max(10,o.height/4)),fontWeight:o.style?.fontWeight||'bold',textAlign:'center',fill:o.style?.textColor||'#fff',selectable:false,evented:false}));return new fabric.Group(members,{...common,fill:undefined,stroke:undefined,width:o.width,height:o.height})}
