@@ -5,10 +5,13 @@ import fs from'node:fs';
 const office=fs.readFileSync(new URL('../office-page-editor.js',import.meta.url),'utf8');
 const fabric=fs.readFileSync(new URL('../fabric-engine.js',import.meta.url),'utf8');
 
-test('layout summary automatically excludes skilled workers from Total and refreshes equipment and Jig',()=>{
- assert.match(fabric,/total:Math\.max\(0,workers-skill\)/);
- assert.match(fabric,/alwaysAutomatic=new Set\(\['total','equipment','jig'\]\)/);
- assert.match(fabric,/input\.disabled=isAutomatic\|\|!canEditLayout\(\)/);
+test('Layout summary counts all people and supports editable automatic totals, equipment and Jig',()=>{
+ assert.match(fabric,/total:Object\.values\(roles\)\.reduce/);
+ assert.match(fabric,/function resolvedLayoutSummaryCounts\(auto,manual=\{\}\)/);
+ assert.match(fabric,/effective\.total=/);
+ assert.match(fabric,/input\.disabled=!canEditLayout\(\)/);
+ assert.match(fabric,/model\(\)\.layoutSummaryManual/);
+ assert.doesNotMatch(fabric,/total:Math\.max\(0,workers-skill\)/);
 });
 const css=fs.readFileSync(new URL('../styles.css',import.meta.url),'utf8');
 
