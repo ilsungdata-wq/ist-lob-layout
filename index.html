@@ -11,6 +11,16 @@
   <link rel="stylesheet" href="./styles.css?v=20261009-load-v8">
 <link rel="stylesheet" href="./overrides.css?v=20261112-print-text-white-v3">
   <link rel="stylesheet" href="./st-info.css?v=20261106-lob-compact-v7">
+  <style id="print-button-contrast-fix">
+    /* Critical topbar styling, independent of external stylesheet cache. */
+    #printBtn,button#printBtn,button#printBtn:disabled,button#printBtn[disabled],
+    .topbar .top-actions button#printBtn {
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      opacity: 1 !important;
+      font-weight: 700 !important;
+    }
+  </style>
 </head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -199,7 +209,7 @@
   <script src="./services/excel-import-utils.js?v=20261009-load-v8"></script>
   <script src="./services/excel-reference.js?v=20261013-layout-v22"></script>
   <script src="./services/reference-editor.js?v=20261013-layout-v22"></script>
-  <script src="./app.js?v=20261106-latest-version-v3"></script>
+  <script src="./app.js?v=20261112-print-contrast-v4"></script>
   <script src="./mobile-ux.js?v=20261111-mobile-reference-fix-v3"></script>
   <script src="./viewer-print-ux.js?v=20261014-layout-v9"></script>
   <script type="module" src="./st-info.js?v=20261106-lob-kpi-v22"></script>
