@@ -729,3 +729,7 @@ body.readonly #saveState{font-size:0!important}
 
 /* Legacy cached Layout helper must never appear in Viewer or Editor. */
 .shape-summary-help{display:none!important}
+
+/* Print action: keep readable light text on navy topbar, including disabled state. */
+.topbar .top-actions #printBtn,.topbar .top-actions #printBtn:disabled,.topbar .top-actions #printBtn[disabled]{color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;opacity:1!important;border-color:#a8c7e9!important;font-weight:700!important}
+.topbar .top-actions #printBtn:hover:not(:disabled){background:rgba(255,255,255,.12)!important}
