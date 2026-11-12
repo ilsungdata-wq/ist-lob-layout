@@ -20,7 +20,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: production
+  group: github-pages-ui-only
   cancel-in-progress: false
 
 jobs:
