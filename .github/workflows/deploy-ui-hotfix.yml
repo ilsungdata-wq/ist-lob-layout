@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'tests/**'
       - 'index.html'
       - 'styles.css'
       - 'overrides.css'
