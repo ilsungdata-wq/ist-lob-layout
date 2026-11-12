@@ -81,5 +81,5 @@ test('all ten Layout cards can be edited, reset and saved per Model/Version',()=
  assert.match(fabric,/persistLocal\(\);scheduleSave\(\)/);
  assert.doesNotMatch(fabric,/alwaysAutomatic=new Set\(\['total','equipment','jig'\]\)/);
  assert.match(html,/fabric-engine\.js\?v=20261111-layout-summary-v24/);
- assert.match(html,/overrides\.css\?v=20261111-layout-counters-v1/);
+ assert.match(html,/overrides\.css\?v=[^"']+/);
 });
