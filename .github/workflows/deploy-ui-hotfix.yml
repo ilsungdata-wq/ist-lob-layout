@@ -1,0 +1,80 @@
+name: Deploy UI-only changes to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'overrides.css'
+      - 'app.js'
+      - 'inline-layout-reference.js'
+      - 'mobile-ux.js'
+      - '.github/workflows/deploy-ui-hotfix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  verify-and-build:
+    name: Verify and build static webapp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app.js
+          node --check studio.js
+          node --check fabric-engine.js
+          node --check professional-editor.js
+          node --check office-page-editor.js
+          node --check supabase-integration.js
+          node --check inline-layout-reference.js
+          node --check mobile-ux.js
+          node --check st-info.js
+      - name: Run unit tests
+        run: node --test tests/*.test.mjs
+      - uses: actions/configure-pages@v5
+      - name: Validate production frontend config
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" || (echo "Missing variable SUPABASE_URL" && exit 1)
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || (echo "Missing secret SUPABASE_PUBLISHABLE_KEY" && exit 1)
+      - name: Assemble static webapp
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          node scripts/generate-supabase-config.mjs
+          mkdir -p _site
+          cp index.html *.js *.css *.png *.LICENSE _site/
+          cp -R assets vendor layout-reference services oauth _site/
+          touch _site/.nojekyll
+          mv supabase-config.js _site/supabase-config.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy static UI to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: verify-and-build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish UI
+        id: deployment
+        uses: actions/deploy-pages@v4
