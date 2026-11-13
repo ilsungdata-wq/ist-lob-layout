@@ -762,3 +762,7 @@ body.readonly #saveState{font-size:0!important}
 .layout-print-setup-body #layoutPrintConfirm{background:#15549b;color:white;border-color:#15549b}
 .layout-print-setup-body #layoutPrintConfirm:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:560px){.layout-print-setup-body>header,.layout-print-setup-controls,.layout-print-setup-body>footer{padding:12px}.layout-print-setup-body>footer{flex-wrap:wrap}.layout-print-setup-body>footer span{max-width:none}.layout-print-preview{height:30vh;min-height:145px}}
+
+/* Jig specification imported/read from WI notes may span multiple lines. */
+.jig-inventory-table .inventory-jig-spec{min-width:220px;width:100%;min-height:72px;max-height:220px;resize:vertical;white-space:pre-wrap;font:inherit;line-height:1.4;padding:8px;border:1px solid #b5cbd3;border-radius:6px}
+.jig-inventory-table .jig-spec-display{min-width:170px;max-width:380px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
