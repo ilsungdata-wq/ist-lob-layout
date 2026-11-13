@@ -134,9 +134,9 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
   const pageSizes={A4:{landscape:[285,197],portrait:[198,285]},A3:{landscape:[408,285],portrait:[285,408]}};
   const [pageWidth,pageHeight]=pageSizes[paper][orientation];
   const requestedScale=Math.max(45,Math.min(100,Number(options.scale)||100))/100;
-  if(view==='overview'&&layoutMode==='excel')await waitForPublishedReference();
   let frame;
   try{
+   if(view==='overview'&&layoutMode==='excel')await waitForPublishedReference();
    const content=reportContent(view,layoutMode),current=model(),title=({overview:'Layout',processes:'Thông tin LOB',jigs:'Thiết bị & Jig'})[view]||'Layout';
    document.getElementById('singlePagePrintFrame')?.remove();frame=document.createElement('iframe');frame.id='singlePagePrintFrame';frame.title='Bản in '+paper;frame.style.cssText='position:fixed;left:-12000px;top:0;width:1122px;height:794px;border:0';
    const loaded=new Promise(resolve=>frame.onload=resolve);
