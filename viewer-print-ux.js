@@ -100,7 +100,7 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    </div>`;
    document.body.appendChild(dialog);
    const scale=dialog.querySelector('#layoutPrintScale'),value=dialog.querySelector('#layoutPrintScaleLabel');
-   const sync=()=>{value.textContent=scale.value+'%';dialog.querySelectorAll('[data-print-scale]').forEach(b=>b.classList.toggle('active',b.dataset.printScale===scale.value));};
+   const sync=()=>{value.textContent=scale.value+'%';const img=dialog.querySelector('#layoutPrintPreviewImage');if(img)img.style.transform='scale('+(Number(scale.value)/100)+')';dialog.querySelectorAll('[data-print-scale]').forEach(b=>b.classList.toggle('active',b.dataset.printScale===scale.value));};
    scale.addEventListener('input',sync);
    dialog.querySelectorAll('[data-print-scale]').forEach(b=>b.addEventListener('click',()=>{scale.value=b.dataset.printScale;sync();}));
    dialog.querySelector('#layoutPrintClose').onclick=()=>dialog.close();
@@ -114,8 +114,8 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
   dialog.dataset.layoutMode=mode;
   dialog.querySelector('#layoutPrintSource').textContent=`${data.name} · ${data.version} · ${mode==='excel'?'PDF / Excel gốc':'Layout đã chỉnh sửa'}`;
   dialog.querySelector('#layoutPrintScale').value='100';
-  dialog.querySelector('#layoutPrintScaleLabel').textContent='100%';
-  dialog.querySelector('#layoutPrintConfirm').disabled=mode==='excel';
+  dialog.querySelector('#layoutPrintScaleLabel').textContent='100%';dialog.querySelector('#layoutPrintPreviewImage').style.transform='scale(1)';
+  dialog.querySelector('#layoutPrintConfirm').disabled=true;
   const preview=dialog.querySelector('#layoutPrintPreviewImage'),status=dialog.querySelector('#layoutPrintPreviewStatus');
   preview.hidden=true;preview.removeAttribute('src');status.textContent='Đang tải bản Layout đã Pushlist…';
   dialog.showModal();
