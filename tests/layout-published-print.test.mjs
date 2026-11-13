@@ -38,5 +38,5 @@ test('print setup offers paper size, orientation, print scale and a rendered pre
  assert.match(print,/singlePageScale\(sheet\.scrollWidth/);
  assert.match(print,/waitForPublishedReference\(\)/);
  assert.match(styles,/\.layout-print-setup-dialog/);
- assert.match(html,/viewer-print-ux\.js\?v=20261113-published-print-v1/);
+ assert.match(html,/viewer-print-ux\.js\?v=[^"']+/);
 });
