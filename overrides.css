@@ -733,3 +733,32 @@ body.readonly #saveState{font-size:0!important}
 /* Print action: keep readable light text on navy topbar, including disabled state. */
 .topbar .top-actions #printBtn,.topbar .top-actions #printBtn:disabled,.topbar .top-actions #printBtn[disabled]{color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;opacity:1!important;border-color:#a8c7e9!important;font-weight:700!important}
 .topbar .top-actions #printBtn:hover:not(:disabled){background:rgba(255,255,255,.12)!important}
+
+/* Published-only Layout print setup with responsive preview and size control. */
+.layout-print-setup-dialog{border:0;border-radius:14px;padding:0;width:min(760px,calc(100vw - 24px));max-height:min(92vh,950px);color:#193746;box-shadow:0 22px 70px #092d4540}
+.layout-print-setup-dialog::backdrop{background:#071e2fc0}
+.layout-print-setup-body{display:grid;gap:0;background:#fff}
+.layout-print-setup-body>header{display:flex;justify-content:space-between;gap:14px;padding:18px 22px;border-bottom:1px solid #d4e1e5}
+.layout-print-setup-body>header small{font-size:11px;letter-spacing:.08em;color:#0e756a;font-weight:800}
+.layout-print-setup-body h2{font-size:20px;margin:3px 0 5px;color:#132e40}
+.layout-print-setup-body header p{margin:0;color:#58727d;font-size:12px}
+.layout-print-setup-body #layoutPrintClose{align-self:start;border:0;background:#f0f5f6;border-radius:7px;padding:8px 12px;cursor:pointer}
+.layout-print-setup-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 22px}
+.layout-print-setup-controls label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700}
+.layout-print-setup-controls select{width:100%;min-height:38px;border:1px solid #b7cbd2;border-radius:7px;padding:6px;background:#fff}
+.layout-print-scale-label{grid-column:1/-1}
+.layout-print-scale-label strong{font-size:14px;color:#115ca4}
+.layout-print-scale-label input[type=range]{width:100%;accent-color:#0b65a6;cursor:pointer}
+.layout-print-quick{display:flex;gap:8px;grid-column:1/-1}
+.layout-print-quick button{border:1px solid #b3c8d0;border-radius:7px;background:#fff;color:#153e50;padding:7px 12px;cursor:pointer}
+.layout-print-quick button.active{background:#dceffc;border-color:#3889be;color:#0b5791}
+.layout-print-preview{display:grid;place-items:center;min-height:200px;height:clamp(200px,35vh,330px);overflow:hidden;background:#e7edef;border-block:1px solid #d4e1e5;padding:10px}
+.layout-print-preview img{max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 3px 14px #0e304129;background:white}
+.layout-print-preview p{font-size:12px;color:#4c6671;text-align:center}
+.layout-print-setup-body>footer{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:14px 22px}
+.layout-print-setup-body>footer span{max-width:370px;font-size:11px;color:#55717a}
+.layout-print-setup-body>footer>div{display:flex;gap:8px}
+.layout-print-setup-body>footer button{border:1px solid #b1c5ce;border-radius:7px;padding:10px 18px;background:white;color:#163b49;font-weight:750;cursor:pointer}
+.layout-print-setup-body #layoutPrintConfirm{background:#15549b;color:white;border-color:#15549b}
+.layout-print-setup-body #layoutPrintConfirm:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:560px){.layout-print-setup-body>header,.layout-print-setup-controls,.layout-print-setup-body>footer{padding:12px}.layout-print-setup-body>footer{flex-wrap:wrap}.layout-print-setup-body>footer span{max-width:none}.layout-print-preview{height:30vh;min-height:145px}}
