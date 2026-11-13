@@ -144,7 +144,7 @@ function printCurrentView(layoutMode=layoutVisualMode){
   }
   report.innerHTML=content;window.print();
 }
-function openPrintChoice(){if(activeView!=='overview')return printCurrentView();renderExcelReference();const original=$('excelReferenceImage'),available=!original.hidden&&!!original.getAttribute('src');$('printExcelVersionBtn').disabled=!available;$('printExcelVersionBtn').title=available?'':'Model/Version này chưa có bản Excel gốc.';$('printChoiceDialog').showModal()}
+function openPrintChoice(){if(activeView==='overview'&&globalThis.ISTViewerPrinting?.openSetup)return globalThis.ISTViewerPrinting.openSetup();return printCurrentView()}
 async function sha256Text(value){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(value)));return[...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 const bytesToB64=bytes=>btoa(String.fromCharCode(...bytes)),b64ToBytes=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
 async function backupKey(pin,salt){const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:120000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
