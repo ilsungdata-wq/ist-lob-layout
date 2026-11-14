@@ -46,3 +46,15 @@ test('preview is exposed only in the equipment tab',()=>{
  assert.match(source,/snapshot\(\)/);
  assert.match(source,/scheduleSave\(\)/);
 });
+
+test('Viewer can download equipment template and open Process Map without write access',()=>{
+ const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
+ const css=fs.readFileSync(new URL('../overrides.css',import.meta.url),'utf8');
+ assert.match(html,/id="jigXlsxTemplateBtn"/);
+ assert.match(html,/id="jigXlsxImportBtn"[^>]*>Tải Process Map lên/);
+ assert.match(app,/for\(const id of \['jigXlsxTemplateBtn','jigXlsxImportBtn'\]\)if\(\$\(id\)\)\$\(id\)\.hidden=false/);
+ assert.match(css,/body\.viewer-mode #jigView \.tab-file-actions\{display:flex!important/);
+ assert.match(source,/template\.onclick=downloadEquipmentTemplate/);
+ assert.match(source,/processUpload\.onclick=\(\)=>processFile\.click\(\)/);
+ assert.match(source,/wiSpecApply'\)\.disabled=!\(typeof canEditEquipment/);
+});
