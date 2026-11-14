@@ -82,3 +82,24 @@ jobs:
       - name: Publish UI
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify published Equipment and Jig UI
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            curl --fail --silent --show-error --location \
+              -H "Cache-Control: no-cache" \
+              "${PAGE_URL%/}/?verify=${GITHUB_SHA}-${attempt}" -o /tmp/published-index.html
+            if grep -q 'Tải Process Map lên' /tmp/published-index.html \
+              && grep -q '<th>Thông số setup</th>' /tmp/published-index.html \
+              && ! grep -q '<th>Vendor</th>' /tmp/published-index.html; then
+              echo "Verified: public GitHub Pages HTML contains the new Equipment/Jig UI."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: public HTML does not yet contain the expected UI; retrying."
+            sleep 5
+          done
+          echo "::error::Public GitHub Pages HTML still differs from the deployed commit."
+          exit 1
