@@ -29,8 +29,11 @@ test('phase 2 shell, i18n, restore and print controls are explicit',()=>{
  assert.match(html,/LAYOUT &amp; LOB IL-SUNGTECH/);assert.match(html,/class="context-bar"/);
  assert.match(i18n,/vi:\{/);assert.match(i18n,/en:\{/);assert.match(i18n,/ist-lob-language/);
  assert.match(studio,/session\.authenticated\|\|!can\('model\.manage'\)/);
- assert.match(studio,/printExcelVersionBtn'\)\.disabled=!available/);
- assert.match(html,/In bản Excel gốc/);assert.match(html,/In bản đã chỉnh sửa/);
+ const printing=fs.readFileSync(new URL('../viewer-print-ux.js',import.meta.url),'utf8');
+ assert.match(studio,/ISTViewerPrinting\?\.openSetup/);
+ assert.match(printing,/function publishedLayoutMode\(/);
+ assert.match(printing,/function openSetup\(/);
+ assert.match(printing,/id="layoutPrintScale"/);
  assert.equal((html.match(/id="layoutXlsxImportBtn"/g)||[]).length,1);
 });
 test('public Viewer uses one published workspace RPC instead of a request per Model',()=>{
