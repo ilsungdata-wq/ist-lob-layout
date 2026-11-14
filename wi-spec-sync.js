@@ -87,17 +87,17 @@ function renderPreview(){
   if(select.value!==''&&Number.isInteger(idx)){p.jig=getJigs(p.station)[idx];p.status='ready'}else{p.jig=null;p.status='select-jig'}
   renderPreview();
  });
- $id('wiSpecApply').disabled=!items.some(p=>p.status==='ready');
+ $id('wiSpecApply').disabled=!(typeof canEditEquipment==='function'&&canEditEquipment()&&items.some(p=>p.status==='ready'));
+ $id('wiSpecApply').title=$id('wiSpecApply').disabled?'Viewer chỉ xem kết quả; cần quyền chỉnh sửa để cập nhật.':'';
 }
 async function chooseExcel(file){
  if(!file)return;
- if(typeof canEditEquipment!=='function'||!canEditEquipment()){alert('Bạn chưa có quyền chỉnh sửa Thiết bị & Jig.');return}
  if(!window.XLSX){alert('Chưa tải được bộ đọc Excel.');return}
  try{
   const current=model(),key=(current._remote?.versionId||current.name+'::'+current.version);
   const workbook=XLSX.read(await file.arrayBuffer(),{type:'array'});
   const extracted=extract(workbook);
-  if(!extracted.length){alert('Không tìm thấy dòng áp lực có tên công đoạn trong file W.I.');return}
+  if(!extracted.length){alert('Đã đọc Process Map nhưng chưa tìm thấy thông số áp lực gắn với công đoạn.');return}
   const items=proposals(extracted,current.processes||[]);
   pending={key,filename:file.name,items};
   renderPreview();$id('wiSpecPreviewDialog').showModal();
@@ -117,13 +117,27 @@ function apply(){
  for(const p of ready)p.jig.spec=p.spec;
  renderAll();scheduleSave();
  $id('wiSpecPreviewDialog').close();pending=null;
- alert('Đã cập nhật '+count+' thông số Jig. Hãy kiểm tra cột Thông số thiết bị và nhấn Lưu thiết bị để xác nhận.');
+ alert('Đã cập nhật '+count+' thông số Jig. Hãy kiểm tra cột Thông số setup và nhấn Lưu thiết bị để xác nhận.');
+}
+function downloadEquipmentTemplate(){
+ if(!window.XLSX){alert('Chưa tải được bộ đọc Excel.');return}
+ const data=[['Tên công đoạn','Loại thiết bị','Tên thiết bị','Thông số setup','Version','Setup (phút)','Ghi chú'],['METAL SHEET (15,16,17,18)','ATTACH','SIDE METAL SHEET ATTACH','Áp lực: 5,5 ± 0,5 kgf/㎠','','','']];
+ const book=XLSX.utils.book_new(),sheet=XLSX.utils.aoa_to_sheet(data);
+ sheet['!cols']=[{wch:40},{wch:18},{wch:38},{wch:35},{wch:18},{wch:18},{wch:26}];
+ XLSX.utils.book_append_sheet(book,sheet,'Thiết bị & Jig');
+ XLSX.writeFile(book,'Mau_Excel_Thiet_bi_Jig.xlsx');
 }
 function init(){
  const btn=$id('wiSpecImportBtn'),file=$id('wiSpecFile'),dlg=$id('wiSpecPreviewDialog');
  if(!btn||!file||!dlg)return;
  btn.onclick=()=>file.click();
  file.onchange=()=>{const f=file.files?.[0];file.value='';chooseExcel(f)};
+ const template=$id('jigXlsxTemplateBtn'),processUpload=$id('jigXlsxImportBtn'),processFile=$id('jigXlsxFile');
+ if(template)template.onclick=downloadEquipmentTemplate;
+ if(processUpload&&processFile){
+  processUpload.onclick=()=>processFile.click();
+  processFile.onchange=()=>{const f=processFile.files?.[0];processFile.value='';chooseExcel(f)};
+ }
  $id('wiSpecCancel').onclick=()=>dlg.close();
  $id('wiSpecApply').onclick=apply;
  const sync=()=>{
