@@ -71,6 +71,13 @@ function proposals(rows,stations){
 }
 function enc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 let pending=null;
+function mayApply(){
+ const editing=typeof canEditEquipment==='function'&&canEditEquipment();
+ const authorized=typeof can==='function'&&(can('equipment.edit')||can('jig.edit'));
+ const status=model()?._remote?.status;
+ const editable=!['ARCHIVED','DELETED','EMPTY','ERROR'].includes(status);
+ return editing||(authorized&&editable&&typeof enterEditMode==='function');
+}
 function renderPreview(){
  const box=$id('wiSpecPreviewBody');if(!box||!pending)return;
  const {items}=pending;
@@ -87,8 +94,8 @@ function renderPreview(){
   if(select.value!==''&&Number.isInteger(idx)){p.jig=getJigs(p.station)[idx];p.status='ready'}else{p.jig=null;p.status='select-jig'}
   renderPreview();
  });
- $id('wiSpecApply').disabled=!(typeof canEditEquipment==='function'&&canEditEquipment()&&items.some(p=>p.status==='ready'));
- $id('wiSpecApply').title=$id('wiSpecApply').disabled?'Viewer chỉ xem kết quả; cần quyền chỉnh sửa để cập nhật.':'';
+ $id('wiSpecApply').disabled=!(mayApply()&&items.some(p=>p.status==='ready'));
+ $id('wiSpecApply').title=$id('wiSpecApply').disabled?'Cần ít nhất một công đoạn khớp và quyền chỉnh sửa Thiết bị & Jig.':(typeof canEditEquipment==='function'&&canEditEquipment()?'':'Xác nhận sẽ chuyển sang chế độ Sửa Thiết bị & Jig trước khi ghi.');
 }
 async function chooseExcel(file){
  if(!file)return;
@@ -107,7 +114,11 @@ function apply(){
  if(!pending)return;
  const current=model(),key=current._remote?.versionId||current.name+'::'+current.version;
  if(key!==pending.key){alert('Model/Version đã thay đổi. Hãy tải lại W.I.');return}
- if(typeof canEditEquipment!=='function'||!canEditEquipment()){alert('Không có quyền chỉnh sửa Thiết bị & Jig.');return}
+ if(typeof canEditEquipment!=='function'||!canEditEquipment()){
+  if(!mayApply()){alert('Tài khoản không có quyền chỉnh sửa Thiết bị & Jig.');return}
+  enterEditMode('equipment');
+  if(typeof canEditEquipment!=='function'||!canEditEquipment()){alert('Không thể chuyển sang chế độ Sửa Thiết bị & Jig.');return}
+ }
  const ready=pending.items.filter(p=>p.status==='ready'&&p.station&&p.jig);
  if(!ready.length)return;
  const count=ready.filter(p=>p.jig.spec!==p.spec).length;
