@@ -57,6 +57,6 @@ test('Viewer can download equipment template and open Process Map without write 
  assert.match(source,/template\.onclick=downloadEquipmentTemplate/);
  assert.match(source,/processUpload\.onclick=\(\)=>processFile\.click\(\)/);
  assert.match(source,/wiSpecApply'\)\.disabled=!\(mayApply\(\)/);
- assert.match(source,/enterEditMode\('equipment'\)/);
- assert.match(source,/can\('equipment.edit'\)\|\|can\('jig.edit'\)/);
+ assert.match(source,/return typeof canEditEquipment==='function'&&canEditEquipment\(\)/);
+ assert.doesNotMatch(source,/enterEditMode\('equipment'\)/);
 });
