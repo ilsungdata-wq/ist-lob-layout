@@ -56,5 +56,7 @@ test('Viewer can download equipment template and open Process Map without write 
  assert.match(css,/body\.viewer-mode #jigView \.tab-file-actions\{display:flex!important/);
  assert.match(source,/template\.onclick=downloadEquipmentTemplate/);
  assert.match(source,/processUpload\.onclick=\(\)=>processFile\.click\(\)/);
- assert.match(source,/wiSpecApply'\)\.disabled=!\(typeof canEditEquipment/);
+ assert.match(source,/wiSpecApply'\)\.disabled=!\(mayApply\(\)/);
+ assert.match(source,/enterEditMode\('equipment'\)/);
+ assert.match(source,/can\('equipment.edit'\)\|\|can\('jig.edit'\)/);
 });
