@@ -72,11 +72,7 @@ function proposals(rows,stations){
 function enc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 let pending=null;
 function mayApply(){
- const editing=typeof canEditEquipment==='function'&&canEditEquipment();
- const authorized=typeof can==='function'&&(can('equipment.edit')||can('jig.edit'));
- const status=model()?._remote?.status;
- const editable=!['ARCHIVED','DELETED','EMPTY','ERROR'].includes(status);
- return editing||(authorized&&editable&&typeof enterEditMode==='function');
+ return typeof canEditEquipment==='function'&&canEditEquipment();
 }
 function renderPreview(){
  const box=$id('wiSpecPreviewBody');if(!box||!pending)return;
@@ -95,7 +91,7 @@ function renderPreview(){
   renderPreview();
  });
  $id('wiSpecApply').disabled=!(mayApply()&&items.some(p=>p.status==='ready'));
- $id('wiSpecApply').title=$id('wiSpecApply').disabled?'Cần ít nhất một công đoạn khớp và quyền chỉnh sửa Thiết bị & Jig.':(typeof canEditEquipment==='function'&&canEditEquipment()?'':'Xác nhận sẽ chuyển sang chế độ Sửa Thiết bị & Jig trước khi ghi.');
+ $id('wiSpecApply').title=$id('wiSpecApply').disabled?'Viewer chỉ xem/đối chiếu; hãy chuyển sang Sửa Thiết bị & Jig để cập nhật.':'';
 }
 async function chooseExcel(file){
  if(!file)return;
@@ -114,11 +110,7 @@ function apply(){
  if(!pending)return;
  const current=model(),key=current._remote?.versionId||current.name+'::'+current.version;
  if(key!==pending.key){alert('Model/Version đã thay đổi. Hãy tải lại W.I.');return}
- if(typeof canEditEquipment!=='function'||!canEditEquipment()){
-  if(!mayApply()){alert('Tài khoản không có quyền chỉnh sửa Thiết bị & Jig.');return}
-  enterEditMode('equipment');
-  if(typeof canEditEquipment!=='function'||!canEditEquipment()){alert('Không thể chuyển sang chế độ Sửa Thiết bị & Jig.');return}
- }
+ if(!mayApply()){alert('Chỉ chế độ Sửa Thiết bị & Jig mới được xác nhận cập nhật. Viewer có thể tải Process Map lên để xem và đối chiếu.');return}
  const ready=pending.items.filter(p=>p.status==='ready'&&p.station&&p.jig);
  if(!ready.length)return;
  const count=ready.filter(p=>p.jig.spec!==p.spec).length;
