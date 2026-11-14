@@ -23,6 +23,7 @@ const scoreMatch=(raw,station)=>{
  if(a===b)return 100;
  if(a.length>10&&b.length>10&&(a.includes(b)||b.includes(a)))return 90;
  const aa=a.split(' ').filter(v=>v.length>1),bb=b.split(' ').filter(v=>v.length>1);
+ if(ax&&bx&&ax===bx&&aa.includes('METAL')&&aa.includes('SHEET')&&bb.includes('METAL')&&bb.includes('SHEET'))return 88;
  if(aa.length<3||bb.length<3)return 0;
  const shared=aa.filter(v=>bb.includes(v)).length;
  return shared/Math.max(aa.length,bb.length)>=.85?85:0;
