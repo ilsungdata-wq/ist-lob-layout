@@ -782,3 +782,8 @@ body.readonly #saveState{font-size:0!important}
 .wi-spec-scroller tr:nth-child(even){background:#f6fafc}
 .wi-spec-scroller select{max-width:200px;min-height:34px;border:1px solid #bdd0d7;background:#fff;color:#193a46;border-radius:6px}
 .wi-spec-shell>footer{display:flex;justify-content:flex-end;gap:10px;padding:15px 22px;border-top:1px solid #d6e3e8}
+
+/* Viewer: expose ONLY the two Process Map/Equipment Excel controls in tab 4. */
+body.viewer-mode #jigView .tab-file-actions{display:flex!important;align-items:center;flex-wrap:wrap;gap:8px}
+body.viewer-mode #jigView .tab-file-actions>:not(#jigXlsxTemplateBtn):not(#jigXlsxImportBtn){display:none!important}
+body.viewer-mode #jigView #jigXlsxTemplateBtn,body.viewer-mode #jigView #jigXlsxImportBtn{display:inline-flex!important;align-items:center;justify-content:center}
