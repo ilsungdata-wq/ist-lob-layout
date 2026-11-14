@@ -9,6 +9,8 @@ on:
       - 'styles.css'
       - 'overrides.css'
       - 'app.js'
+      - 'studio.js'
+      - 'wi-spec-sync.js'
       - 'inline-layout-reference.js'
       - 'mobile-ux.js'
       - '.github/workflows/deploy-ui-hotfix.yml'
@@ -36,6 +38,7 @@ jobs:
         run: |
           node --check app.js
           node --check studio.js
+          node --check wi-spec-sync.js
           node --check fabric-engine.js
           node --check professional-editor.js
           node --check office-page-editor.js
