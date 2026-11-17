@@ -71,7 +71,9 @@ async function inspectGoogleSheet(){
   const serverTimeout=e.status===504||e.message==='google_sheet_source_timeout';
   const message=e.name==='AbortError'?'Đồng bộ vượt thời gian chờ 140 giây. Nút đã mở lại; vui lòng kiểm tra nguồn ERP/BOM trước khi thử lại.'
    :serverTimeout?'Google Apps Script chưa trả dữ liệu ERP/BOM trong 110 giây. Nút đã mở lại; hãy kiểm tra tốc độ đọc Sheets và bản triển khai Apps Script.'
-   :e.message==='google_sheet_bridge_upgrade_required'?'Google Apps Script chưa triển khai phiên bản đọc ERP/BOM theo đợt. Cần cập nhật và triển khai Code.gs st-paged-v2.'
+   :e.message==='google_sheet_meta_timeout'?'Apps Script đọc thông tin ERP/BOM quá chậm (55 giây). Kiểm tra log Executions tại bước getSourceMeta_.'
+   :e.message==='google_sheet_meta_unavailable'?'Không đọc được thông tin nguồn Apps Script. Kiểm tra log doPost, quyền Sheets và kết nối Supabase.'
+   :e.message==='google_sheet_bridge_upgrade_required'?'Apps Script trả phản hồi chưa đúng chuẩn st-paged-v2. Kiểm tra deployment URL và Version 7.'
    :e.message==='google_sheet_paged_read_failed'?`Lỗi đọc theo đợt ERP/BOM: ${detail||e.message}. Kiểm tra Sheets API và nhật ký Apps Script.`
    :e.message==='google_sheet_source_unavailable'?'Không kết nối được Google Apps Script. Kiểm tra quyền truy cập và URL triển khai.'
    :e.message==='google_sheet_sync_not_configured'?'Chưa cấu hình cầu nối Google Sheet.'
