@@ -83,3 +83,14 @@ test('all ten Layout cards can be edited, reset and saved per Model/Version',()=
  assert.match(html,/fabric-engine\.js\?v=20261111-layout-summary-v24/);
  assert.match(html,/overrides\.css\?v=[^"']+/);
 });
+
+test('QC summary combines IQC and OQC without changing staff totals or source roles',()=>{
+ assert.match(html,/<span>QC<\/span><input id="shapeQcCount"/);
+ assert.doesNotMatch(html,/<span>IQC<\/span><input id="shapeIqcCount"/);
+ assert.doesNotMatch(html,/<span>OQC<\/span><input id="shapeOqcCount"/);
+ assert.match(fabric,/qcInput.value=counts.iqc\+counts.oqc/);
+ const ctx=withModel({processes:[{name:'IQC',mp:1},{name:'OQC',mp:3},{name:'ASSEMBLY',mp:28},{name:'LEADER',mp:1},{name:'SUPPORT',mp:1}]});
+ const totals=ctx.fabricTypeCounts([]);
+ assert.equal(totals.iqc+totals.oqc,4);
+ assert.equal(totals.total,34);
+});
