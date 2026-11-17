@@ -22,7 +22,42 @@ function testStSourceAccess() {
 
 function runDailyStSync(){const token=PropertiesService.getScriptProperties().getProperty('ST_SYNC_TOKEN'),url=PropertiesService.getScriptProperties().getProperty('ST_EDGE_SYNC_URL');if(!token||!url)throw new Error('Thiếu ST_SYNC_TOKEN hoặc ST_EDGE_SYNC_URL');const response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify({mode:'apply',token:token}),muteHttpExceptions:true});if(response.getResponseCode()<200||response.getResponseCode()>=300)throw new Error('Tự động đồng bộ thất bại: '+response.getContentText().slice(0,500));}
 function installDailyStSync(){ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='runDailyStSync').forEach(t=>ScriptApp.deleteTrigger(t));ScriptApp.newTrigger('runDailyStSync').timeBased().everyDays(1).atHour(12).create();}
-function doPost(event){try{const body=JSON.parse((event&&event.postData&&event.postData.contents)||'{}'),expected=PropertiesService.getScriptProperties().getProperty('ST_SYNC_TOKEN');if(!expected||body.token!==expected)return output_({ok:false,message:'unauthorized'});return output_(buildSnapshot_(body.include_history===true))}catch(error){return output_({ok:false,message:String(error&&error.message||error)})}}
+function doPost(event){try{const body=JSON.parse((event&&event.postData&&event.postData.contents)||'{}'),expected=PropertiesService.getScriptProperties().getProperty('ST_SYNC_TOKEN');if(!expected||body.token!==expected)return output_({ok:false,message:'unauthorized'});if(body.mode==='meta')return output_(getSourceMeta_());if(body.mode==='page')return output_(getSourcePage_(body));return output_(buildSnapshot_(body.include_history===true))}catch(error){return output_({ok:false,message:String(error&&error.message||error)})}}
+// Paged bridge v2: each call reads at most 5,000 rows of required columns.
+// Unlike the legacy full snapshot, each Apps Script request is short enough
+// for the Supabase Edge Function request budget.
+function getSourceMeta_(){
+ const erp=SpreadsheetApp.openById(ERP_SPREADSHEET_ID).getSheetByName(ERP_SHEET_NAME);
+ const bom=SpreadsheetApp.openById(BOM_SPREADSHEET_ID).getSheetByName(BOM_SHEET_NAME);
+ if(!erp||!bom)throw new Error('Không tìm thấy sheet nguồn ERP hoặc BOM.');
+ return {ok:true,protocol:'st-paged-v2',erp_rows:Math.max(0,erp.getLastRow()-1),bom_rows:Math.max(0,bom.getLastRow()-1),page_size:5000};
+}
+function getSourcePage_(args){
+ const source=String(args.source||'').toLowerCase();
+ if(source!=='erp'&&source!=='bom')throw new Error('Invalid source');
+ const id=source==='erp'?ERP_SPREADSHEET_ID:BOM_SPREADSHEET_ID;
+ const name=source==='erp'?ERP_SHEET_NAME:BOM_SHEET_NAME;
+ const offset=Number(args.offset),limit=Number(args.limit);
+ if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>5000)throw new Error('Invalid page range');
+ const sheet=SpreadsheetApp.openById(id).getSheetByName(name);
+ if(!sheet)throw new Error('Sheet missing: '+name);
+ const rows=Math.max(0,sheet.getLastRow()-1);
+ const n=Math.max(0,Math.min(limit,rows-offset));
+ if(!n)return {ok:true,protocol:'st-paged-v2',source:source,offset:offset,count:0,total:rows,columns:[]};
+ const headers=sheet.getRange(1,1,1,sheet.getLastColumn()).getDisplayValues()[0];
+ const columns=source==='erp'?[headerColumn_(headers,'Prod. Material'),headerColumn_(headers,'Net Price')]
+ :[headerColumn_(headers,'Model'),headerColumn_(headers,'Parent Code'),headerColumnOptional_(headers,['Type','Loại','Product Type','Phân loại'])||2];
+ const start=offset+2,end=start+n-1,quoted="'"+name.replace(/'/g,"''")+"'";
+ const ranges=columns.map(c=>'ranges='+encodeURIComponent(quoted+'!'+columnLetters_(c)+start+':'+columnLetters_(c)+end)).join('&');
+ const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values:batchGet?'+ranges+'&valueRenderOption=FORMATTED_VALUE';
+ const response=UrlFetchApp.fetch(url,{method:'get',headers:{Authorization:'Bearer '+ScriptApp.getOAuthToken()},muteHttpExceptions:true});
+ if(response.getResponseCode()!==200)throw new Error('Sheets API '+response.getResponseCode()+' '+source+': '+response.getContentText().slice(0,250));
+ const data=JSON.parse(response.getContentText()),valueRanges=data.valueRanges||[];
+ if(valueRanges.length!==columns.length)throw new Error('Unexpected column count for '+source);
+ const values=valueRanges.map(v=>Array.from({length:n},(_,i)=>String(v.values?.[i]?.[0]??'')));
+ console.log('ST paged '+source+' '+offset+'..'+(offset+n)+' done');
+ return {ok:true,protocol:'st-paged-v2',source:source,offset:offset,count:n,total:rows,columns:values};
+}
 function buildSnapshot_(includeHistory){const erpSheet=SpreadsheetApp.openById(ERP_SPREADSHEET_ID).getSheetByName(ERP_SHEET_NAME),bomSheet=SpreadsheetApp.openById(BOM_SPREADSHEET_ID).getSheetByName(BOM_SHEET_NAME);if(!erpSheet||!bomSheet)throw new Error('Không tìm thấy sheet nguồn ERP hoặc BOM.');const erpHeaders=erpSheet.getRange(1,1,1,erpSheet.getLastColumn()).getDisplayValues()[0],productColumn=headerColumn_(erpHeaders,'Prod. Material'),priceColumn=headerColumn_(erpHeaders,'Net Price'),rdColumn=includeHistory?headerColumnAny_(erpHeaders,['R/D date','R/D Date','RD date','Release date']):0,erpRows=Math.max(0,erpSheet.getLastRow()-1),erpColumns=readSheetColumns_(ERP_SPREADSHEET_ID,ERP_SHEET_NAME,includeHistory?[productColumn,priceColumn,rdColumn]:[productColumn,priceColumn],erpRows),products=erpColumns[0],prices=erpColumns[1],dates=includeHistory?erpColumns[2]:[];const bomHeaders=bomSheet.getRange(1,1,1,bomSheet.getLastColumn()).getDisplayValues()[0],modelColumn=headerColumn_(bomHeaders,'Model'),parentColumn=headerColumn_(bomHeaders,'Parent Code'),typeColumn=headerColumnOptional_(bomHeaders,['Type','Loại','Product Type','Phân loại'])||2,bomCount=Math.max(0,bomSheet.getLastRow()-1),bomColumns=readSheetColumns_(BOM_SPREADSHEET_ID,BOM_SHEET_NAME,[modelColumn,parentColumn,typeColumn],bomCount),models=bomColumns[0],parents=bomColumns[1],types=bomColumns[2],bomByCode=new Map();for(let i=0;i<bomCount;i++){const code=String(parents[i]||'').trim().toUpperCase(),model=String(models[i]||'').trim(),type=typeFromBom_(types[i],model);if(/^GH96-[A-Z0-9]+$/.test(code)&&model)bomByCode.set(code,{model_name:model,product_type:type})}const bom_rows=[...bomByCode.entries()].map(([product_code,v])=>({product_code,...v})).sort((a,b)=>a.model_name.localeCompare(b.model_name)||a.product_code.localeCompare(b.product_code)),all=[],latest=new Map();for(let i=0;i<erpRows;i++){const code=String(products[i]||'').trim().toUpperCase(),netPrice=number_(prices[i]),mapping=bomByCode.get(code),rdDate=includeHistory?date_(dates[i]):'';if(!/^GH96-[A-Z0-9]+$/.test(code)||!mapping||!(netPrice>1000))continue;const row={product_code:code,model_name:mapping.model_name,product_type:mapping.product_type,net_price:netPrice,rd_date:rdDate};latest.set(code,row);if(rdDate)all.push(row)}const dedup=new Map();all.sort((a,b)=>a.product_code.localeCompare(b.product_code)||a.rd_date.localeCompare(b.rd_date));for(const row of all)dedup.set(`${row.product_code}|${row.rd_date}|${row.net_price}`,row);const historyRows=[...dedup.values()].filter((row,i,a)=>!i||a[i-1].product_code!==row.product_code||a[i-1].net_price!==row.net_price),rows=[...latest.values()].sort((a,b)=>a.model_name.localeCompare(b.model_name)||a.product_code.localeCompare(b.product_code));return{ok:true,generated_at:new Date().toISOString(),rows:rows,bom_rows:bom_rows,history_rows:historyRows,stats:{erp_rows:erpRows,unique_codes:latest.size,mapped_codes:rows.length,bom_codes:bom_rows.length,history_points:historyRows.length}}}
 // Read only the required columns through Sheets batchGet. The two source workbooks
 // contain ~91k ERP rows and ~13k BOM rows; repeated SpreadsheetApp.getDisplayValues()
