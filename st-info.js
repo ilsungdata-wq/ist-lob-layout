@@ -55,7 +55,7 @@ async function inspectGoogleSheet(){
  if(status){status.textContent='Đồng bộ ERP & BOM đang thực hiện — không cần bấm lại.';status.dataset.syncState='loading'}
  try{
   if(!await auth.restore())throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-  const res=await supabaseRequest('/functions/v1/st-sheet-sync',{method:'POST',body:{mode:'apply'},signal:controller.signal}),p=res.data;
+  const res=await supabaseRequest('/functions/v1/st-sheet-sync',{method:'POST',body:{mode:'apply',paged:true},signal:controller.signal}),p=res.data;
   if(!p?.ok)throw new Error(p?.message||'Đồng bộ không trả về kết quả thành công.');
   const totals=p.totals||{},row=Array.isArray(p.status)?p.status[0]:p.status,elapsed=Number(p.elapsed_ms||Math.round(performance.now()-started));
   stage='Đang cập nhật bảng S/T…';b.textContent=stage;
@@ -71,6 +71,8 @@ async function inspectGoogleSheet(){
   const serverTimeout=e.status===504||e.message==='google_sheet_source_timeout';
   const message=e.name==='AbortError'?'Đồng bộ vượt thời gian chờ 140 giây. Nút đã mở lại; vui lòng kiểm tra nguồn ERP/BOM trước khi thử lại.'
    :serverTimeout?'Google Apps Script chưa trả dữ liệu ERP/BOM trong 110 giây. Nút đã mở lại; hãy kiểm tra tốc độ đọc Sheets và bản triển khai Apps Script.'
+   :e.message==='google_sheet_bridge_upgrade_required'?'Google Apps Script chưa triển khai phiên bản đọc ERP/BOM theo đợt. Cần cập nhật và triển khai Code.gs st-paged-v2.'
+   :e.message==='google_sheet_paged_read_failed'?`Lỗi đọc theo đợt ERP/BOM: ${detail||e.message}. Kiểm tra Sheets API và nhật ký Apps Script.`
    :e.message==='google_sheet_source_unavailable'?'Không kết nối được Google Apps Script. Kiểm tra quyền truy cập và URL triển khai.'
    :e.message==='google_sheet_sync_not_configured'?'Chưa cấu hình cầu nối Google Sheet.'
    :`Không thể đồng bộ: ${detail||e.message}`;
