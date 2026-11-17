@@ -70,12 +70,12 @@ test('manual Layout overrides allow zero, recompute Total, and can override Tota
  assert.equal(reset.total,25);
 });
 test('Layout editable counters persist independently while QC merges IQC and OQC for display',()=>{
- const keys=['leader','dkn','support','mp','pqc','total','equipment','jig'];
+ const keys=['leader','dkn','support','mp','qc','pqc','total','equipment','jig'];
  for(const key of keys){
   assert.match(html,new RegExp('data-layout-summary="'+key+'"'));
   assert.match(html,new RegExp('data-summary-auto="'+key+'"'));
  }
- assert.match(html,/<span>QC<\/span><input id="shapeQcCount"/);
+ assert.match(html,/<span>QC<\/span><input id="shapeQcCount" data-layout-summary="qc"/);
  assert.match(fabric,/model\(\)\.layoutSummaryManual/);
  assert.match(fabric,/input\.disabled=!canEditLayout\(\)/);
  assert.match(fabric,/snapshot\(\)/);
@@ -86,7 +86,7 @@ test('Layout editable counters persist independently while QC merges IQC and OQC
 });
 
 test('QC summary combines IQC and OQC without changing staff totals or source roles',()=>{
- assert.match(html,/<span>QC<\/span><input id="shapeQcCount"/);
+ assert.match(html,/<span>QC<\/span><input id="shapeQcCount" data-layout-summary="qc"/);
  assert.doesNotMatch(html,/<span>IQC<\/span><input id="shapeIqcCount"/);
  assert.doesNotMatch(html,/<span>OQC<\/span><input id="shapeOqcCount"/);
  assert.match(fabric,/qcInput.value=counts.iqc\+counts.oqc/);
@@ -94,4 +94,15 @@ test('QC summary combines IQC and OQC without changing staff totals or source ro
  const totals=ctx.fabricTypeCounts([]);
  assert.equal(totals.iqc+totals.oqc,4);
  assert.equal(totals.total,34);
+});
+
+test('manual QC override allows editing displayed QC while raw IQC/OQC stay intact',()=>{
+ const ctx=withModel({processes:[{name:'IQC',mp:1},{name:'OQC',mp:3},{name:'ASSEMBLY',mp:28},{name:'LEADER',mp:1},{name:'SUPPORT',mp:1}]});
+ const auto=ctx.fabricTypeCounts([]);
+ assert.equal(ctx.resolvedLayoutSummaryCounts(auto,{}).qc,4);
+ assert.equal(ctx.resolvedLayoutSummaryCounts(auto,{qc:3}).qc,3);
+ assert.equal(ctx.resolvedLayoutSummaryCounts(auto,{qc:3}).total,33);
+ assert.equal(auto.iqc,1);assert.equal(auto.oqc,3);
+ assert.equal(ctx.resolvedLayoutSummaryCounts(auto,{}).total,34);
+ assert.match(html,/data-summary-auto="qc"/);
 });
