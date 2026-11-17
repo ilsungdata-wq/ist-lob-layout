@@ -55,7 +55,7 @@ function fabricTypeCounts(items){
   tables:count(['table','station'])
  };
 }
-const layoutSummaryKeys=['leader','dkn','support','mp','iqc','oqc','pqc','total','equipment','jig'];
+const layoutSummaryKeys=['leader','dkn','support','mp','iqc','oqc','qc','pqc','total','equipment','jig'];
 function resolvedLayoutSummaryCounts(auto,manual={}){
  const effective={};
  for(const key of layoutSummaryKeys){
@@ -63,7 +63,8 @@ function resolvedLayoutSummaryCounts(auto,manual={}){
   const valid=Object.prototype.hasOwnProperty.call(manual,key)&&override!==null&&override!==''&&Number.isInteger(numeric)&&numeric>=0;
   if(key!=='total')effective[key]=valid?numeric:auto[key]||0;
  }
- const calculated=effective.leader+effective.support+effective.mp+effective.iqc+effective.oqc+effective.pqc;
+ effective.qc=Object.prototype.hasOwnProperty.call(manual,'qc')&&manual.qc!==null&&manual.qc!==''&&Number.isSafeInteger(Number(manual.qc))&&Number(manual.qc)>=0?Number(manual.qc):effective.iqc+effective.oqc;
+ const calculated=effective.leader+effective.support+effective.mp+effective.qc+effective.pqc;
  const raw=manual.total,number=Number(raw);
  effective.total=Object.prototype.hasOwnProperty.call(manual,'total')&&raw!==null&&raw!==''&&Number.isInteger(number)&&number>=0?number:calculated;
  return effective;
@@ -100,8 +101,8 @@ function bindLayoutSummaryCards(){
 renderShapeSummary=function(items){
  const auto=fabricTypeCounts(items),manual=model().layoutSummaryManual||{};
  const counts=resolvedLayoutSummaryCounts(auto,manual);
- const qcInput=$('shapeQcCount');if(qcInput){qcInput.value=counts.iqc+counts.oqc;qcInput.title='QC = IQC ('+counts.iqc+') + OQC ('+counts.oqc+'). Số liệu gốc giữ riêng trong LOB.';}
- const calculated=counts.leader+counts.support+counts.mp+counts.iqc+counts.oqc+counts.pqc;
+ const qcInput=$('shapeQcCount');if(qcInput){qcInput.title='QC = IQC ('+counts.iqc+') + OQC ('+counts.oqc+'). Có thể sửa số tổng hợp, không đổi dữ liệu nhân lực LOB.';}
+ const calculated=counts.leader+counts.support+counts.mp+counts.qc+counts.pqc;
  bindLayoutSummaryCards();
  for(const key of layoutSummaryKeys){
   const input=document.querySelector('[data-layout-summary="'+key+'"]');
