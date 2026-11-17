@@ -40,7 +40,7 @@ if(body?.paged===true){
    const code=String(products?.[i]||'').trim().toUpperCase(),mapped=bomMap.get(code),rawPrice=String(prices?.[i]||'').trim().replace(/\s/g,''),net_price=/^\d{1,3}([.,]\d{3})+$/.test(rawPrice)?Number(rawPrice.replace(/[.,]/g,'')):Number(rawPrice.replace(',','.'));
    if(mapped&&Number.isFinite(net_price)&&net_price>1000)latest.set(code,{...mapped,labor_cost:mapped.product_type==='Tab'?3566:3445,net_price});
   }}
-  if(bomMap.size<10||latest.size<10)throw new Error('google_sheet_paged_empty_or_invalid_mapping: bom='+bomMap.size+', erp='+latest.size);
+  if(meta.erp_rows>1000&&(bomMap.size<10||latest.size<10))throw new Error('google_sheet_paged_empty_or_invalid_mapping: bom='+bomMap.size+', erp='+latest.size);
   payload={ok:true,generated_at:new Date().toISOString(),rows:[...latest.values()],bom_rows:[...bomMap.values()],history_rows:[]};
   console.info('[st-sheet-sync] paged source',JSON.stringify({ms:Date.now()-sourceStarted,erp_rows:meta.erp_rows,bom_rows:meta.bom_rows,matched:payload.rows.length}));
  }catch(error){return json({message:'google_sheet_paged_read_failed',detail:error instanceof Error?error.message:String(error),stage:'google_sheet_pages'},502)}
