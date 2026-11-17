@@ -89,7 +89,7 @@ test('QC summary combines IQC and OQC without changing staff totals or source ro
  assert.match(html,/<span>QC<\/span><input id="shapeQcCount" data-layout-summary="qc"/);
  assert.doesNotMatch(html,/<span>IQC<\/span><input id="shapeIqcCount"/);
  assert.doesNotMatch(html,/<span>OQC<\/span><input id="shapeOqcCount"/);
- assert.match(fabric,/qcInput.value=counts.iqc\+counts.oqc/);
+ assert.match(fabric,/effective.qc=Object.prototype.hasOwnProperty.call\(manual,'qc'\)/);
  const ctx=withModel({processes:[{name:'IQC',mp:1},{name:'OQC',mp:3},{name:'ASSEMBLY',mp:28},{name:'LEADER',mp:1},{name:'SUPPORT',mp:1}]});
  const totals=ctx.fabricTypeCounts([]);
  assert.equal(totals.iqc+totals.oqc,4);
