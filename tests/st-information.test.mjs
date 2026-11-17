@@ -241,7 +241,7 @@ test('model summary puts Set Person, average price and per-person price above S/
  assert.match(script,/Net Price Avg \/ Direct MP/);
  assert.match(script,/Chưa có Direct MP/);
  assert.match(script,/refreshStSession/);
- assert.match(script,/body:\{mode:\x27apply\x27\}/);
+ assert.match(script,/body:\{mode:'apply',paged:true\}/);
  assert.match(script,/jwtExpired/);
  assert.match(script,/Net Price \/ người/);
  assert.match(script,/st-model-summary-table/);
