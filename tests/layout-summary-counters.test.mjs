@@ -69,18 +69,19 @@ test('manual Layout overrides allow zero, recompute Total, and can override Tota
  const reset=ctx.resolvedLayoutSummaryCounts(auto,{});
  assert.equal(reset.total,25);
 });
-test('all ten Layout cards can be edited, reset and saved per Model/Version',()=>{
- const keys=['leader','dkn','support','mp','iqc','oqc','pqc','total','equipment','jig'];
+test('Layout editable counters persist independently while QC merges IQC and OQC for display',()=>{
+ const keys=['leader','dkn','support','mp','pqc','total','equipment','jig'];
  for(const key of keys){
   assert.match(html,new RegExp('data-layout-summary="'+key+'"'));
   assert.match(html,new RegExp('data-summary-auto="'+key+'"'));
  }
+ assert.match(html,/<span>QC<\/span><input id="shapeQcCount"/);
  assert.match(fabric,/model\(\)\.layoutSummaryManual/);
  assert.match(fabric,/input\.disabled=!canEditLayout\(\)/);
  assert.match(fabric,/snapshot\(\)/);
  assert.match(fabric,/persistLocal\(\);scheduleSave\(\)/);
  assert.doesNotMatch(fabric,/alwaysAutomatic=new Set\(\['total','equipment','jig'\]\)/);
- assert.match(html,/fabric-engine\.js\?v=20261111-layout-summary-v24/);
+ assert.match(html,/fabric-engine\.js\?v=[^"']+/);
  assert.match(html,/overrides\.css\?v=[^"']+/);
 });
 
