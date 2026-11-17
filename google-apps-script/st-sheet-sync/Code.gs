@@ -3,21 +3,19 @@ const ERP_SHEET_NAME = 'DATA BASE ERP';
 const BOM_SPREADSHEET_ID = '1hA6a9EJsPOnhjbJUWtJmg7NSZGWaTKFAyvdEdmnZwuY';
 const BOM_SHEET_NAME = 'BOM';
 
-// Safe source smoke test: checks the two Sheets and the Sheets API with
-// 5 rows only. Does not write data to either Google Sheet or Supabase.
+// Read-only smoke test. Logs counts and latency without exposing source data.
 function testStSourceAccess() {
-  const sources=[
-    [ERP_SPREADSHEET_ID,ERP_SHEET_NAME],
-    [BOM_SPREADSHEET_ID,BOM_SHEET_NAME]
-  ];
-  sources.forEach(([id,name])=>{
-    const sheet=SpreadsheetApp.openById(id).getSheetByName(name);
-    if (!sheet) throw new Error('Không tìm thấy sheet '+name);
-    const count=Math.min(5,Math.max(0,sheet.getLastRow()-1));
-    const values=readSheetColumns_(id,name,[1],count);
-    console.log('PASS S/T source '+name+' | rows='+sheet.getLastRow()+' | sample='+values[0].length);
-  });
-  console.log('PASS: nguồn ERP, BOM và quyền Google Sheets API hoạt động.');
+  const started = Date.now();
+  const meta = getSourceMeta_();
+  console.log(JSON.stringify({ ...meta, elapsed_ms: Date.now() - started }));
+  for (const source of ['erp', 'bom']) {
+    const pageStarted = Date.now();
+    const page = getSourcePage_({ source, offset: 0, limit: 5 });
+    if (page.count !== 5 || page.columns.some(column => column.length !== 5)) {
+      throw new Error('Incomplete sample: ' + source);
+    }
+    console.log(JSON.stringify({ source, count: page.count, elapsed_ms: Date.now() - pageStarted }));
+  }
 }
 
 function runDailyStSync(){const token=PropertiesService.getScriptProperties().getProperty('ST_SYNC_TOKEN'),url=PropertiesService.getScriptProperties().getProperty('ST_EDGE_SYNC_URL');if(!token||!url)throw new Error('Thiếu ST_SYNC_TOKEN hoặc ST_EDGE_SYNC_URL');const response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify({mode:'apply',paged:true,token:token}),muteHttpExceptions:true});if(response.getResponseCode()<200||response.getResponseCode()>=300)throw new Error('Tự động đồng bộ thất bại: '+response.getContentText().slice(0,500));}
@@ -26,27 +24,47 @@ function doPost(event){try{const body=JSON.parse((event&&event.postData&&event.p
 // Paged bridge v2: each call reads at most 5,000 rows of required columns.
 // Unlike the legacy full snapshot, each Apps Script request is short enough
 // for the Supabase Edge Function request budget.
-function getSourceMeta_(){
- const erp=SpreadsheetApp.openById(ERP_SPREADSHEET_ID).getSheetByName(ERP_SHEET_NAME);
- const bom=SpreadsheetApp.openById(BOM_SPREADSHEET_ID).getSheetByName(BOM_SHEET_NAME);
- if(!erp||!bom)throw new Error('Không tìm thấy sheet nguồn ERP hoặc BOM.');
- return {ok:true,protocol:'st-paged-v2',erp_rows:Math.max(0,erp.getLastRow()-1),bom_rows:Math.max(0,bom.getLastRow()-1),page_size:5000};
+function getSourceMeta_() {
+  const erp = getPagedSource_('erp');
+  const bom = getPagedSource_('bom');
+  return { ok: true, protocol: 'st-paged-v2', erp_rows: erp.rows, bom_rows: bom.rows, page_size: 5000 };
 }
+
+function getPagedSource_(source) {
+  const id = source === 'erp' ? ERP_SPREADSHEET_ID : BOM_SPREADSHEET_ID;
+  const name = source === 'erp' ? ERP_SHEET_NAME : BOM_SHEET_NAME;
+  const cache = CacheService.getScriptCache();
+  const key = 'st-paged-source-4:' + source;
+  const cached = cache.get(key);
+  if (cached) return JSON.parse(cached);
+
+  // Grid bounds require metadata only. Sheets values reads omit trailing blanks.
+  const metadata = Sheets.Spreadsheets.get(id, {
+    fields: 'sheets(properties(title,gridProperties(rowCount)))'
+  });
+  const sheet = metadata.sheets.find(sheet => sheet.properties.title === name);
+  const rows = sheet?.properties?.gridProperties?.rowCount - 1;
+  if (!Number.isSafeInteger(rows) || rows < 1) throw new Error('Invalid sheet grid: ' + source);
+  const quoted = "'" + name.replace(/'/g, "''") + "'";
+  const headers = Sheets.Spreadsheets.Values.get(id, quoted + '!1:1').values?.[0] || [];
+  const columns = source === 'erp'
+    ? [headerColumn_(headers, 'Prod. Material'), headerColumn_(headers, 'Net Price')]
+    : [headerColumn_(headers, 'Model'), headerColumn_(headers, 'Parent Code'),
+       headerColumnOptional_(headers, ['Type', 'Loại', 'Product Type', 'Phân loại']) || 2];
+
+  const config = { id, name, rows, columns };
+  cache.put(key, JSON.stringify(config), 120);
+  return config;
+}
+
 function getSourcePage_(args){
  const source=String(args.source||'').toLowerCase();
  if(source!=='erp'&&source!=='bom')throw new Error('Invalid source');
- const id=source==='erp'?ERP_SPREADSHEET_ID:BOM_SPREADSHEET_ID;
- const name=source==='erp'?ERP_SHEET_NAME:BOM_SHEET_NAME;
  const offset=Number(args.offset),limit=Number(args.limit);
  if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>5000)throw new Error('Invalid page range');
- const sheet=SpreadsheetApp.openById(id).getSheetByName(name);
- if(!sheet)throw new Error('Sheet missing: '+name);
- const rows=Math.max(0,sheet.getLastRow()-1);
+ const { id, name, rows, columns } = getPagedSource_(source);
  const n=Math.max(0,Math.min(limit,rows-offset));
  if(!n)return {ok:true,protocol:'st-paged-v2',source:source,offset:offset,count:0,total:rows,columns:[]};
- const headers=sheet.getRange(1,1,1,sheet.getLastColumn()).getDisplayValues()[0];
- const columns=source==='erp'?[headerColumn_(headers,'Prod. Material'),headerColumn_(headers,'Net Price')]
- :[headerColumn_(headers,'Model'),headerColumn_(headers,'Parent Code'),headerColumnOptional_(headers,['Type','Loại','Product Type','Phân loại'])||2];
  const start=offset+2,end=start+n-1,quoted="'"+name.replace(/'/g,"''")+"'";
  const ranges=columns.map(c=>'ranges='+encodeURIComponent(quoted+'!'+columnLetters_(c)+start+':'+columnLetters_(c)+end)).join('&');
  const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values:batchGet?'+ranges+'&valueRenderOption=FORMATTED_VALUE';
