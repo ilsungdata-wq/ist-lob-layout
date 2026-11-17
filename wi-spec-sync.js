@@ -76,22 +76,46 @@ function mayApply(){
 }
 function renderPreview(){
  const box=$id('wiSpecPreviewBody');if(!box||!pending)return;
- const {items}=pending;
+ const {items,stations}=pending;
  const stats={ready:0,review:0};items.forEach(p=>p.status==='ready'?stats.ready++:stats.review++);
  $id('wiSpecPreviewSummary').textContent=`${pending.filename} · ${items.length} dòng áp lực · ${stats.ready} khớp · ${stats.review} cần rà soát`;
  box.innerHTML=items.map((p,i)=>{
   let choice='';
-  if(p.status==='select-jig'&&p.station){const opts=getJigs(p.station).map((j,k)=>`<option value="${k}">${enc(j.name||j.eqType||'Jig '+(k+1))}</option>`).join('');choice=`<select data-jig-choice="${i}"><option value="">Chọn Jig phù hợp…</option>${opts}</select>`}
+  if(p.station&&getJigs(p.station).length>1){const opts=getJigs(p.station).map((j,k)=>`<option value="${k}" ${j===p.jig?'selected':''}>${enc(j.name||j.eqType||'Jig '+(k+1))}</option>`).join('');choice=`<select data-jig-choice="${i}"><option value="">Chọn Jig phù hợp…</option>${opts}</select>`}
+  if(p.status==='no-jig'||p.newJig!==undefined)choice=`<input data-new-jig="${i}" aria-label="Tên Jig mới" placeholder="Nhập tên Jig để tạo" value="${enc(p.newJig||'')}">`;
+  const stationOptions=stations.map((station,k)=>`<option value="${k}" ${p.station===station?'selected':''}>${enc(station.name)}</option>`).join('');
+  const stationChoice=`<select data-station-choice="${i}" aria-label="Công đoạn LOB"><option value="">Chọn công đoạn…</option>${stationOptions}</select>`;
   const label={ready:'Sẵn sàng',unmatched:'Không khớp',ambiguous:'Trùng công đoạn',duplicate:'Trùng dữ liệu W.I', 'select-jig':'Chọn Jig','no-jig':'Chưa khai báo Jig'}[p.status];
-  return `<tr><td>${enc(p.sheet)} · ${p.row}</td><td>${enc(p.stationName)}</td><td>${enc(p.station?.name||'—')}</td><td>${enc(p.spec)}</td><td>${choice||enc(p.jig?.name||label)}</td><td>${enc(label)}</td></tr>`;
+  return `<tr><td>${enc(p.sheet)} · ${p.row}</td><td>${enc(p.stationName)}</td><td>${stationChoice}</td><td>${enc(p.spec)}</td><td>${choice||enc(p.jig?.name||label)}</td><td>${enc(label)}</td></tr>`;
  }).join('');
- box.querySelectorAll('select[data-jig-choice]').forEach(select=>select.onchange=()=>{
-  const p=items[Number(select.dataset.jigChoice)],idx=Number(select.value);
-  if(select.value!==''&&Number.isInteger(idx)){p.jig=getJigs(p.station)[idx];p.status='ready'}else{p.jig=null;p.status='select-jig'}
+ box.querySelectorAll('[data-station-choice]').forEach(select=>select.onchange=()=>{
+  const p=items[Number(select.dataset.stationChoice)];
+  p.station=select.value===''?null:stations[Number(select.value)];
+  delete p.newJig;
+  const jigs=p.station?getJigs(p.station):[];
+  p.jig=jigs.length===1?jigs[0]:null;
+  p.status=!p.station?'unmatched':p.jig?'ready':jigs.length?'select-jig':'no-jig';
   renderPreview();
  });
- $id('wiSpecApply').disabled=!(mayApply()&&items.some(p=>p.status==='ready'));
- $id('wiSpecApply').title=$id('wiSpecApply').disabled?'Viewer chỉ xem/đối chiếu; hãy chuyển sang Sửa Thiết bị & Jig để cập nhật.':'';
+ box.querySelectorAll('[data-jig-choice]').forEach(select=>select.onchange=()=>{
+  const p=items[Number(select.dataset.jigChoice)];
+  p.jig=select.value===''?null:getJigs(p.station)[Number(select.value)];
+  p.status=p.jig?'ready':'select-jig';
+  renderPreview();
+ });
+ box.querySelectorAll('[data-new-jig]').forEach(input=>input.oninput=()=>{
+  const p=items[Number(input.dataset.newJig)];
+  p.newJig=input.value;
+  p.status=input.value.trim()?'ready':'no-jig';
+  updateApply();
+ });
+ updateApply();
+}
+function updateApply(){
+ const button=$id('wiSpecApply');
+ button.disabled=!(mayApply()&&pending.items.some(p=>p.status==='ready'));
+ button.title=!mayApply()?'Hãy chuyển sang Sửa Thiết bị & Jig.':button.disabled?'Chọn công đoạn và Jig hoặc nhập tên Jig mới.':'';
+
 }
 async function chooseExcel(file){
  if(!file)return;
@@ -102,7 +126,7 @@ async function chooseExcel(file){
   const extracted=extract(workbook);
   if(!extracted.length){alert('Đã đọc Process Map nhưng chưa tìm thấy thông số áp lực gắn với công đoạn.');return}
   const items=proposals(extracted,current.processes||[]);
-  pending={key,filename:file.name,items};
+  pending={key,filename:file.name,items,stations:current.processes||[]};
   renderPreview();$id('wiSpecPreviewDialog').showModal();
  }catch(error){alert('Không đọc được Excel W.I: '+error.message)}
 }
@@ -111,13 +135,23 @@ function apply(){
  const current=model(),key=current._remote?.versionId||current.name+'::'+current.version;
  if(key!==pending.key){alert('Model/Version đã thay đổi. Hãy tải lại W.I.');return}
  if(!mayApply()){alert('Chỉ chế độ Sửa Thiết bị & Jig mới được xác nhận cập nhật. Viewer có thể tải Process Map lên để xem và đối chiếu.');return}
- const ready=pending.items.filter(p=>p.status==='ready'&&p.station&&p.jig);
+ const ready=pending.items.filter(p=>p.status==='ready'&&p.station&&(p.jig||p.newJig?.trim()));
  if(!ready.length)return;
- const count=ready.filter(p=>p.jig.spec!==p.spec).length;
+ const targets=new Map();
+ for(const p of ready){
+  if(!current.processes.includes(p.station)||(p.jig&&!getJigs(p.station).includes(p.jig))){alert('Danh sách công đoạn hoặc Jig đã thay đổi. Hãy tải lại Process Map.');return}
+  const key=p.jig||p.station;
+  if(targets.has(key)){alert('Có nhiều dòng W.I cùng chọn một Jig. Hãy rà soát lại lựa chọn trước khi lưu.');return}
+  targets.set(key,p);
+ }
+ const count=ready.filter(p=>p.jig?.spec!==p.spec).length;
  if(!count){$id('wiSpecPreviewDialog').close();return}
  if(!confirm(`Cập nhật thông số áp lực cho ${count} Jig trên ${current.name} · ${current.version}? Thông số cũ của những Jig này sẽ được thay thế.`))return;
  snapshot();
- for(const p of ready)p.jig.spec=p.spec;
+ for(const p of ready){
+  if(p.jig)p.jig.spec=p.spec;
+  else getJigs(p.station).push({name:p.newJig.trim(),spec:p.spec,setup:0});
+ }
  renderAll();scheduleSave();
  $id('wiSpecPreviewDialog').close();pending=null;
  alert('Đã cập nhật '+count+' thông số Jig. Hãy kiểm tra cột Thông số setup và nhấn Lưu thiết bị để xác nhận.');
