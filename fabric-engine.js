@@ -100,6 +100,7 @@ function bindLayoutSummaryCards(){
 renderShapeSummary=function(items){
  const auto=fabricTypeCounts(items),manual=model().layoutSummaryManual||{};
  const counts=resolvedLayoutSummaryCounts(auto,manual);
+ const qcInput=$('shapeQcCount');if(qcInput){qcInput.value=counts.iqc+counts.oqc;qcInput.title='QC = IQC ('+counts.iqc+') + OQC ('+counts.oqc+'). Số liệu gốc giữ riêng trong LOB.';}
  const calculated=counts.leader+counts.support+counts.mp+counts.iqc+counts.oqc+counts.pqc;
  bindLayoutSummaryCards();
  for(const key of layoutSummaryKeys){
