@@ -787,3 +787,8 @@ body.readonly #saveState{font-size:0!important}
 body.viewer-mode #jigView .tab-file-actions{display:flex!important;align-items:center;flex-wrap:wrap;gap:8px}
 body.viewer-mode #jigView .tab-file-actions>:not(#jigXlsxTemplateBtn):not(#jigXlsxImportBtn){display:none!important}
 body.viewer-mode #jigView #jigXlsxTemplateBtn,body.viewer-mode #jigView #jigXlsxImportBtn{display:inline-flex!important;align-items:center;justify-content:center}
+
+/* Prevent legacy Layout instructions from covering the mobile drawing. */
+body .shape-summary-help,body.viewer-mode .shape-summary-help{display:none!important;visibility:hidden!important}
+.layout-print-process-option{grid-column:1/-1!important;display:flex!important;flex-direction:row!important;align-items:flex-start!important;gap:9px!important;font-size:13px!important;line-height:1.4!important}
+.layout-print-process-option input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:#105c94}
