@@ -32,12 +32,12 @@ if(body?.paged===true){
   const bomMap=new Map<string,MappingRow>();
   for(const page of bomPages){const [models,parents,types]=page.columns;for(let i=0;i<page.count;i++){
    const product_code=String(parents?.[i]||'').trim().toUpperCase(),model_name=String(models?.[i]||'').trim(),kind=String(types?.[i]||'').toLowerCase();
-   const product_type=kind.includes('block')?'Block':kind.includes('tab')?'Tab':kind.includes('smart')?'Smart':/\\bblock\\s*\\d+\\b/i.test(model_name)?'Block':/^(P6|T|X)/i.test(model_name)?'Tab':'Smart';
+   const product_type=kind.includes('block')?'Block':kind.includes('tab')?'Tab':kind.includes('smart')?'Smart':/\bblock\s*\d+\b/i.test(model_name)?'Block':/^(P6|T|X)/i.test(model_name)?'Tab':'Smart';
    if(/^GH96-[A-Z0-9]+$/.test(product_code)&&model_name)bomMap.set(product_code,{product_code,model_name,product_type});
   }}
   const erpPages=await getPages('erp',meta.erp_rows),latest=new Map<string,SyncRow>();
   for(const page of erpPages){const [products,prices]=page.columns;for(let i=0;i<page.count;i++){
-   const code=String(products?.[i]||'').trim().toUpperCase(),mapped=bomMap.get(code),rawPrice=String(prices?.[i]||'').trim().replace(/\\s/g,''),net_price=/^\\d{1,3}([.,]\\d{3})+$/.test(rawPrice)?Number(rawPrice.replace(/[.,]/g,'')):Number(rawPrice.replace(',','.'));
+   const code=String(products?.[i]||'').trim().toUpperCase(),mapped=bomMap.get(code),rawPrice=String(prices?.[i]||'').trim().replace(/\s/g,''),net_price=/^\d{1,3}([.,]\d{3})+$/.test(rawPrice)?Number(rawPrice.replace(/[.,]/g,'')):Number(rawPrice.replace(',','.'));
    if(mapped&&Number.isFinite(net_price)&&net_price>1000)latest.set(code,{...mapped,labor_cost:mapped.product_type==='Tab'?3566:3445,net_price});
   }}
   payload={ok:true,generated_at:new Date().toISOString(),rows:[...latest.values()],bom_rows:[...bomMap.values()],history_rows:[]};
