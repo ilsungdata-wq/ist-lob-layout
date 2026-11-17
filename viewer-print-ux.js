@@ -79,6 +79,27 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    if(image.complete&&image.naturalWidth>0&&!image.hidden)finish();
   });
  }
+ function processSetupPages(current,paper,orientation){
+  const rows=(current.processes||[]).filter(row=>row.isActive!==false);
+  if(!rows.length)return '';
+  const perPage=orientation==='portrait'?(paper==='A3'?13:10):(paper==='A3'?20:14);
+  const pages=[];
+  for(let start=0;start<rows.length;start+=perPage){
+   const chunk=rows.slice(start,start+perPage);
+   const body=chunk.map((row,idx)=>{
+    const jigs=typeof getJigs==='function'?getJigs(row):row.jigs||[];
+    const details=jigs.map(j=>{
+     const spec=String(j.spec||'').trim(),label=String(j.name||j.eqType||j.type||'Jig');
+     return label+(spec?' · '+spec:'');
+    }).join('; ')||String(row.equipment||row.equipmentName||row.machineName||'—');
+    const value=typeof stationTime==='function'?stationTime(row):Number(row.tt||row.time||0);
+    return '<tr><td class="setup-no">'+(start+idx+1)+'</td><td class="setup-process">'+esc(row.name||'—')+'</td><td>'+esc(Number.isFinite(value)?Number(value).toFixed(2):'—')+'</td><td>'+esc(String(row.mp??row.manpower??0))+'</td><td class="setup-equip">'+esc(details)+'</td></tr>';
+   }).join('');
+   const index=pages.length+1,total=Math.ceil(rows.length/perPage);
+   pages.push('<section class="page setup-sheet"><header><div><b>IL-SUNG TECH · DANH SÁCH CÔNG ĐOẠN SETUP</b><h1>'+esc(current.name)+' · '+esc(current.version)+'</h1></div><p>Trang công đoạn '+index+'/'+total+'</p></header><main><div class="setup-content"><table class="setup-process-table"><thead><tr><th>STT</th><th>TÊN CÔNG ĐOẠN</th><th>T/T (s)</th><th>MP</th><th>THIẾT BỊ / JIG · THÔNG SỐ SETUP</th></tr></thead><tbody>'+body+'</tbody></table></div></main><footer><span>Danh sách công đoạn phục vụ setup tại chuyền · '+rows.length+' công đoạn</span><span>'+paper+' · '+(orientation==='landscape'?'Ngang':'Dọc')+'</span></footer></section>');
+  }
+  return pages.join('');
+ }
  function openSetup(){
   if(activeView!=='overview')return printOnePage(activeView);
   const mode=publishedLayoutMode(),data=model();
@@ -94,6 +115,7 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
       <input id="layoutPrintScale" type="range" min="45" max="100" step="5" value="100">
      </label>
      <div class="layout-print-quick"><button type="button" data-print-scale="60">60%</button><button type="button" data-print-scale="80">80%</button><button type="button" data-print-scale="100">Vừa trang</button></div>
+     <label class="layout-print-process-option"><input id="layoutPrintProcessList" type="checkbox" checked> In kèm danh sách công đoạn chữ lớn (tự chia trang để setup)</label>
     </div>
     <div class="layout-print-preview"><img id="layoutPrintPreviewImage" alt="Xem trước bản Layout sẽ in"><p id="layoutPrintPreviewStatus">Đang tải bản in…</p></div>
     <footer><span>Chỉ in nguồn Layout đã được chọn khi Pushlist. 100% = vừa khổ giấy.</span><div><button type="button" id="layoutPrintCancel">Hủy</button><button type="button" id="layoutPrintConfirm">In</button></div></footer>
@@ -107,13 +129,13 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    dialog.querySelector('#layoutPrintCancel').onclick=()=>dialog.close();
    dialog.querySelector('#layoutPrintConfirm').onclick=()=>{
     if(dialog.querySelector('#layoutPrintConfirm').disabled)return;
-    const options={paper:dialog.querySelector('#layoutPrintPaper').value,orientation:dialog.querySelector('#layoutPrintOrientation').value,scale:Number(scale.value)};
+    const options={paper:dialog.querySelector('#layoutPrintPaper').value,orientation:dialog.querySelector('#layoutPrintOrientation').value,scale:Number(scale.value),processList:dialog.querySelector('#layoutPrintProcessList').checked};
     const source=dialog.dataset.layoutMode;dialog.close();printOnePage('overview',source,options);
    };
   }
   dialog.dataset.layoutMode=mode;
   dialog.querySelector('#layoutPrintSource').textContent=`${data.name} · ${data.version} · ${mode==='excel'?'PDF / Excel gốc':'Layout đã chỉnh sửa'}`;
-  dialog.querySelector('#layoutPrintScale').value='100';
+  dialog.querySelector('#layoutPrintScale').value='100';dialog.querySelector('#layoutPrintProcessList').checked=true;
   dialog.querySelector('#layoutPrintScaleLabel').textContent='100%';dialog.querySelector('#layoutPrintPreviewImage').style.transform='scale(1)';
   dialog.querySelector('#layoutPrintConfirm').disabled=true;
   const preview=dialog.querySelector('#layoutPrintPreviewImage'),status=dialog.querySelector('#layoutPrintPreviewStatus');
@@ -141,8 +163,8 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    document.getElementById('singlePagePrintFrame')?.remove();frame=document.createElement('iframe');frame.id='singlePagePrintFrame';frame.title='Bản in '+paper;frame.style.cssText='position:fixed;left:-12000px;top:0;width:1122px;height:794px;border:0';
    const loaded=new Promise(resolve=>frame.onload=resolve);
    frame.srcdoc=`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${esc(title+' · '+current.name)}</title><style>
-    @page{size:${paper} ${orientation};margin:6mm}*{box-sizing:border-box}html,body{margin:0;padding:0;color:#163441;font-family:Arial,sans-serif;font-size:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:${pageWidth}mm;height:${pageHeight}mm;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:2mm}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #7f999f;padding:1mm 0}h1{font-size:16px;margin:2px 0}header p{margin:0}main{position:relative;min-height:0;overflow:hidden}.content{position:absolute;top:0;left:0;width:100%;transform-origin:top left}footer{display:flex;justify-content:space-between;font-size:9px;border-top:1px solid #b9cacc;padding-top:1mm}.metrics{display:flex;gap:18px;padding:5px 0}.chart{height:40mm;margin:2mm 0}.chart svg{width:100%;height:100%;min-width:0;max-width:100%}.layout-image{display:block;width:100%;height:${Math.max(60,pageHeight-46)}mm;object-fit:contain}.legend{margin:2px 0;font-size:10px}table{border-collapse:collapse;table-layout:auto;width:100%;font-size:10px}th,td{border:1px solid #bacace;padding:3px 4px;text-align:left;overflow-wrap:anywhere;vertical-align:middle}th{background:#e7f1ee}tr:nth-child(even){background:#f5f8f7}thead{display:table-header-group}tr{break-inside:avoid}button,input,select{display:none}body{overflow:visible}
-    </style></head><body><section class="page"><header><div><b>IL-SUNG TECH · ${esc(title)}</b><h1>${esc(current.name)} · ${esc(current.version)}</h1></div><p>Rev ${esc(current._remote?.revision??'—')} · ${new Date().toLocaleDateString('vi-VN')}</p></header><main><div class="content">${content}</div></main><footer><span>${esc(title)} · ${esc(current.name)}</span><span>${paper} ${orientation==='landscape'?'ngang':'dọc'} · 1/1</span></footer></section></body></html>`;
+    @page{size:${paper} ${orientation};margin:6mm}*{box-sizing:border-box}html,body{margin:0;padding:0;color:#163441;font-family:Arial,sans-serif;font-size:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:${pageWidth}mm;height:${pageHeight}mm;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:2mm}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #7f999f;padding:1mm 0}h1{font-size:16px;margin:2px 0}header p{margin:0}main{position:relative;min-height:0;overflow:hidden}.content{position:absolute;top:0;left:0;width:100%;transform-origin:top left}footer{display:flex;justify-content:space-between;font-size:9px;border-top:1px solid #b9cacc;padding-top:1mm}.metrics{display:flex;gap:18px;padding:5px 0}.chart{height:40mm;margin:2mm 0}.chart svg{width:100%;height:100%;min-width:0;max-width:100%}.page{page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.setup-sheet main{overflow:visible}.setup-content{width:100%;height:100%}.setup-process-table{font-size:14px;table-layout:fixed;width:100%;line-height:1.3}.setup-process-table th{font-size:14px;background:#dcebef;color:#0d3043;padding:8px 7px}.setup-process-table td{font-size:14px;padding:8px 7px;white-space:normal;vertical-align:middle}.setup-process-table th:nth-child(1){width:7%}.setup-process-table th:nth-child(2){width:37%}.setup-process-table th:nth-child(3){width:9%}.setup-process-table th:nth-child(4){width:7%}.setup-process-table th:nth-child(5){width:40%}.setup-process-table .setup-process{font-weight:750;color:#0b2a42}.setup-sheet h1{font-size:20px}.setup-sheet footer{font-size:11px}.layout-image{display:block;width:100%;height:${Math.max(60,pageHeight-46)}mm;object-fit:contain}.legend{margin:2px 0;font-size:10px}table{border-collapse:collapse;table-layout:auto;width:100%;font-size:10px}th,td{border:1px solid #bacace;padding:3px 4px;text-align:left;overflow-wrap:anywhere;vertical-align:middle}th{background:#e7f1ee}tr:nth-child(even){background:#f5f8f7}thead{display:table-header-group}tr{break-inside:avoid}button,input,select{display:none}body{overflow:visible}
+    </style></head><body><section class="page"><header><div><b>IL-SUNG TECH · ${esc(title)}</b><h1>${esc(current.name)} · ${esc(current.version)}</h1></div><p>Rev ${esc(current._remote?.revision??'—')} · ${new Date().toLocaleDateString('vi-VN')}</p></header><main><div class="content">${content}</div></main><footer><span>${esc(title)} · ${esc(current.name)}</span><span>${paper} ${orientation==='landscape'?'ngang':'dọc'} · 1/1</span></footer></section>${view==='overview'&&options.processList!==false?processSetupPages(current,paper,orientation):''}</body></html>`;
    document.body.appendChild(frame);await loaded;const doc=frame.contentDocument,win=frame.contentWindow;
    await doc.fonts.ready;await Promise.all([...doc.images].map(img=>img.decode()));
    const box=doc.querySelector('main'),sheet=doc.querySelector('.content'),scale=singlePageScale(sheet.scrollWidth,sheet.scrollHeight,box.clientWidth,box.clientHeight)*requestedScale;sheet.style.left=Math.max(0,(box.clientWidth-sheet.scrollWidth*scale)/2)+'px';sheet.style.transform=`scale(${scale})`;
