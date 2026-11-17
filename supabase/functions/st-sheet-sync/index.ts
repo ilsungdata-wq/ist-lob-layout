@@ -13,9 +13,14 @@ if(body?.paged===true){
   }finally{clearTimeout(timeout)}
  };
  let meta:any;
- try{meta=await call({mode:'meta'},18000)}
- catch(error){return json({message:'google_sheet_bridge_upgrade_required',detail:'Apps Script chưa phản hồi chế độ đọc theo đợt. Cần triển khai Code.gs phiên bản st-paged-v2.',stage:'google_sheet_meta'},503)}
- if(meta.protocol!=='st-paged-v2')return json({message:'google_sheet_bridge_upgrade_required',stage:'google_sheet_meta'},503);
+ try{meta=await call({mode:'meta'},55000)}
+ catch(error){
+  const detail=error instanceof Error?error.message:String(error);
+  console.error('[st-sheet-sync] metadata request failed',{elapsed_ms:Date.now()-sourceStarted,reason:detail});
+  const timedOut=/abort|timeout/i.test(detail);
+  return json({message:timedOut?'google_sheet_meta_timeout':'google_sheet_meta_unavailable',detail:timedOut?'Apps Script phản hồi metadata quá chậm (55 giây). Kiểm tra thời gian đọc sheet và Executions.':'Không đọc được metadata của Apps Script. Kiểm tra log doPost, quyền Google Sheets, ST_SYNC_TOKEN và deployment URL.',stage:'google_sheet_meta',elapsed_ms:Date.now()-sourceStarted},timedOut?504:502)
+ }
+ if(meta.protocol!=='st-paged-v2')return json({message:'google_sheet_bridge_upgrade_required',detail:'Phản hồi Apps Script thiếu protocol st-paged-v2; kiểm tra doPost Version 7 và ST_GOOGLE_SYNC_URL.',stage:'google_sheet_meta',elapsed_ms:Date.now()-sourceStarted},503);
  if(!Number.isSafeInteger(meta.erp_rows)||!Number.isSafeInteger(meta.bom_rows)||meta.erp_rows>300000||meta.bom_rows>100000)return json({message:'invalid_google_sheet_page_metadata'},502);
  const getPages=async(source:'erp'|'bom',count:number)=>{
   const offsets=Array.from({length:Math.ceil(count/PAGE_SIZE)},(_,i)=>i*PAGE_SIZE);
