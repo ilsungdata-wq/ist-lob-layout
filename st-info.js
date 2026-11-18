@@ -45,10 +45,52 @@ async function readVocFile(file){const wb=XLSX.read(await file.arrayBuffer(),{ty
 function renderVocPreview(){const valid=vocRows.filter(r=>r.valid),invalid=vocRows.length-valid.length;$('stVocSummary').textContent=`${valid.length} dòng hợp lệ${invalid?` · ${invalid} dòng cần kiểm tra`:''}.`;$('stVocPreviewTable').innerHTML=`<table><thead><tr><th>GH96</th><th>Giá mới</th><th>Ngày</th><th>VOC</th><th>Lý do</th></tr></thead><tbody>${vocRows.slice(0,100).map(r=>`<tr class="${r.valid?'':'invalid'}"><td>${esc(r.product_code||'Thiếu code')}</td><td>${Number.isFinite(r.new_price)?money.format(r.new_price):'Không hợp lệ'}</td><td>${esc(r.change_date)}</td><td>${esc(r.voc_code||'—')}</td><td>${esc(r.reason||'Để trống')}</td></tr>`).join('')}</tbody></table>`;$('stVocConfirmBtn').disabled=!valid.length;$('stVocPreviewDialog').showModal()}
 async function applyVoc(e){e.preventDefault();const rows=vocRows.filter(r=>r.valid).map(({valid,...r})=>r);if(!rows.length)return;const b=$('stVocConfirmBtn');b.disabled=true;try{const x=await rpc('apply_st_voc_batch',{p_rows:rows});$('stVocPreviewDialog').close();historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);catalog=[];await loadCatalog({fresh:true});toastMessage(`Đã ghi nhận ${x?.updated||0} thay đổi VOC.`)}catch(err){toastMessage('Không thể ghi nhận VOC: '+err.message)}finally{b.disabled=false}}
 function compareSheetRows(rows){const now=new Map(catalog.map(r=>[r.product_code,r]));return rows.map(r=>{const old=now.get(r.product_code),typ=typeForModel(r.model_name),laborCost=typ==='Tab'?3566:3445,newSt=+r.net_price/laborCost,oldSt=old?+old.current_st:null;let status='unchanged';if(!old)status='new';else if(+old.current_price!==+r.net_price)status='price';else if(old.model_name!==r.model_name||typeLabel(old.product_type)!==typ)status='mapping';return{...r,product_type:typ,labor_cost:laborCost,status,old_price:old?.current_price??null,old_st:oldSt,new_st:newSt,gap_st:oldSt==null?null:newSt-oldSt,effective_date:r.rd_date||new Date().toISOString().slice(0,10)}})}
+async function renderErpTimeline(code){
+ const host=$('stErpTimelineResult');
+ host.textContent=code?'Đang tải lịch sử ERP đã lưu…':'';
+ if(!code)return;
+ try{
+  const dates=await supabaseRequest('/rest/v1/st_erp_days?select=rd_date&order=rd_date.desc&limit=1');
+  const history=await rpc('get_st_history',{p_product_code:code});
+  const rows=[];
+  for(let offset=0;;offset+=500){
+   const {data}=await supabaseRequest('/rest/v1/st_erp_daily_prices?select=rd_date,net_price,plan_qty&parent_code=eq.'+encodeURIComponent(code)+'&order=rd_date.asc,net_price.asc&limit=500&offset='+offset);
+   if(!Array.isArray(data))throw new Error('Không đọc được lịch sử đã lưu.');
+   rows.push(...data);
+   if(data.length<500)break;
+  }
+  if($('stErpTimelineCode').value!==code)return;
+  if(!rows.length){host.textContent='Chưa có dữ liệu ERP đã lưu cho mã này.';return}
+  const days=new Map();
+  for(const row of rows){
+   if(!days.has(row.rd_date))days.set(row.rd_date,[]);
+   days.get(row.rd_date).push(row);
+  }
+  const periods=[];
+  for(const [date,items] of days){
+   const last=periods.at(-1),mixed=items.length>1;
+   if(!mixed&&last&&!last.mixed&&last.price===Number(items[0].net_price)){
+    last.qty+=Number(items[0].plan_qty);last.planDays++;last.lastPlan=date;
+   }else for(const item of items)periods.push({date,lastPlan:date,price:Number(item.net_price),qty:Number(item.plan_qty),planDays:1,mixed});
+  }
+  const ms=86400000;
+  host.innerHTML='<p>Lịch sử ERP đã lưu · '+esc(code)+' · đến '+esc(dates.data?.[0]?.rd_date||'—')+'</p><div style="max-height:45vh;overflow:auto"><table><thead><tr><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Ngày có Plan</th><th>Plan Q’ty</th><th>Giá (VND/EA)</th><th>GAP theo Plan (VND)</th><th>Lý do / VOC</th></tr></thead><tbody>'+periods.map((p,i)=>{
+   const previous=periods[i-1],next=periods[i+1];
+   const end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):p.lastPlan;
+   const duration=1+(Date.parse(end)-Date.parse(p.date))/ms;
+   const note=(history||[]).find(row=>row.change_date===p.date&&Number(row.new_price)===p.price);
+   const gap=previous&&!p.mixed&&!previous.mixed?money.format((p.price-previous.price)*p.qty):'—';
+   return `<tr><td>${esc(p.date)}</td><td>${esc(end)}</td><td>${duration}</td><td>${p.planDays}</td><td>${money.format(p.qty)}</td><td>${money.format(p.price)}</td><td>${gap}</td><td>${p.mixed?'Nhiều mức giá':esc([note?.reason,note?.voc_code].filter(Boolean).join(' · ')||'—')}</td></tr>`;
+  }).join('')+'</tbody></table></div>';
+ }catch(error){if($('stErpTimelineCode').value===code)host.textContent=error.message}
+}
 function previewErp(){
  const dialog=$('stErpDailyDialog'), input=$('stErpDailyDate'), result=$('stErpDailyResult');
  if(!input.value) input.value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format();
  dialog.showModal();
+ const code=$('stErpTimelineCode');
+ code.innerHTML='<option value="">Chọn Model / Parent Code</option>'+catalog.map(row=>`<option value="${esc(row.product_code)}">${esc(row.model_name)} · ${esc(row.product_code)}</option>`).join('');
+ code.onchange=()=>renderErpTimeline(code.value);
  $('stErpDailyForm').onsubmit=async event=>{
   event.preventDefault();
   if(!canImport())return;
@@ -56,10 +98,10 @@ function previewErp(){
   button.disabled=true;result.textContent='Đang đọc đơn gia công từ Next ERP…';
   try{
    if(!await auth.restore())throw new Error('Vui lòng đăng nhập lại.');
-   const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date}});
+   const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:event.submitter?.value==='save'}});
    if(!Array.isArray(data?.groups))throw new Error('Phản hồi ERP không hợp lệ.');
    const groups=[...data.groups].sort((a,b)=>a.parent_code.localeCompare(b.parent_code)||a.net_price-b.net_price);
-   result.innerHTML=`<p>${esc(date)} · ${Number(data.order_count)} đơn · ${money.format(Number(data.plan_qty))} EA · ${Number(data.skipped_lines)} dòng bỏ qua</p><div style="max-height:55vh;overflow:auto"><table><thead><tr><th>Parent Code</th><th>Net Price gốc (VND/EA)</th><th>Plan Q’ty (EA)</th></tr></thead><tbody>${groups.map(row=>`<tr><td>${esc(row.parent_code)}</td><td>${money.format(row.net_price)}</td><td>${money.format(row.plan_qty)}</td></tr>`).join('')}</tbody></table></div>`;
+   result.innerHTML=`<p>${esc(date)} · ${data.saved?'Đã lưu · ':''}${Number(data.order_count)} đơn · ${money.format(Number(data.plan_qty))} EA · ${Number(data.skipped_lines)} dòng bỏ qua</p><div style="max-height:55vh;overflow:auto"><table><thead><tr><th>Parent Code</th><th>Net Price gốc (VND/EA)</th><th>Plan Q’ty (EA)</th></tr></thead><tbody>${groups.map(row=>`<tr><td>${esc(row.parent_code)}</td><td>${money.format(row.net_price)}</td><td>${money.format(row.plan_qty)}</td></tr>`).join('')}</tbody></table></div>`;
   }catch(error){
    result.textContent='Kiểm tra ERP thất bại: '+(error.details?.error||error.message);
   }finally{button.disabled=false}
