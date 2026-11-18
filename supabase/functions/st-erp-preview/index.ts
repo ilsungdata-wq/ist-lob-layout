@@ -8,10 +8,14 @@ Deno.serve(async request => {
   const authorization = request.headers.get("Authorization");
   if (!authorization) return json({ error: "authentication_required" }, 401);
   try {
-    const admin = await fetch(Deno.env.get("SUPABASE_URL") + "/rest/v1/rpc/is_admin", {
+    const { date, save, scheduled } = await request.json().catch(() => ({}));
+    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const admin = await fetch(Deno.env.get("SUPABASE_URL") + "/rest/v1/rpc/" + (scheduled === true ? "st_erp_cron_authorized" : "is_admin"), {
       method: "POST",
-      headers: { ...headers, authorization, apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "" },
-      body: "{}",
+      headers: scheduled === true
+        ? { ...headers, authorization: "Bearer " + service, apikey: service }
+        : { ...headers, authorization, apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "" },
+      body: scheduled === true ? JSON.stringify({ p_token: authorization.startsWith("Bearer ") ? authorization.slice(7) : "" }) : "{}",
       signal: AbortSignal.timeout(5000),
     });
     if (!admin.ok || await admin.json() !== true) return json({ error: "admin_required" }, 403);
@@ -19,7 +23,6 @@ Deno.serve(async request => {
     const key = Deno.env.get("ERP_API_KEY");
     const secret = Deno.env.get("ERP_API_SECRET");
     if (!key || !secret) return json({ error: "erp_secrets_missing" }, 503);
-    const { date, save } = await request.json().catch(() => ({}));
     if (typeof date !== "string" || !/^2026-\d{2}-\d{2}$/.test(date) ||
         !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) {
       return json({ error: "valid_2026_date_required" }, 400);
