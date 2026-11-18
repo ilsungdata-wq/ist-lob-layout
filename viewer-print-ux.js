@@ -141,73 +141,25 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    return result.toDataURL('image/png');
   }catch{return source} // Cross-origin or unsupported images retain original printing.
  }
- function openSetup(){
+ async function openSetup(){
   if(activeView!=='overview')return printOnePage(activeView);
-  const mode=displayedLayoutMode(),data=model();
-  let dialog=document.getElementById('layoutPrintSetupDialog');
-  if(!dialog){
-   dialog=document.createElement('dialog');dialog.id='layoutPrintSetupDialog';dialog.className='layout-print-setup-dialog';
-   dialog.innerHTML=`<div class="layout-print-setup-body">
-    <header><div><small>IN LAYOUT · CHỌN NGUỒN BẢN IN</small><h2>Thiết lập in Layout</h2><p id="layoutPrintSource"></p></div><button type="button" id="layoutPrintClose" aria-label="Đóng">✕</button></header>
-    <div class="layout-print-setup-controls"><label style="grid-column:1/-1">Bản cần in <select id="layoutPrintLayoutMode"><option value="excel">PDF / Excel gốc</option><option value="interactive">Layout vẽ trên webapp</option></select></label>
-     <label>Khổ giấy <select id="layoutPrintPaper" disabled><option value="A4">A4</option></select></label>
-     <label>Hướng giấy <select id="layoutPrintOrientation" disabled><option value="landscape">Ngang</option></select></label>
-     <label class="layout-print-scale-label">Kích thước bản in <strong id="layoutPrintScaleLabel">100%</strong>
-      <input id="layoutPrintScale" type="range" min="45" max="100" step="5" value="100">
-     </label>
-     <div class="layout-print-quick"><button type="button" data-print-scale="60">60%</button><button type="button" data-print-scale="80">80%</button><button type="button" data-print-scale="100">Vừa trang</button></div>
-     <p class="layout-print-paper-hint">In đúng 1 trang A4 ngang. Tự cắt khoảng trắng quanh Layout để tên công đoạn hiển thị lớn nhất.</p>
-    </div>
-    <div class="layout-print-preview"><img id="layoutPrintPreviewImage" alt="Xem trước bản Layout sẽ in"><p id="layoutPrintPreviewStatus">Đang tải bản in…</p></div>
-    <footer><span>Mặc định in bản đang hiển thị. Có thể chọn bản khác; không thay đổi Pushlist. 100% = vừa khổ giấy.</span><div><button type="button" id="layoutPrintCancel">Hủy</button><button type="button" id="layoutPrintConfirm">In</button></div></footer>
-   </div>`;
-   document.body.appendChild(dialog);
-   const scale=dialog.querySelector('#layoutPrintScale'),value=dialog.querySelector('#layoutPrintScaleLabel');
-   const sync=()=>{value.textContent=scale.value+'%';const img=dialog.querySelector('#layoutPrintPreviewImage');if(img)img.style.transform='scale('+(Number(scale.value)/100)+')';dialog.querySelectorAll('[data-print-scale]').forEach(b=>b.classList.toggle('active',b.dataset.printScale===scale.value));};
-   scale.addEventListener('input',sync);
-   dialog.querySelectorAll('[data-print-scale]').forEach(b=>b.addEventListener('click',()=>{scale.value=b.dataset.printScale;sync();}));
-   dialog.querySelector('#layoutPrintClose').onclick=()=>dialog.close();
-   dialog.querySelector('#layoutPrintCancel').onclick=()=>dialog.close();
-   dialog.querySelector('#layoutPrintConfirm').onclick=()=>{
-    if(dialog.querySelector('#layoutPrintConfirm').disabled)return;
-    const options={paper:'A4',orientation:'landscape',scale:Number(scale.value)};
-    const source=dialog.dataset.layoutMode;options.image=dialog.querySelector('#layoutPrintPreviewImage').src;dialog.close();printOnePage('overview',source,options);
-   };
-  }
-  const selector=dialog.querySelector('#layoutPrintLayoutMode');
-  selector.value=mode;
-  dialog.querySelector('#layoutPrintScale').value='100';
-  dialog.querySelector('#layoutPrintScaleLabel').textContent='100%';dialog.querySelector('#layoutPrintPreviewImage').style.transform='scale(1)';
-  let request=0;
-  const renderPreview=async()=>{
-   const seq=++request,source=selector.value;
-   dialog.dataset.layoutMode=source;
-   dialog.querySelector('#layoutPrintSource').textContent=`${data.name} · ${data.version} · ${source==='excel'?'PDF / Excel gốc':'Layout vẽ trên webapp'}`;
-   const preview=dialog.querySelector('#layoutPrintPreviewImage'),status=dialog.querySelector('#layoutPrintPreviewStatus'),confirm=dialog.querySelector('#layoutPrintConfirm');
-   confirm.disabled=true;preview.hidden=true;preview.removeAttribute('src');status.textContent='Đang tải bản cần in…';
-   try{
-    let url;
-    if(source==='excel'){
-     const inline=$('layoutReferenceInlineImage');
-     if(displayedLayoutMode()==='excel'&&inline?.complete&&inline.naturalWidth>0)url=inline.src;
-     else{await waitForPublishedReference();url=$('excelReferenceImage')?.src;}
-    }else{url=phase2dLayoutImage();}
-    if(!url)throw Error('Phiên bản này chưa có bản Layout đã chọn.');
-    const cropped=await optimizedLayoutImage(url);
-    if(seq!==request||!dialog.open||model()!==data)return;
-    preview.src=cropped;await preview.decode();
-    if(seq!==request||!dialog.open||model()!==data)return;
-    preview.hidden=false;status.textContent='';confirm.disabled=false;
-   }catch(error){if(seq===request&&dialog.open)status.textContent=error.message;}
-  };
-  selector.onchange=renderPreview;
-  dialog.showModal();renderPreview();
+  const current=model(),mode=displayedLayoutMode();
+  try{
+   let image;
+   if(mode==='excel'){
+    const inline=$('layoutReferenceInlineImage');
+    if(inline?.complete&&inline.naturalWidth>0&&!inline.hidden)image=inline.src;
+    else{await waitForPublishedReference();image=$('excelReferenceImage')?.src;}
+   }else image=phase2dLayoutImage();
+   if(model()!==current)throw Error('Model đã thay đổi, hãy in lại.');
+   if(!image)throw Error('Không có Layout đang hiển thị để in.');
+   return printOnePage('overview',mode,{image:await optimizedLayoutImage(image),scale:100});
+  }catch(error){toast('Không thể chuẩn bị bản in: '+error.message)}
  }
-
  async function printOnePage(view=activeView,layoutMode='interactive',options={}){
   const paper='A4',orientation='landscape';
   const pageSizes={A4:{landscape:[285,197],portrait:[198,285]},A3:{landscape:[408,285],portrait:[285,408]}};
-  const [pageWidth,pageHeight]=pageSizes[paper][orientation];
+  const [pageWidth,pageHeight]=view==='overview'?[288,200]:pageSizes[paper][orientation];
   const requestedScale=Math.max(45,Math.min(100,Number(options.scale)||100))/100;
   let frame;
   try{
@@ -217,8 +169,8 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    document.getElementById('singlePagePrintFrame')?.remove();frame=document.createElement('iframe');frame.id='singlePagePrintFrame';frame.title='Bản in '+paper;frame.style.cssText='position:fixed;left:-12000px;top:0;width:1122px;height:794px;border:0';
    const loaded=new Promise(resolve=>frame.onload=resolve);
    frame.srcdoc=`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${esc(title+' · '+current.name)}</title><style>
-    @page{size:${paper} ${orientation};margin:6mm}*{box-sizing:border-box}html,body{margin:0;padding:0;color:#163441;font-family:Arial,sans-serif;font-size:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:${pageWidth}mm;height:${pageHeight}mm;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:1mm}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #7f999f;padding:1mm 0}h1{font-size:16px;margin:2px 0}header p{margin:0}main{position:relative;min-height:0;overflow:hidden}.content{position:absolute;top:0;left:0;width:100%;transform-origin:top left}footer{display:flex;justify-content:space-between;font-size:9px;border-top:1px solid #b9cacc;padding-top:1mm}.metrics{display:flex;gap:18px;padding:5px 0}.chart{height:40mm;margin:2mm 0}.chart svg{width:100%;height:100%;min-width:0;max-width:100%}.page{page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.setup-sheet main{overflow:visible}.setup-content{width:100%;height:100%}.setup-process-table{font-size:14px;table-layout:fixed;width:100%;line-height:1.3}.setup-process-table th{font-size:14px;background:#dcebef;color:#0d3043;padding:8px 7px}.setup-process-table td{font-size:14px;padding:8px 7px;white-space:normal;vertical-align:middle}.setup-process-table th:nth-child(1){width:7%}.setup-process-table th:nth-child(2){width:37%}.setup-process-table th:nth-child(3){width:9%}.setup-process-table th:nth-child(4){width:7%}.setup-process-table th:nth-child(5){width:40%}.setup-process-table .setup-process{font-weight:750;color:#0b2a42}.setup-sheet h1{font-size:20px}.setup-sheet footer{font-size:11px}.layout-image{display:block;width:100%;height:${Math.max(60,pageHeight-18)}mm;object-fit:contain;object-position:top center}.legend{margin:2px 0;font-size:10px}table{border-collapse:collapse;table-layout:auto;width:100%;font-size:10px}th,td{border:1px solid #bacace;padding:3px 4px;text-align:left;overflow-wrap:anywhere;vertical-align:middle}th{background:#e7f1ee}tr:nth-child(even){background:#f5f8f7}thead{display:table-header-group}tr{break-inside:avoid}button,input,select{display:none}body{overflow:visible}
-    </style></head><body><section class="page"><header><div><b>IL-SUNG TECH · ${esc(title)}</b><h1>${esc(current.name)} · ${esc(current.version)}</h1></div><p>Rev ${esc(current._remote?.revision??'—')} · ${new Date().toLocaleDateString('vi-VN')}</p></header><main><div class="content">${content}</div></main><footer><span>${esc(title)} · ${esc(current.name)}</span><span>${paper} ${orientation==='landscape'?'ngang':'dọc'} · 1/1</span></footer></section></body></html>`;
+    @page{size:${paper} ${orientation};margin:${view==='overview'?4:6}mm}*{box-sizing:border-box}html,body{margin:0;padding:0;color:#163441;font-family:Arial,sans-serif;font-size:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:${pageWidth}mm;height:${pageHeight}mm;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:1mm}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #7f999f;padding:1mm 0}h1{font-size:16px;margin:2px 0}header p{margin:0}main{position:relative;min-height:0;overflow:hidden}.content{position:absolute;top:0;left:0;width:100%;transform-origin:top left}footer{display:flex;justify-content:space-between;font-size:9px;border-top:1px solid #b9cacc;padding-top:1mm}.metrics{display:flex;gap:18px;padding:5px 0}.chart{height:40mm;margin:2mm 0}.chart svg{width:100%;height:100%;min-width:0;max-width:100%}.page{page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.setup-sheet main{overflow:visible}.setup-content{width:100%;height:100%}.setup-process-table{font-size:14px;table-layout:fixed;width:100%;line-height:1.3}.setup-process-table th{font-size:14px;background:#dcebef;color:#0d3043;padding:8px 7px}.setup-process-table td{font-size:14px;padding:8px 7px;white-space:normal;vertical-align:middle}.setup-process-table th:nth-child(1){width:7%}.setup-process-table th:nth-child(2){width:37%}.setup-process-table th:nth-child(3){width:9%}.setup-process-table th:nth-child(4){width:7%}.setup-process-table th:nth-child(5){width:40%}.setup-process-table .setup-process{font-weight:750;color:#0b2a42}.setup-sheet h1{font-size:20px}.setup-sheet footer{font-size:11px}.layout-image{display:block;width:100%;height:100%;object-fit:contain;object-position:center}.layout-only{grid-template-rows:auto minmax(0,1fr);gap:1mm}.layout-only footer{display:none}.layout-only .content{height:100%;width:100%}.layout-only header{padding:0;border-bottom:0}.layout-only h1{font-size:13px;margin:0}.layout-only header b{font-size:9px}.legend{margin:2px 0;font-size:10px}table{border-collapse:collapse;table-layout:auto;width:100%;font-size:10px}th,td{border:1px solid #bacace;padding:3px 4px;text-align:left;overflow-wrap:anywhere;vertical-align:middle}th{background:#e7f1ee}tr:nth-child(even){background:#f5f8f7}thead{display:table-header-group}tr{break-inside:avoid}button,input,select{display:none}body{overflow:visible}
+    </style></head><body><section class="page ${view==='overview'?'layout-only':''}"><header><div><b>IL-SUNG TECH · ${esc(title)}</b><h1>${esc(current.name)} · ${esc(current.version)}</h1></div><p>Rev ${esc(current._remote?.revision??'—')} · ${new Date().toLocaleDateString('vi-VN')}</p></header><main><div class="content">${content}</div></main><footer><span>${esc(title)} · ${esc(current.name)}</span><span>${paper} ${orientation==='landscape'?'ngang':'dọc'} · 1/1</span></footer></section></body></html>`;
    document.body.appendChild(frame);await loaded;const doc=frame.contentDocument,win=frame.contentWindow;
    await doc.fonts.ready;await Promise.all([...doc.images].map(img=>img.decode()));
    const box=doc.querySelector('main'),sheet=doc.querySelector('.content'),scale=(view==='overview'?1:singlePageScale(sheet.scrollWidth,sheet.scrollHeight,box.clientWidth,box.clientHeight))*requestedScale;sheet.style.left=Math.max(0,(box.clientWidth-sheet.scrollWidth*scale)/2)+'px';sheet.style.transform=`scale(${scale})`;
