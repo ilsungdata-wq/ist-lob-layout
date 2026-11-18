@@ -43,7 +43,8 @@ Deno.serve(async request => {
         filters: JSON.stringify([["delivery_date", "=", date], ["is_subcontracted", "=", 1],
           ["custom_delivery_date_is_placeholder", "=", 0], ["docstatus", "<", 2]]),
         order_by: "name asc",
-        limit_page_length: "100",\n      limit_start: String(offset),
+        limit_page_length: "100",
+          limit_start: String(offset),
       }));
         if (!Array.isArray(page) || orders.length + page.length > 500) return json({ error: "preview_order_limit" }, 422);
       orders.push(...page);
