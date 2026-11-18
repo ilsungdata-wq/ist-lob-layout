@@ -29,15 +29,12 @@ test('published source remains the fallback when no active display is available'
  assert.doesNotMatch(studio,/function openPrintChoice\(\)\{[^}]*showModal/);
 });
 
-test('print setup offers paper size, orientation, print scale and a rendered preview',()=>{
- assert.match(print,/id="layoutPrintPaper"/);
- assert.match(print,/id="layoutPrintOrientation"/);
- assert.match(print,/id="layoutPrintScale"/);
- assert.match(print,/id="layoutPrintPreviewImage"/);
- assert.match(print,/Math\.max\(45,Math\.min\(100/);
+test('direct browser print fits one A4 landscape page with full image',()=>{
+ assert.doesNotMatch(print,/layoutPrintSetupDialog/);
+ assert.match(print,/const paper='A4',orientation='landscape'/);
+ assert.match(print,/object-fit:contain;object-position:center/);
+ assert.match(print,/layout-only \.content\{height:100%;width:100%\}/);
  assert.match(print,/singlePageScale\(sheet\.scrollWidth/);
- assert.match(print,/waitForPublishedReference\(\)/);
- assert.match(styles,/\.layout-print-setup-dialog/);
  assert.match(html,/viewer-print-ux\.js\?v=[^"']+/);
 });
 
@@ -47,12 +44,11 @@ test('visible PDF has priority even when saved source is edited (S936)',()=>{
  vm.runInContext(print.slice(a,b),context);
  assert.equal(context.displayedLayoutMode(),'excel');
 });
-test('preview source choice controls the exact image printed without changing published state',()=>{
- assert.match(print,/const mode=displayedLayoutMode\(\)/);
- assert.match(print,/id="layoutPrintLayoutMode"/);
- assert.match(print,/selector.onchange=renderPreview/);
- assert.match(print,/options.image=dialog.querySelector\('#layoutPrintPreviewImage'\).src/);
+test('direct printing uses the currently displayed image without changing published state',()=>{
+ assert.match(print,/mode=displayedLayoutMode\(\)/);
+ assert.match(print,/image=inline.src/);
+ assert.match(print,/image:await optimizedLayoutImage\(image\),scale:100/);
  assert.match(print,/options.image\|\|await optimizedLayoutImage/);
- assert.match(print,/seq!==request/);
+ assert.match(print,/win\.print\(\)/);
  assert.doesNotMatch(print,/model\(\)\.viewerLayoutSource\s*=/);
 });
