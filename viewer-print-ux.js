@@ -65,6 +65,13 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
   const hasReference=!!(data?.referenceAsset?.path||data?.referenceImage||data?.referenceSourceAsset?.path||data?.sourceExcelAsset?.path);
   return hasReference?'excel':'interactive';
  }
+ function displayedLayoutMode(){
+  const panel=$('layoutReferenceInline'),image=$('layoutReferenceInlineImage');
+  if(globalThis.ISTReferenceViewer?.active?.()||panel&&!panel.hidden)return'excel';
+  const canvas=$('professionalEditorShell');
+  if(canvas&&!canvas.hidden&&canvas.getClientRects().length)return'interactive';
+  return publishedLayoutMode();
+ }
  function waitForPublishedReference(){
   const image=$('excelReferenceImage');
   if(!image)return Promise.reject(new Error('Không tìm thấy ảnh PDF / Excel gốc.'));
@@ -136,13 +143,13 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
  }
  function openSetup(){
   if(activeView!=='overview')return printOnePage(activeView);
-  const mode=publishedLayoutMode(),data=model();
+  const mode=displayedLayoutMode(),data=model();
   let dialog=document.getElementById('layoutPrintSetupDialog');
   if(!dialog){
    dialog=document.createElement('dialog');dialog.id='layoutPrintSetupDialog';dialog.className='layout-print-setup-dialog';
    dialog.innerHTML=`<div class="layout-print-setup-body">
-    <header><div><small>IN LAYOUT · PHIÊN BẢN ĐÃ PUSHLIST</small><h2>Thiết lập in Layout</h2><p id="layoutPrintSource"></p></div><button type="button" id="layoutPrintClose" aria-label="Đóng">✕</button></header>
-    <div class="layout-print-setup-controls">
+    <header><div><small>IN LAYOUT · CHỌN NGUỒN BẢN IN</small><h2>Thiết lập in Layout</h2><p id="layoutPrintSource"></p></div><button type="button" id="layoutPrintClose" aria-label="Đóng">✕</button></header>
+    <div class="layout-print-setup-controls"><label style="grid-column:1/-1">Bản cần in <select id="layoutPrintLayoutMode"><option value="excel">PDF / Excel gốc</option><option value="interactive">Layout vẽ trên webapp</option></select></label>
      <label>Khổ giấy <select id="layoutPrintPaper" disabled><option value="A4">A4</option></select></label>
      <label>Hướng giấy <select id="layoutPrintOrientation" disabled><option value="landscape">Ngang</option></select></label>
      <label class="layout-print-scale-label">Kích thước bản in <strong id="layoutPrintScaleLabel">100%</strong>
@@ -152,7 +159,7 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
      <p class="layout-print-paper-hint">In đúng 1 trang A4 ngang. Tự cắt khoảng trắng quanh Layout để tên công đoạn hiển thị lớn nhất.</p>
     </div>
     <div class="layout-print-preview"><img id="layoutPrintPreviewImage" alt="Xem trước bản Layout sẽ in"><p id="layoutPrintPreviewStatus">Đang tải bản in…</p></div>
-    <footer><span>Chỉ in nguồn Layout đã được chọn khi Pushlist. 100% = vừa khổ giấy.</span><div><button type="button" id="layoutPrintCancel">Hủy</button><button type="button" id="layoutPrintConfirm">In</button></div></footer>
+    <footer><span>Mặc định in bản đang hiển thị. Có thể chọn bản khác; không thay đổi Pushlist. 100% = vừa khổ giấy.</span><div><button type="button" id="layoutPrintCancel">Hủy</button><button type="button" id="layoutPrintConfirm">In</button></div></footer>
    </div>`;
    document.body.appendChild(dialog);
    const scale=dialog.querySelector('#layoutPrintScale'),value=dialog.querySelector('#layoutPrintScaleLabel');
@@ -164,27 +171,39 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    dialog.querySelector('#layoutPrintConfirm').onclick=()=>{
     if(dialog.querySelector('#layoutPrintConfirm').disabled)return;
     const options={paper:'A4',orientation:'landscape',scale:Number(scale.value)};
-    const source=dialog.dataset.layoutMode;dialog.close();printOnePage('overview',source,options);
+    const source=dialog.dataset.layoutMode;options.image=dialog.querySelector('#layoutPrintPreviewImage').src;dialog.close();printOnePage('overview',source,options);
    };
   }
-  dialog.dataset.layoutMode=mode;
-  dialog.querySelector('#layoutPrintSource').textContent=`${data.name} · ${data.version} · ${mode==='excel'?'PDF / Excel gốc':'Layout đã chỉnh sửa'}`;
+  const selector=dialog.querySelector('#layoutPrintLayoutMode');
+  selector.value=mode;
   dialog.querySelector('#layoutPrintScale').value='100';
   dialog.querySelector('#layoutPrintScaleLabel').textContent='100%';dialog.querySelector('#layoutPrintPreviewImage').style.transform='scale(1)';
-  dialog.querySelector('#layoutPrintConfirm').disabled=true;
-  const preview=dialog.querySelector('#layoutPrintPreviewImage'),status=dialog.querySelector('#layoutPrintPreviewStatus');
-  preview.hidden=true;preview.removeAttribute('src');status.textContent='Đang tải bản Layout đã Pushlist…';
-  dialog.showModal();
-  if(mode==='excel'){
-   waitForPublishedReference().then(async()=>{
-    if(!dialog.open||dialog.dataset.layoutMode!==mode)return;
-    preview.src=await optimizedLayoutImage($('excelReferenceImage').src);preview.hidden=false;status.textContent='';dialog.querySelector('#layoutPrintConfirm').disabled=false;
-   }).catch(error=>{if(dialog.open)status.textContent=error.message;});
-  }else{
-   try{const url=phase2dLayoutImage();if(!url)throw Error('Bản Layout chưa có dữ liệu để in.');optimizedLayoutImage(url).then(cropped=>{if(!dialog.open)return;preview.src=cropped;preview.hidden=false;status.textContent='';dialog.querySelector('#layoutPrintConfirm').disabled=false;});}
-   catch(error){status.textContent=error.message;dialog.querySelector('#layoutPrintConfirm').disabled=true;}
-  }
+  let request=0;
+  const renderPreview=async()=>{
+   const seq=++request,source=selector.value;
+   dialog.dataset.layoutMode=source;
+   dialog.querySelector('#layoutPrintSource').textContent=`${data.name} · ${data.version} · ${source==='excel'?'PDF / Excel gốc':'Layout vẽ trên webapp'}`;
+   const preview=dialog.querySelector('#layoutPrintPreviewImage'),status=dialog.querySelector('#layoutPrintPreviewStatus'),confirm=dialog.querySelector('#layoutPrintConfirm');
+   confirm.disabled=true;preview.hidden=true;preview.removeAttribute('src');status.textContent='Đang tải bản cần in…';
+   try{
+    let url;
+    if(source==='excel'){
+     const inline=$('layoutReferenceInlineImage');
+     if(displayedLayoutMode()==='excel'&&inline?.complete&&inline.naturalWidth>0)url=inline.src;
+     else{await waitForPublishedReference();url=$('excelReferenceImage')?.src;}
+    }else{url=phase2dLayoutImage();}
+    if(!url)throw Error('Phiên bản này chưa có bản Layout đã chọn.');
+    const cropped=await optimizedLayoutImage(url);
+    if(seq!==request||!dialog.open||model()!==data)return;
+    preview.src=cropped;await preview.decode();
+    if(seq!==request||!dialog.open||model()!==data)return;
+    preview.hidden=false;status.textContent='';confirm.disabled=false;
+   }catch(error){if(seq===request&&dialog.open)status.textContent=error.message;}
+  };
+  selector.onchange=renderPreview;
+  dialog.showModal();renderPreview();
  }
+
  async function printOnePage(view=activeView,layoutMode='interactive',options={}){
   const paper='A4',orientation='landscape';
   const pageSizes={A4:{landscape:[285,197],portrait:[198,285]},A3:{landscape:[408,285],portrait:[285,408]}};
@@ -192,9 +211,8 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
   const requestedScale=Math.max(45,Math.min(100,Number(options.scale)||100))/100;
   let frame;
   try{
-   if(view==='overview'&&layoutMode==='excel')await waitForPublishedReference();
-   const original=reportContent(view,layoutMode);
-   const content=view==='overview'?'<img class="layout-image" alt="Layout để setup" src="'+esc(await optimizedLayoutImage(layoutMode==='excel'?$('excelReferenceImage').src:phase2dLayoutImage()))+'">':original;
+   if(view==='overview'&&layoutMode==='excel'&&!options.image)await waitForPublishedReference();
+   const content=view==='overview'?'<img class="layout-image" alt="Layout để setup" src="'+esc(options.image||await optimizedLayoutImage(layoutMode==='excel'?$('excelReferenceImage').src:phase2dLayoutImage()))+'">':reportContent(view,layoutMode);
    const current=model(),title=({overview:'Layout',processes:'Thông tin LOB',jigs:'Thiết bị & Jig'})[view]||'Layout';
    document.getElementById('singlePagePrintFrame')?.remove();frame=document.createElement('iframe');frame.id='singlePagePrintFrame';frame.title='Bản in '+paper;frame.style.cssText='position:fixed;left:-12000px;top:0;width:1122px;height:794px;border:0';
    const loaded=new Promise(resolve=>frame.onload=resolve);
@@ -207,9 +225,9 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    win.addEventListener('afterprint',()=>setTimeout(()=>frame.remove(),0),{once:true});win.focus();win.print();
   }catch(error){frame?.remove();toast('Không thể chuẩn bị bản in: '+error.message)}
  }
- printCurrentView=function(layoutMode=layoutVisualMode){return printOnePage(activeView,layoutMode)};
+ printCurrentView=function(layoutMode){return activeView==='overview'?openSetup():printOnePage(activeView,layoutMode)};
  const detailPrint=printOffice;
- printOffice=function(mode){return mode==='detail'?detailPrint(mode):printOnePage('overview')};
+ printOffice=function(mode){return mode==='detail'?detailPrint(mode):openSetup()};
  globalThis.ISTViewerPrinting={fitContent,printOnePage,reportContent,openSetup,publishedLayoutMode};
 })();
 
