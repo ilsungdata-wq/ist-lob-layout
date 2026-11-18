@@ -19,7 +19,7 @@ Deno.serve(async request => {
     const key = Deno.env.get("ERP_API_KEY");
     const secret = Deno.env.get("ERP_API_SECRET");
     if (!key || !secret) return json({ error: "erp_secrets_missing" }, 503);
-    const { date } = await request.json().catch(() => ({}));
+    const { date, save } = await request.json().catch(() => ({}));
     if (typeof date !== "string" || !/^2026-\d{2}-\d{2}$/.test(date) ||
         !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) {
       return json({ error: "valid_2026_date_required" }, 400);
@@ -36,14 +36,19 @@ Deno.serve(async request => {
       return payload.data;
     };
 
-    const orders = await read<{name: string}[]>("", new URLSearchParams({
-      fields: JSON.stringify(["name"]),
-      filters: JSON.stringify([["delivery_date", "=", date], ["is_subcontracted", "=", 1],
-        ["custom_delivery_date_is_placeholder", "=", 0], ["docstatus", "<", 2]]),
-      order_by: "name asc",
-      limit_page_length: "101",
-    }));
-    if (!Array.isArray(orders) || orders.length > 100) return json({ error: "preview_order_limit" }, 422);
+    const orders: {name: string}[] = [];
+    for (let offset = 0; offset <= 500; offset += 100) {
+      const page = await read<{name: string}[]>("", new URLSearchParams({
+        fields: JSON.stringify(["name"]),
+        filters: JSON.stringify([["delivery_date", "=", date], ["is_subcontracted", "=", 1],
+          ["custom_delivery_date_is_placeholder", "=", 0], ["docstatus", "<", 2]]),
+        order_by: "name asc",
+        limit_page_length: "100",\n      limit_start: String(offset),
+      }));
+        if (!Array.isArray(page) || orders.length + page.length > 500) return json({ error: "preview_order_limit" }, 422);
+      orders.push(...page);
+      if (page.length < 100) break;
+    }
     const groups = new Map<string, { parent_code: string; net_price: number; plan_qty: number }>();
     let qty = 0;
     let skipped = 0;
@@ -67,7 +72,19 @@ Deno.serve(async request => {
         }
       }
     }
-    return json({ date, order_count: orders.length, plan_qty: qty, skipped_lines: skipped, groups: [...groups.values()] });
+    if (save === true) {
+      if (skipped > 0) return json({ error: "erp_rows_require_review", skipped_lines: skipped }, 422);
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (!serviceKey) return json({ error: "database_credentials_missing" }, 503);
+      const stored = await fetch(Deno.env.get("SUPABASE_URL") + "/rest/v1/rpc/st_erp_replace_day", {
+        method: "POST",
+        headers: { ...headers, apikey: serviceKey, Authorization: "Bearer " + serviceKey },
+        body: JSON.stringify({ p_date: date, p_orders: orders.length, p_skipped: skipped, p_groups: [...groups.values()] }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!stored.ok) return json({ error: "erp_snapshot_write_failed" }, 502);
+    }
+    return json({ date, saved: save === true, order_count: orders.length, plan_qty: qty, skipped_lines: skipped, groups: [...groups.values()] });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     return json({ error: /^erp_http_\d{3}$/.test(message) ? message : "erp_preview_failed" }, 502);
