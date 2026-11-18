@@ -1,8 +1,9 @@
-const headers = { "Content-Type": "application/json", "Cache-Control": "no-store" };
+const headers = { "Access-Control-Allow-Origin": "https://ilsungdata-wq.github.io", "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS", "Content-Type": "application/json", "Cache-Control": "no-store" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
 type Order = { name: string; custom_gmes_raw_net_price: number; items: { fg_item: string; fg_item_qty: number }[] };
 
 Deno.serve(async request => {
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   const authorization = request.headers.get("Authorization");
   if (!authorization) return json({ error: "authentication_required" }, 401);
