@@ -141,19 +141,42 @@ function singlePageScale(contentWidth,contentHeight,availableWidth,availableHeig
    return result.toDataURL('image/png');
   }catch{return source} // Cross-origin or unsupported images retain original printing.
  }
- async function openSetup(){
+ function openSetup(){
   if(activeView!=='overview')return printOnePage(activeView);
-  const current=model(),mode=displayedLayoutMode();
+  const current=model(),visible=displayedLayoutMode();
+  let dialog=document.getElementById('layoutPrintSourceDialog');
+  if(!dialog){
+   dialog=document.createElement('dialog');dialog.id='layoutPrintSourceDialog';
+   dialog.style.cssText='border:0;border-radius:12px;padding:22px;width:min(420px,calc(100vw - 32px));box-shadow:0 20px 65px #0004;color:#123047';
+   dialog.innerHTML='<h2 style="margin:0 0 8px;font-size:19px">Chọn bản cần in</h2><p id="layoutPrintSourceModel" style="margin:0 0 16px;color:#526575;font-size:13px"></p><div style="display:grid;gap:9px"><button type="button" class="btn" data-layout-print-source="excel" style="text-align:left;padding:13px">In bản PDF / Excel gốc</button><button type="button" class="btn" data-layout-print-source="interactive" style="text-align:left;padding:13px">In Layout Web</button><button type="button" class="btn" id="layoutPrintSourceCancel">Hủy</button></div><p style="font-size:12px;margin:12px 0 0;color:#526575">Tự Fit toàn bộ Layout trên 1 trang A4 ngang.</p>';
+   document.body.appendChild(dialog);
+   dialog.querySelector('#layoutPrintSourceCancel').onclick=()=>dialog.close();
+  }
+  dialog.querySelector('#layoutPrintSourceModel').textContent=current.name+' · '+current.version;
+  const hasReference=!!(current.referenceAsset?.path||current.referenceImage||current.referenceSourceAsset?.path||current.sourceExcelAsset?.path||$('excelReferenceImage')?.getAttribute('src')||visible==='excel');
+  for(const button of dialog.querySelectorAll('[data-layout-print-source]')){
+   const source=button.dataset.layoutPrintSource;
+   button.disabled=source==='excel'&&!hasReference;
+   button.classList.toggle('primary',source===visible);
+   button.textContent=(source==='excel'?'In bản PDF / Excel gốc':'In Layout Web')+(source===visible?' · Đang hiển thị':'');
+   button.onclick=()=>{if(button.disabled)return;dialog.close();if(model()!==current)return toast('Model đã thay đổi, hãy in lại.');printSelectedLayout(source);};
+  }
+  if(!dialog.open)dialog.showModal();
+ }
+ async function printSelectedLayout(mode){
+  const current=model();
   try{
    let image;
    if(mode==='excel'){
     const inline=$('layoutReferenceInlineImage');
-    if(inline?.complete&&inline.naturalWidth>0&&!inline.hidden)image=inline.src;
+    if(displayedLayoutMode()==='excel'&&inline?.complete&&inline.naturalWidth>0&&!inline.hidden)image=inline.src;
     else{await waitForPublishedReference();image=$('excelReferenceImage')?.src;}
    }else image=phase2dLayoutImage();
    if(model()!==current)throw Error('Model đã thay đổi, hãy in lại.');
    if(!image)throw Error('Không có Layout đang hiển thị để in.');
-   return printOnePage('overview',mode,{image:await optimizedLayoutImage(image),scale:100});
+   const cropped=await optimizedLayoutImage(image);
+   if(model()!==current)throw Error('Model đã thay đổi, hãy in lại.');
+   return printOnePage('overview',mode,{image:cropped,scale:100});
   }catch(error){toast('Không thể chuẩn bị bản in: '+error.message)}
  }
  async function printOnePage(view=activeView,layoutMode='interactive',options={}){
