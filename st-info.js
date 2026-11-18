@@ -16,7 +16,17 @@ function canView(){return canImport()||sessionStorage.getItem(VIEW_KEY)==='1'}
 function lockView(){sessionStorage.removeItem(VIEW_KEY);loaded=false;catalog=[];$('stInfoView').hidden=true}
 let latestSyncNewCodes=new Set();
 function renderSyncStatus(row){const target=$('stSyncStatus');if(!target)return;const codes=Array.isArray(row?.result?.new_codes)?row.result.new_codes:[];latestSyncNewCodes=new Set(codes.map(value=>String(value).trim().toUpperCase()));const option=$('stChangeFilter')?.querySelector('option[value="new-latest"]');if(option)option.textContent=`Mã mới - đồng bộ gần nhất (${latestSyncNewCodes.size})`;if(loaded&&$('stChangeFilter')?.value==='new-latest'){page=1;applyFilters()}if(!row?.synced_at){target.textContent='Chưa có lần đồng bộ Google Sheet được ghi nhận.';return}const changed=Number(row.result?.updated||0),added=Number(row.result?.inserted||0),elapsed=Number(row.result?.elapsed_ms||0),mode=row.result?.mode==='automatic'?'tự động':'thủ công',duration=elapsed?` · ${(elapsed/1000).toLocaleString('vi-VN',{maximumFractionDigits:1})} giây`:'';target.textContent=`Đồng bộ Google Sheet gần nhất (${mode}): ${dateTimeLabel(row.synced_at)} · ${Number(row.snapshot_rows||0).toLocaleString('vi-VN')} mã${added||changed?` · ${added} mới, ${changed} thay đổi`:''}${duration}`}
-async function loadSyncStatus(){try{const result=await rpc('get_st_google_sync_status'),row=Array.isArray(result)?result[0]:result;renderSyncStatus(row)}catch{const target=$('stSyncStatus');if(target)target.textContent='Chưa có thông tin đồng bộ Google Sheet.'}}
+async function loadSyncStatus(){
+ const target=$('stSyncStatus');
+ if(!target)return;
+ if(!canImport()){target.hidden=true;return}
+ target.hidden=false;
+ try{
+  const {data}=await supabaseRequest('/rest/v1/st_erp_days?select=rd_date,synced_at,order_count,plan_qty&order=synced_at.desc&limit=1');
+  const row=data?.[0];
+  target.textContent=row?`Next ERP · ngày R/D ${dateLabel(row.rd_date)} · lưu lúc ${dateTimeLabel(row.synced_at)} · ${row.order_count} đơn · ${money.format(row.plan_qty)} EA`:'Chưa có ngày ERP đã lưu.';
+ }catch{target.textContent='Chưa đọc được trạng thái dữ liệu ERP.'}
+}
 async function loadCatalog({fresh=false}={}){if(loading||!canView())return;loading=true;$('stTableHost').innerHTML='<div class="st-loading">Đang tải danh sách S/T…</div>';try{if(!fresh){try{const c=JSON.parse(sessionStorage.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.savedAt<CACHE_MS)catalog=c.rows||[]}catch{}}if(!catalog.length||fresh){catalog=await rpc('get_st_catalog');sessionStorage.setItem(CACHE_KEY,JSON.stringify({savedAt:Date.now(),rows:catalog}))}loaded=true;await loadStModelDefaults();renderModelOptions();renderKpis();renderModelSummary();void loadModelMetrics();applyFilters()}catch(e){$('stTableHost').innerHTML=`<div class="st-error"><b>Không tải được dữ liệu S/T</b><span>${esc(e.message)}</span></div>`}finally{loading=false}}
 function selectedModels(){return[...($('stModelOptions')?.querySelectorAll('input:checked')||[])].map(x=>x.value)}
 function allModelNames(){return[...new Set(catalog.map(r=>r.model_name).filter(Boolean))]}
@@ -99,6 +109,7 @@ function previewErp(){
   try{
    if(!await auth.restore())throw new Error('Vui lòng đăng nhập lại.');
    const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:event.submitter?.value==='save'}});
+   if(data?.saved)void loadSyncStatus();
    if(!Array.isArray(data?.groups))throw new Error('Phản hồi ERP không hợp lệ.');
    const groups=[...data.groups].sort((a,b)=>a.parent_code.localeCompare(b.parent_code)||a.net_price-b.net_price);
    result.innerHTML=`<p>${esc(date)} · ${data.saved?'Đã lưu · ':''}${Number(data.order_count)} đơn · ${money.format(Number(data.plan_qty))} EA · ${Number(data.skipped_lines)} dòng bỏ qua</p><div style="max-height:55vh;overflow:auto"><table><thead><tr><th>Parent Code</th><th>Net Price gốc (VND/EA)</th><th>Plan Q’ty (EA)</th></tr></thead><tbody>${groups.map(row=>`<tr><td>${esc(row.parent_code)}</td><td>${money.format(row.net_price)}</td><td>${money.format(row.plan_qty)}</td></tr>`).join('')}</tbody></table></div>`;
@@ -107,47 +118,6 @@ function previewErp(){
   }finally{button.disabled=false}
  };
 }
-async function inspectGoogleSheet(){
- const b=$('stSheetSyncBtn'),status=$('stSyncStatus');
- if(!b||b.disabled)return;
- const controller=new AbortController(),MAX_WAIT_MS=140000,timeout=setTimeout(()=>controller.abort(),MAX_WAIT_MS),started=performance.now();
- const originalLabel='Đồng bộ nhanh Google Sheet';
- let stage='Đang lấy dữ liệu ERP & BOM…';
- b.disabled=true;b.textContent=stage;
- if(status){status.textContent='Đồng bộ ERP & BOM đang thực hiện — không cần bấm lại.';status.dataset.syncState='loading'}
- try{
-  if(!await auth.restore())throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-  const res=await supabaseRequest('/functions/v1/st-sheet-sync',{method:'POST',body:{mode:'apply',paged:true},signal:controller.signal}),p=res.data;
-  if(!p?.ok)throw new Error(p?.message||'Đồng bộ không trả về kết quả thành công.');
-  const totals=p.totals||{},row=Array.isArray(p.status)?p.status[0]:p.status,elapsed=Number(p.elapsed_ms||Math.round(performance.now()-started));
-  stage='Đang cập nhật bảng S/T…';b.textContent=stage;
-  renderSyncStatus(row);
-  clearTimeout(timeout);
-  historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);
-  await Promise.allSettled([loadSyncStatus(),loadCatalog({fresh:true})]);
-  const message=`Đồng bộ thành công sau ${(elapsed/1000).toLocaleString('vi-VN',{maximumFractionDigits:1})} giây: ${Number(totals.inserted||0)} mã mới, ${Number(totals.updated||0)} thay đổi S/T.`;
-  if(status){status.textContent=message;status.dataset.syncState='success'}
-  toastMessage(message);
- }catch(e){
-  const detail=String(e.details?.detail||e.details?.message||'').trim();
-  const serverTimeout=e.message!=='google_sheet_meta_timeout'&&e.status===504||e.message==='google_sheet_source_timeout';
-  const message=e.name==='AbortError'?'Đồng bộ vượt thời gian chờ 140 giây. Nút đã mở lại; vui lòng kiểm tra nguồn ERP/BOM trước khi thử lại.'
-   :serverTimeout?'Google Apps Script chưa trả dữ liệu ERP/BOM trong thời gian chờ. Nút đã mở lại; hãy kiểm tra tốc độ đọc Sheets và bản triển khai Apps Script.'
-   :e.message==='google_sheet_meta_timeout'?'Apps Script đọc thông tin ERP/BOM quá chậm (55 giây). Kiểm tra log Executions tại bước getSourceMeta_.'
-   :e.message==='google_sheet_meta_unavailable'?'Không đọc được thông tin nguồn Apps Script. Kiểm tra log doPost, quyền Sheets và kết nối Supabase.'
-   :e.message==='google_sheet_bridge_upgrade_required'?'Apps Script trả phản hồi chưa đúng chuẩn st-paged-v2. Kiểm tra deployment URL và phiên bản đang hoạt động.'
-   :e.message==='google_sheet_paged_read_failed'?`Lỗi đọc theo đợt ERP/BOM: ${detail||e.message}. Kiểm tra Sheets API và nhật ký Apps Script.`
-   :e.message==='google_sheet_source_unavailable'?'Không kết nối được Google Apps Script. Kiểm tra quyền truy cập và URL triển khai.'
-   :e.message==='google_sheet_sync_not_configured'?'Chưa cấu hình cầu nối Google Sheet.'
-   :`Không thể đồng bộ: ${detail||e.message}`;
-  if(status){status.textContent=message;status.dataset.syncState='error'}
-  toastMessage(message);
-  console.error('[S/T sync] Failed',{status:e.status||null,code:e.code||null,message:e.message,details:e.details||null});
- }finally{
-  clearTimeout(timeout);b.disabled=false;b.textContent=originalLabel;
- }
-}
-const syncDirection=row=>row.status==='new'?['new','Mã mới']:Number(row.gap_st)>0?['up',`Tăng ${deltaLabel(row.gap_st)}`]:Number(row.gap_st)<0?['down',`Giảm ${deltaLabel(row.gap_st)}`]:['new',row.status==='mapping'?'Đổi Model':'Không đổi S/T'];
 function syncRowsTable(rows){return rows.length?`<table><thead><tr><th>Thay đổi</th><th>GH96</th><th>Model</th><th>Net Price</th><th>S/T cũ → mới</th><th>Ngày ghi nhận</th></tr></thead><tbody>${rows.slice(0,100).map(r=>{const [direction,label]=syncDirection(r);return`<tr><td><span class="st-sync-direction ${direction}">${esc(label)}</span></td><td>${esc(r.product_code)}</td><td>${esc(r.model_name)}</td><td>${r.old_price==null?'—':money.format(r.old_price)+' → '}${money.format(r.net_price)} ₫</td><td>${r.old_st==null?'— → ':decimal.format(r.old_st)+' → '}${decimal.format(r.new_st)}<small>${r.gap_st==null?'Mốc đầu tiên':deltaLabel(r.gap_st)}</small></td><td>${dateLabel(r.effective_date)}</td></tr>`}).join('')}</tbody></table>`:'<div class="st-loading">Không có thay đổi giá hoặc S/T trong lần đồng bộ này.</div>'}
 function renderSheetSyncPreview(p){const c=sheetSyncRows.reduce((a,r)=>(a[r.status]++,a),{new:0,price:0,mapping:0,unchanged:0}),changes=sheetSyncRows.filter(r=>r.status!=='unchanged');$('stSheetSyncEyebrow').textContent='GOOGLE SHEET · XEM TRƯỚC';$('stSheetSyncTitle').textContent='Đồng bộ danh mục S/T';$('stSheetSyncSummary').textContent=`Đã đọc ${Number(p.stats?.erp_rows||0).toLocaleString('vi-VN')} dòng ERP; phát hiện ${Number(p.stats?.history_points||0).toLocaleString('vi-VN')} mốc R/D date.`;$('stSheetSyncStats').innerHTML=[['Mã mới',c.new],['Tăng S/T',changes.filter(r=>Number(r.gap_st)>0).length],['Giảm S/T',changes.filter(r=>Number(r.gap_st)<0).length],['Không đổi',c.unchanged]].map(([l,v])=>`<article><span>${l}</span><b>${v.toLocaleString('vi-VN')}</b></article>`).join('');$('stSheetSyncPreview').classList.remove('st-sync-complete');$('stSheetSyncPreview').innerHTML=syncRowsTable(changes);$('stSheetSyncNote').textContent='Ngày ghi nhận lấy từ R/D date của ERP; các mốc này được dùng trong biểu đồ xu hướng theo tháng.';$('stSheetSyncCancelBtn').textContent='Hủy';$('stSheetSyncConfirmBtn').hidden=false;$('stSheetSyncConfirmBtn').disabled=!sheetSyncRows.length;$('stSheetSyncDialog').showModal()}
 function renderSheetSyncResult(rows,totals){const changes=rows.filter(r=>r.status!=='unchanged');$('stSheetSyncEyebrow').textContent='GOOGLE SHEET · HOÀN TẤT';$('stSheetSyncTitle').textContent='Đã ghi nhận đồng bộ S/T';$('stSheetSyncSummary').textContent=`Đã lưu ${totals.inserted} mã mới và ${totals.updated} thay đổi S/T. Danh sách bên dưới là kết quả của lần đồng bộ này.`;$('stSheetSyncStats').innerHTML=[['Mã mới',totals.inserted],['Tăng S/T',changes.filter(r=>Number(r.gap_st)>0).length],['Giảm S/T',changes.filter(r=>Number(r.gap_st)<0).length],['Đổi Model',totals.mapping_updated]].map(([l,v])=>`<article><span>${l}</span><b>${Number(v||0).toLocaleString('vi-VN')}</b></article>`).join('');$('stSheetSyncPreview').innerHTML=`<h3 class="st-sync-result-title">Các mã đã ghi nhận</h3>${syncRowsTable(changes)}`;$('stSheetSyncPreview').classList.add('st-sync-complete');$('stSheetSyncNote').textContent='Chọn Parent Code hoặc Model để xem lịch sử và trendline theo tháng.';$('stSheetSyncCancelBtn').textContent='Đóng';$('stSheetSyncConfirmBtn').hidden=true}
