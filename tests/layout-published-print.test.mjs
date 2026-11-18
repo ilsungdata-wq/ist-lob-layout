@@ -44,11 +44,13 @@ test('visible PDF has priority even when saved source is edited (S936)',()=>{
  vm.runInContext(print.slice(a,b),context);
  assert.equal(context.displayedLayoutMode(),'excel');
 });
-test('direct printing uses the currently displayed image without changing published state',()=>{
- assert.match(print,/mode=displayedLayoutMode\(\)/);
- assert.match(print,/image=inline.src/);
- assert.match(print,/image:await optimizedLayoutImage\(image\),scale:100/);
- assert.match(print,/options.image\|\|await optimizedLayoutImage/);
+test('two source choices default to visible layout and open native print',()=>{
+ assert.match(print,/visible=displayedLayoutMode\(\)/);
+ assert.match(print,/id='layoutPrintSourceDialog'/);
+ assert.match(print,/data-layout-print-source="excel"/);
+ assert.match(print,/data-layout-print-source="interactive"/);
+ assert.match(print,/printSelectedLayout\(source\)/);
+ assert.match(print,/image:cropped,scale:100/);
  assert.match(print,/win\.print\(\)/);
  assert.doesNotMatch(print,/model\(\)\.viewerLayoutSource\s*=/);
 });
