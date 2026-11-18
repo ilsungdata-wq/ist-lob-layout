@@ -33,7 +33,7 @@ test('phase 2 shell, i18n, restore and print controls are explicit',()=>{
  assert.match(studio,/ISTViewerPrinting\?\.openSetup/);
  assert.match(printing,/function publishedLayoutMode\(/);
  assert.match(printing,/function openSetup\(/);
- assert.match(printing,/id="layoutPrintScale"/);
+ assert.match(printing,/win\.print\(\)/);
  assert.equal((html.match(/id="layoutXlsxImportBtn"/g)||[]).length,1);
 });
 test('public Viewer uses one published workspace RPC instead of a request per Model',()=>{
