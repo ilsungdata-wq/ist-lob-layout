@@ -62,6 +62,7 @@ async function renderErpTimeline(code){
  try{
   const dates=await supabaseRequest('/rest/v1/st_erp_days?select=rd_date&order=rd_date.desc&limit=1');
   const history=await rpc('get_st_history',{p_product_code:code});
+  const notes=await supabaseRequest('/rest/v1/st_erp_price_notes?select=*&parent_code=eq.'+encodeURIComponent(code));
   const rows=[];
   for(let offset=0;;offset+=500){
    const {data}=await supabaseRequest('/rest/v1/st_erp_daily_prices?select=rd_date,net_price,plan_qty&parent_code=eq.'+encodeURIComponent(code)+'&order=rd_date.asc,net_price.asc&limit=500&offset='+offset);
@@ -86,12 +87,28 @@ async function renderErpTimeline(code){
   const ms=86400000;
   host.innerHTML='<p>Lịch sử ERP đã lưu · '+esc(code)+' · đến '+esc(dates.data?.[0]?.rd_date||'—')+'</p><div style="max-height:45vh;overflow:auto"><table><thead><tr><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Ngày có Plan</th><th>Plan Q’ty</th><th>Giá (VND/EA)</th><th>GAP theo Plan (VND)</th><th>Lý do / VOC</th></tr></thead><tbody>'+periods.map((p,i)=>{
    const previous=periods[i-1],next=periods[i+1];
-   const end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):p.lastPlan;
+   const end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):todayIso();
    const duration=1+(Date.parse(end)-Date.parse(p.date))/ms;
-   const note=(history||[]).find(row=>row.change_date===p.date&&Number(row.new_price)===p.price);
+   const note=notes.data?.find(row=>row.change_date===p.date&&Number(row.net_price)===p.price)||(history||[]).find(row=>row.change_date===p.date&&Number(row.new_price)===p.price);
    const gap=previous&&!p.mixed&&!previous.mixed?money.format((p.price-previous.price)*p.qty):'—';
-   return `<tr><td>${esc(p.date)}</td><td>${esc(end)}</td><td>${duration}</td><td>${p.planDays}</td><td>${money.format(p.qty)}</td><td>${money.format(p.price)}</td><td>${gap}</td><td>${p.mixed?'Nhiều mức giá':esc([note?.reason,note?.voc_code].filter(Boolean).join(' · ')||'—')}</td></tr>`;
+   return `<tr><td>${esc(p.date)}</td><td>${esc(end)}</td><td>${duration}</td><td>${p.planDays}</td><td>${money.format(p.qty)}</td><td>${money.format(p.price)}</td><td>${gap}</td><td>${p.mixed?'<p>Nhiều mức giá trong ngày</p>':''}<form data-erp-note="${i}"><textarea name="reason" aria-label="Lý do đổi giá" placeholder="Lý do tăng / giảm giá">${esc(note?.reason||'')}</textarea><input name="voc_code" aria-label="Mã VOC" placeholder="Mã VOC" value="${esc(note?.voc_code||'')}"><input name="voc_url" type="url" aria-label="Liên kết VOC" placeholder="https://… tài liệu VOC" value="${esc(note?.voc_url||'')}"><button class="btn" type="submit">Lưu lý do / VOC</button><span role="status"></span></form></td></tr>`;
   }).join('')+'</tbody></table></div>';
+  host.querySelectorAll('[data-erp-note]').forEach(form=>form.onsubmit=async event=>{
+   event.preventDefault();
+   const p=periods[Number(form.dataset.erpNote)],button=form.querySelector('button'),status=form.querySelector('[role=status]');
+   const fields=new FormData(form),url=String(fields.get('voc_url')||'').trim();
+   if(url&&!/^https?:\/\//i.test(url)){status.textContent='Liên kết cần bắt đầu bằng https://';return}
+   button.disabled=true;status.textContent='Đang lưu…';
+   try{
+    await supabaseRequest('/rest/v1/st_erp_price_notes?on_conflict=parent_code,change_date,net_price',{
+     method:'POST',headers:{Prefer:'resolution=merge-duplicates'},
+     body:{parent_code:code,change_date:p.date,net_price:p.price,reason:String(fields.get('reason')||''),voc_code:String(fields.get('voc_code')||''),voc_url:url,updated_at:new Date().toISOString()}
+    });
+    status.textContent='Đã lưu';
+   }catch(error){status.textContent='Lưu thất bại: '+error.message}
+   finally{button.disabled=false}
+  });
+
  }catch(error){if($('stErpTimelineCode').value===code)host.textContent=error.message}
 }
 function previewErp(){
