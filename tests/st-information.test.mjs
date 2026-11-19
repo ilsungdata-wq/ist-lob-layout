@@ -28,7 +28,7 @@ test('S/T workspace is wired into navigation with responsive assets',()=>{
 });
 
 test('catalog uses one cached RPC, client filters, pagination, and lazy history',()=>{
- assert.match(script,/rpc\('get_st_catalog'\)/);
+ assert.match(script,/rpc\('get_st_erp_catalog'\)/);
  assert.match(script,/CACHE_MS=15\*60\*1000/);
  assert.match(script,/PAGE_SIZE=40/);
  assert.match(script,/filtered=catalog\.filter/);
@@ -135,24 +135,16 @@ test('incremental sync inserts new codes and writes history only for real S/T ch
  assert.match(syncMigration,/if price_changed or next_st<>product\.current_st then/);
  assert.match(syncMigration,/jsonb_build_object\('inserted',inserted_count/);
 });
-test('S/T shows and records the most recent Google Sheet synchronization',()=>{
+test('S/T reads ERP status and displays inline history modes',()=>{
  assert.match(html,/id="stSyncStatus"/);
- assert.match(script,/rpc\('get_st_google_sync_status'\)/);
- assert.match(script,/rpc\('record_st_google_sync'/);
- assert.match(script,/Đồng bộ Google Sheet gần nhất/);
- assert.match(script,/google_sheet_source_timeout/);
- assert.match(script,/Đồng bộ thành công sau/);
- assert.match(script,/MAX_WAIT_MS=140000/);
- assert.match(script,/finally\{/);
- assert.match(edgeFunction,/SOURCE_TIMEOUT_MS=110000/);
- assert.match(css,/\.st-sync-status/);
- assert.match(syncStatusMigration,/create table if not exists public\.st_google_sync_runs/);
- assert.match(syncStatusMigration,/create or replace function public\.get_st_google_sync_status/);
- assert.match(syncStatusMigration,/create or replace function public\.record_st_google_sync/);
- assert.match(syncStatusMigration,/grant execute on function public\.get_st_google_sync_status\(\) to anon, authenticated/);
- assert.match(syncAuditFixMigration,/auth\.role\(\) <> 'service_role'/);
- assert.match(syncAuditFixMigration,/to authenticated,service_role/);
+ assert.match(script,/rpc\('get_st_erp_catalog'\)/);
+ assert.match(script,/\/rest\/v1\/st_erp_days/);
+ assert.match(html,/id="stErpHistoryPanel"/);
+ assert.match(html,/id="stErpTableMode"/);
+ assert.match(html,/id="stErpChartMode"/);
+ assert.doesNotMatch(html,/id="stSheetSyncBtn"/);
 });
+
 test('BOM mapping preserves Block models and is applied by the production sync migration',()=>{
  const bomMappingMigration=read('supabase/migrations/20261022000100_fix_st_bom_mapping.sql');
  assert.match(syncMigration,/when lower\(trim\(item->>'product_type'\)\)='block' then 'Block'/);
@@ -241,7 +233,7 @@ test('model summary puts Set Person, average price and per-person price above S/
  assert.match(script,/Net Price Avg \/ Direct MP/);
  assert.match(script,/Chưa có Direct MP/);
  assert.match(script,/refreshStSession/);
- assert.match(script,/body:\{mode:'apply',paged:true\}/);
+ assert.match(script,/\/functions\/v1\/st-erp-preview/);
  assert.match(script,/jwtExpired/);
  assert.match(script,/Net Price \/ người/);
  assert.match(script,/st-model-summary-table/);
