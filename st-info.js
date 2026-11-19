@@ -27,7 +27,7 @@ async function loadSyncStatus(){
   target.textContent=row?`Next ERP · ngày R/D ${dateLabel(row.rd_date)} · lưu lúc ${dateTimeLabel(row.synced_at)} · ${row.order_count} đơn · ${money.format(row.plan_qty)} EA`:'Chưa có ngày ERP đã lưu.';
  }catch{target.textContent='Chưa đọc được trạng thái dữ liệu ERP.'}
 }
-async function loadCatalog({fresh=false}={}){if(loading||!canView())return;loading=true;$('stTableHost').innerHTML='<div class="st-loading">Đang tải danh sách S/T…</div>';try{if(!fresh){try{const c=JSON.parse(sessionStorage.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.savedAt<CACHE_MS)catalog=c.rows||[]}catch{}}if(!catalog.length||fresh){catalog=await rpc('get_st_erp_catalog');sessionStorage.setItem(CACHE_KEY,JSON.stringify({savedAt:Date.now(),rows:catalog}))}loaded=true;await loadStModelDefaults();renderModelOptions();renderKpis();renderModelSummary();void loadModelMetrics();applyFilters()}catch(e){$('stTableHost').innerHTML=`<div class="st-error"><b>Không tải được dữ liệu S/T</b><span>${esc(e.message)}</span></div>`}finally{loading=false}}
+async function loadCatalog({fresh=false}={}){if(loading||!canView())return;loading=true;$('stTableHost').innerHTML='<div class="st-loading">Đang tải danh sách S/T…</div>';try{if(!fresh){try{const c=JSON.parse(sessionStorage.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.savedAt<CACHE_MS)catalog=c.rows||[]}catch{}}if(!catalog.length||fresh){catalog=await rpc('get_st_erp_catalog');sessionStorage.setItem(CACHE_KEY,JSON.stringify({savedAt:Date.now(),rows:catalog}))}loaded=true;await loadStModelDefaults();renderModelOptions();renderKpis();renderModelSummary();void loadModelMetrics();applyFilters();initInlineErpHistory()}catch(e){$('stTableHost').innerHTML=`<div class="st-error"><b>Không tải được dữ liệu S/T</b><span>${esc(e.message)}</span></div>`}finally{loading=false}}
 function selectedModels(){return[...($('stModelOptions')?.querySelectorAll('input:checked')||[])].map(x=>x.value)}
 function allModelNames(){return[...new Set(catalog.map(r=>r.model_name).filter(Boolean))]}
 function hasSpecificModels(){const total=allModelNames().length;return selectedModels().length>0&&selectedModels().length<total}
@@ -155,7 +155,54 @@ async function openLaborCostDialog(){$('stLaborCostDate').value=todayIso();$('st
 async function applyLaborCost(event){event.preventDefault();const cost=Number($('stLaborCostValue').value),date=$('stLaborCostDate').value,type=$('stLaborCostType').value,note=$('stLaborCostNote').value.trim();if(!Number.isFinite(cost)||cost<=0||!date)return;const button=$('stLaborCostConfirmBtn');button.disabled=true;button.textContent='Đang lưu…';try{const result=await rpc('apply_st_labor_cost',{p_labor_cost:cost,p_effective_date:date,p_product_type:type,p_note:note||null});$('stLaborCostDialog').close();historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);catalog=[];await loadCatalog({fresh:true});globalThis.renderLobSummary?.();toastMessage(`Đã cập nhật Labor cost cho ${result?.updated||0} Parent Code từ ${dateLabel(date)}.`)}catch(error){$('stLaborCostStatus').textContent='Không thể lưu: '+error.message;toastMessage('Không thể cập nhật Labor cost: '+error.message)}finally{button.disabled=false;button.textContent='Lưu Labor cost'}}async function openManualPriceDialog(){const status=$('stManualPriceStatus');status.textContent='Đang tải danh mục BOM…';$('stManualPriceDate').value=todayIso();$('stManualPriceValue').value='';$('stManualPriceReason').value='';try{bomPriceEntries=await rpc('get_st_bom_price_entry_catalog');const empty=bomPriceEntries.filter(row=>row.current_price==null);const rows=empty.length?empty:bomPriceEntries;$('stManualPriceCode').innerHTML=rows.length?rows.map(row=>`<option value="${esc(row.product_code)}">${esc(row.product_code)} · ${esc(row.model_name)} · ${esc(row.product_type)}</option>`).join(''):'<option value="">Chưa có Parent Code từ BOM</option>';updateManualPriceSelection();status.textContent=empty.length?`${empty.length} Parent Code chưa có giá/S/T. Danh mục lấy từ lần đồng bộ BOM gần nhất.`:'Hiện chưa có Parent Code trống. Có thể chọn mã để cập nhật giá thủ công.';$('stManualPriceDialog').showModal()}catch(error){status.textContent='Không tải được BOM: '+error.message;$('stManualPriceDialog').showModal()}}
 function updateManualPriceSelection(){const row=bomPriceEntries.find(item=>item.product_code===$('stManualPriceCode').value);$('stManualPriceModel').value=row?.model_name||'';$('stManualPriceType').value=row?.product_type||'';if(row?.current_price!=null)$('stManualPriceValue').value=String(Math.round(Number(row.current_price)));}
 async function applyManualPrice(event){event.preventDefault();const code=$('stManualPriceCode').value,price=Number($('stManualPriceValue').value),date=$('stManualPriceDate').value,reason=$('stManualPriceReason').value.trim(),status=$('stManualPriceStatus'),button=$('stManualPriceConfirmBtn');if(!code||!Number.isFinite(price)||price<=1000||!date)return;button.disabled=true;button.textContent='Đang lưu…';try{const result=await rpc('apply_st_manual_price',{p_product_code:code,p_net_price:price,p_effective_date:date,p_reason:reason||null});$('stManualPriceDialog').close();historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);catalog=[];await loadCatalog({fresh:true});toastMessage(`Đã lưu ${result.product_code}: ${decimal.format(result.current_st)} phút.`)}catch(error){status.textContent='Không thể lưu: '+error.message}finally{button.disabled=false;button.textContent='Lưu giá & S/T'}}function bind(){['stSearch','stTypeFilter','stChangeFilter'].forEach(id=>$(id).addEventListener(id==='stSearch'?'input':'change',()=>{page=1;applyFilters();if(hasSpecificModels())showModelOverview()}));['stDateFrom','stDateTo','stPeriodFilter'].forEach(id=>$(id).addEventListener('change',refreshSelectedChart));$('stRefreshBtn').onclick=()=>{sessionStorage.removeItem(CACHE_KEY);catalog=[];modelMetricRows=[];modelReportMetricRows=[];historyCache.clear();modelHistoryCache.clear();loadCatalog({fresh:true})};$('stExportModelBtn').onclick=exportModel;$('stReportBtn').onclick=openStSummaryReport;$('stReportCloseBtn').onclick=()=>$('stReportDialog').close();$('stLaborCostBtn').onclick=openLaborCostDialog;$('stManualPriceBtn').onclick=openManualPriceDialog;$('stManualPriceForm').onsubmit=applyManualPrice;$('stManualPriceCloseBtn').onclick=$('stManualPriceCancelBtn').onclick=()=>$('stManualPriceDialog').close();$('stManualPriceCode').onchange=updateManualPriceSelection;$('stLaborCostForm').onsubmit=applyLaborCost;$('stLaborCostCloseBtn').onclick=$('stLaborCostCancelBtn').onclick=()=>$('stLaborCostDialog').close();$('stErpPreviewBtn').onclick=previewErp;$('stSheetSyncForm').onsubmit=applySheetSync;$('stSheetSyncCloseBtn').onclick=$('stSheetSyncCancelBtn').onclick=()=>$('stSheetSyncDialog').close();$('stVocImportBtn').onclick=()=>$('stVocFile').click();$('stVocFile').onchange=e=>{const f=e.target.files[0];if(f)readVocFile(f).catch(x=>toastMessage(x.message));e.target.value=''};$('stVocPreviewForm').onsubmit=applyVoc;$('stVocCloseBtn').onclick=$('stVocCancelBtn').onclick=()=>$('stVocPreviewDialog').close();$('stViewerPasswordForm').onsubmit=verifyViewerPassword;$('stViewerPasswordManageForm').onsubmit=saveViewerPassword;$('stViewerPasswordManageClose').onclick=$('stViewerPasswordManageCancel').onclick=()=>$('stViewerPasswordManageDialog').close();$('stViewerPasswordCancel').onclick=()=>{$('stViewerPasswordDialog').close();globalThis.switchView?.('lob-summary')}}
+async function loadErpModelSummary(){
+ const host=$('stErpModelSummary');
+ host.textContent='Đang tổng hợp lịch sử Model…';
+ try{
+  const rows=[];
+  for(let offset=0;;offset+=500){
+   const {data}=await supabaseRequest('/rest/v1/st_erp_periods?select=model_name,parent_code,start_date,end_date,plan_qty,gap_value,mixed&order=parent_code,start_date,net_price&limit=500&offset='+offset);
+   if(!Array.isArray(data))throw Error('Phản hồi tổng hợp không hợp lệ');
+   rows.push(...data);if(data.length<500)break;
+  }
+  const models=new Map();
+  for(const row of rows){
+   const m=models.get(row.model_name)||{codes:new Set(),qty:0,gap:0,start:row.start_date,end:row.end_date,mixed:0};
+   m.codes.add(row.parent_code);m.qty+=Number(row.plan_qty);m.gap+=Number(row.gap_value||0);m.mixed+=row.mixed?1:0;
+   if(row.start_date<m.start)m.start=row.start_date;if(row.end_date>m.end)m.end=row.end_date;
+   models.set(row.model_name,m);
+  }
+  host.innerHTML='<div style="overflow:auto"><table><thead><tr><th>Model</th><th>Parent Code</th><th>Từ ngày</th><th>Đến ngày</th><th>Plan Q’ty</th><th>GAP tiền (VND)</th><th>Cần rà soát</th></tr></thead><tbody>'+[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<tr><td><button type="button" class="btn" data-erp-model="${esc(name)}">${esc(name)}</button></td><td>${m.codes.size}</td><td>${esc(m.start)}</td><td>${esc(m.end)}</td><td>${money.format(m.qty)}</td><td>${money.format(m.gap)}</td><td>${m.mixed}</td></tr>`).join('')+'</tbody></table></div>';
+  host.querySelectorAll('[data-erp-model]').forEach(button=>button.onclick=()=>{
+   const select=$('stErpTimelineCode'),model=button.dataset.erpModel;
+   select.innerHTML='<option value="">Chọn Parent Code</option>'+catalog.filter(row=>row.model_name===model).map(row=>`<option value="${esc(row.product_code)}">${esc(row.model_name)} · ${esc(row.product_code)}</option>`).join('');
+   if(select.options.length>1){select.selectedIndex=1;void renderErpTimeline(select.value)}
+  });
+ }catch(error){host.textContent=error.message}
+}
+async function importErpVoc(file){
+ if(!file||!canImport())return;
+ const status=$('stErpVocStatus');
+ try{
+  const book=XLSX.read(await file.arrayBuffer(),{type:'array'});
+  const rows=XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{defval:'',raw:false});
+  const notes=rows.map(row=>({parent_code:String(row['Parent Code']||'').trim().toUpperCase(),change_date:String(row['Ngày đổi giá']||'').trim(),net_price:Number(String(row['Giá mới']||'').replace(/,/g,'')),reason:String(row['Lý do']||''),voc_code:String(row['VOC']||''),voc_url:String(row['Link VOC']||'')}));
+  if(!notes.length||notes.some(n=>!/^GH96-[A-Z0-9]+$/.test(n.parent_code)||!/^2026-\d{2}-\d{2}$/.test(n.change_date)||!(n.net_price>0)||(n.voc_url&&!/^https?:\/\//i.test(n.voc_url))))throw Error('Cột bắt buộc: Parent Code, Ngày đổi giá (YYYY-MM-DD), Giá mới dạng số. Cột bổ sung: Lý do, VOC, Link VOC.');
+  const seen=new Set();
+  for(const n of notes){
+   const key=n.parent_code+'|'+n.change_date+'|'+n.net_price;if(seen.has(key))throw Error('Trùng mốc giá trong Excel');seen.add(key);
+   const {data}=await supabaseRequest('/rest/v1/st_erp_periods?select=parent_code&parent_code=eq.'+encodeURIComponent(n.parent_code)+'&start_date=eq.'+n.change_date+'&net_price=eq.'+n.net_price+'&limit=1');
+   if(!data?.length)throw Error('Chưa khớp mốc ERP: '+key);
+  }
+  if(!confirm('Lưu lý do/VOC cho '+notes.length+' mốc giá ERP?'))return;
+  await supabaseRequest('/rest/v1/st_erp_price_notes?on_conflict=parent_code,change_date,net_price',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},body:notes});
+  status.textContent='Đã lưu '+notes.length+' mốc VOC';void renderErpTimeline($('stErpTimelineCode').value);
+ }catch(error){status.textContent=error.message}
+}
 function initInlineErpHistory(){
+ void loadErpModelSummary();
+ $('stErpVocFile').onchange=event=>{void importErpVoc(event.target.files?.[0]);event.target.value=''};
+
  const code=$('stErpTimelineCode');
  code.innerHTML='<option value="">Chọn Model / Parent Code</option>'+catalog.map(row=>`<option value="${esc(row.product_code)}">${esc(row.model_name)} · ${esc(row.product_code)}</option>`).join('');
  code.onchange=()=>renderErpTimeline(code.value);
