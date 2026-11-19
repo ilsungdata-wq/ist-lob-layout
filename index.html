@@ -171,7 +171,7 @@
     <div class="st-toolbar"><label class="st-search"><span>⌕</span><input id="stSearch" type="search" placeholder="Tìm Code hoặc Model…" autocomplete="off"></label><label class="st-model-picker-label">Model<details id="stModelPicker" class="st-model-picker"><summary id="stModelFilterLabel">Tất cả model</summary><div class="st-model-options"><label><input id="stModelAll" type="checkbox" checked> Tất cả model</label><div id="stModelOptions"></div><button id="stSaveModelDefaultsBtn" class="st-save-model-defaults" type="button" hidden>Lưu mặc định</button></div></details></label><label>Loại<select id="stTypeFilter"><option value="">Tất cả</option><option value="Smart">Smart</option><option value="Tab">Tab</option><option value="Block">Block</option></select></label><label>Thay đổi<select id="stChangeFilter"><option value="">Tất cả</option><option value="changed">Đã thay đổi</option><option value="baseline">Chưa thay đổi</option><option value="new-latest">Mã mới - đồng bộ gần nhất</option></select></label><label>Từ ngày<input id="stDateFrom" type="date"></label><label>Đến ngày<input id="stDateTo" type="date"></label><label>Kỳ biểu đồ<select id="stPeriodFilter"><option value="month">Theo tháng</option><option value="quarter">Theo quý</option><option value="year">Theo năm</option></select></label><span id="stResultCount" class="st-result-count"></span></div>
     <div class="st-workspace">
       <section class="st-list-panel" aria-label="Danh sách Prod. Material"><div id="stTableHost" class="st-table-host"></div><nav id="stPager" class="st-pager" aria-label="Phân trang S/T"></nav><section id="stErpHistoryPanel" style="margin-top:20px;padding:16px;border:1px solid #d5e2ef;border-radius:10px;background:white">
-    <h3>Lịch sử theo Model và Parent Code</h3>
+    <h3>Lịch sử theo Model và Parent Code</h3><div id="stErpModelSummary"></div><label>Nhập lý do/VOC từ Excel <input id="stErpVocFile" type="file" accept=".xlsx,.xls"></label><p id="stErpVocStatus" role="status"></p>
     <select id="stErpTimelineCode" aria-label="Model và Parent Code"></select>
     <div id="stErpTimelineResult" aria-live="polite"></div>
 
@@ -254,7 +254,7 @@
     </form>
     <div id="stErpDailyResult" aria-live="polite"></div>
   </dialog>
-  <script type="module" src="./st-info.js?v=20261119-erp-inline"></script>
+  <script type="module" src="./st-info.js?v=20261119-erp-model-summary"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
