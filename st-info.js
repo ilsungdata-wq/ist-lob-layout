@@ -58,7 +58,7 @@ function compareSheetRows(rows){const now=new Map(catalog.map(r=>[r.product_code
 async function renderErpTimeline(code){
  const host=$('stErpTimelineResult');
  host.textContent=code?'Đang tải lịch sử ERP đã lưu…':'';
- if(!code)return;
+ if(!code){$('stErpTimelineChart').textContent='Chọn Parent Code để xem lịch sử giá.';return;}
  try{
   const dates=await supabaseRequest('/rest/v1/st_erp_days?select=rd_date&order=rd_date.desc&limit=1');
   const history=await rpc('get_st_history',{p_product_code:code});
@@ -71,7 +71,7 @@ async function renderErpTimeline(code){
    if(data.length<500)break;
   }
   if($('stErpTimelineCode').value!==code)return;
-  if(!rows.length){host.textContent='Chưa có dữ liệu ERP đã lưu cho mã này.';return}
+  if(!rows.length){host.textContent='Chưa có dữ liệu ERP đã lưu cho mã này.';$('stErpTimelineChart').textContent=host.textContent;return}
   const days=new Map();
   for(const row of rows){
    if(!days.has(row.rd_date))days.set(row.rd_date,[]);
@@ -88,15 +88,36 @@ async function renderErpTimeline(code){
   const max=Math.max(...periods.map(p=>p.price)),min=Math.min(...periods.map(p=>p.price));
   const x=p=>40+(Date.parse(p.date)-Date.parse(periods[0].date))/Math.max(1,Date.parse(todayIso())-Date.parse(periods[0].date))*660;
   const y=p=>150-(p.price-min)/Math.max(1,max-min)*110;
-  $('stErpTimelineChart').innerHTML='<svg viewBox="0 0 740 210" width="100%" role="img" aria-label="Timeline giá theo ngày"><polyline fill="none" stroke="#315bd8" stroke-width="3" points="'+periods.map(p=>x(p)+','+y(p)).join(' ')+'"/>'+periods.map(p=>`<circle cx="${x(p)}" cy="${y(p)}" r="4" fill="#315bd8"><title>${esc(p.date)} · ${money.format(p.price)} VND · ${money.format(p.qty)} EA</title></circle>`).join('')+`<text x="40" y="190" font-size="12">${esc(periods[0].date)}</text><text x="620" y="190" font-size="12">${esc(todayIso())}</text></svg>`;
+  const chart=$('stErpTimelineChart');
+  const selectedRow=catalog.find(row=>row.product_code===code);
+  const totalQty=periods.reduce((sum,p)=>sum+p.qty,0);
+  const changes=periods.slice(1).filter((p,i)=>!p.mixed&&!periods[i].mixed).map((p)=>{const i=periods.indexOf(p);return(p.price-periods[i-1].price)*p.qty});
+  chart.innerHTML=`<div style="padding:16px"><h3>${esc(selectedRow?.model_name||'')} · ${esc(code)}</h3><p>Mốc đầu trong dữ liệu ERP: ${dateLabel(periods[0].date)} · Tổng Plan Q’ty: ${money.format(totalQty)} EA · GAP ròng: ${money.format(changes.reduce((sum,value)=>sum+value,0))} VND</p><p>Bấm một mốc giá để xem thời gian áp dụng, sản lượng và GAP.</p></div>`+
+   '<svg viewBox="0 0 740 210" width="100%" role="img" aria-label="Lịch sử giá Parent Code">'+
+   [0,1,2,3].map(i=>{const value=min+(max-min)*i/3,yy=150-i*110/3;return `<line x1="40" y1="${yy}" x2="710" y2="${yy}" stroke="#d8e1ef"/><text x="42" y="${yy-5}" font-size="10" fill="#53677f">${money.format(value)} đ</text>`}).join('')+
+   '<polyline fill="none" stroke="#315bd8" stroke-width="3" points="'+periods.map(p=>x(p)+','+y(p)).concat(['700,'+y(periods.at(-1))]).join(' ')+'"/>'+
+   periods.map((p,i)=>`<circle data-erp-point="${i}" tabindex="0" role="button" aria-label="${esc(p.date)} · ${money.format(p.price)} VND" cx="${x(p)}" cy="${y(p)}" r="6" fill="#315bd8" style="cursor:pointer"><title>${esc(p.date)} · ${money.format(p.price)} VND · ${money.format(p.qty)} EA</title></circle>`).join('')+
+   `<text x="40" y="190" font-size="12">${esc(periods[0].date)}</text><text x="620" y="190" font-size="12">${esc(todayIso())}</text></svg><div id="stErpPeriodInfo" style="padding:16px;background:#edf4ff"></div>`;
+  const showPeriod=index=>{
+   const p=periods[index],previous=periods[index-1],next=periods[index+1];
+   const end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):todayIso();
+   const gap=previous&&!p.mixed&&!previous.mixed?(p.price-previous.price)*p.qty:null;
+   $('stErpPeriodInfo').innerHTML=`<b>${dateLabel(p.date)} – ${dateLabel(end)}</b> · ${1+Math.round((Date.parse(end)-Date.parse(p.date))/ms)} ngày áp dụng · ${p.planDays} ngày có Plan · <b>${money.format(p.qty)} EA</b><br>Giá ${money.format(p.price)} VND/EA · GAP đơn giá ${previous&&!p.mixed&&!previous.mixed?money.format(p.price-previous.price):'—'} VND/EA · <b>GAP tiền ${gap==null?'Mốc gốc / cần rà soát':money.format(gap)+' VND'}</b>`;
+  };
+  chart.querySelectorAll('[data-erp-point]').forEach(point=>{
+   point.onclick=()=>showPeriod(Number(point.dataset.erpPoint));
+   point.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();point.onclick()}};
+  });
+  showPeriod(periods.length-1);
 
-  host.innerHTML='<p>Lịch sử ERP đã lưu · '+esc(code)+' · đến '+esc(dates.data?.[0]?.rd_date||'—')+'</p><div style="max-height:45vh;overflow:auto"><table><thead><tr><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Ngày có Plan</th><th>Plan Q’ty</th><th>Giá (VND/EA)</th><th>GAP theo Plan (VND)</th><th>Lý do / VOC</th></tr></thead><tbody>'+periods.map((p,i)=>{
+
+  host.innerHTML='<p>Lịch sử ERP đã lưu · '+esc(code)+' · đến '+esc(dates.data?.[0]?.rd_date||'—')+'</p><div style="max-height:45vh;overflow:auto"><table><thead><tr><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Ngày có Plan</th><th>Plan Q’ty</th><th>Giá (VND/EA)</th><th>GAP đơn giá</th><th>GAP theo Plan (VND)</th><th>Lý do / VOC</th></tr></thead><tbody>'+periods.map((p,i)=>{
    const previous=periods[i-1],next=periods[i+1];
    const end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):todayIso();
    const duration=1+(Date.parse(end)-Date.parse(p.date))/ms;
    const note=notes.data?.find(row=>row.change_date===p.date&&Number(row.net_price)===p.price)||(history||[]).find(row=>row.change_date===p.date&&Number(row.new_price)===p.price);
    const gap=previous&&!p.mixed&&!previous.mixed?money.format((p.price-previous.price)*p.qty):'—';
-   return `<tr><td>${esc(p.date)}</td><td>${esc(end)}</td><td>${duration}</td><td>${p.planDays}</td><td>${money.format(p.qty)}</td><td>${money.format(p.price)}</td><td>${gap}</td><td>${p.mixed?'<p>Nhiều mức giá trong ngày</p>':''}<details><summary>${esc(note?.voc_code||note?.reason||'Thêm lý do / VOC')}</summary><form data-erp-note="${i}"><textarea name="reason" aria-label="Lý do đổi giá" placeholder="Lý do tăng / giảm giá">${esc(note?.reason||'')}</textarea><input name="voc_code" aria-label="Mã VOC" placeholder="Mã VOC" value="${esc(note?.voc_code||'')}"><input name="voc_url" type="url" aria-label="Liên kết VOC" placeholder="https://… tài liệu VOC" value="${esc(note?.voc_url||'')}"><button class="btn" type="submit">Lưu lý do / VOC</button><span role="status"></span></form></details></td></tr>`;
+   return `<tr><td>${esc(p.date)}</td><td>${esc(end)}</td><td>${duration}</td><td>${p.planDays}</td><td>${money.format(p.qty)}</td><td>${money.format(p.price)}</td><td>${previous&&!p.mixed&&!previous.mixed?money.format(p.price-previous.price):'—'}</td><td style="color:${previous&&p.price<previous.price?'#bc3340':'#087a48'}">${gap}</td><td>${p.mixed?'<p>Nhiều mức giá trong ngày</p>':''}<details><summary>${esc(note?.voc_code||note?.reason||'Thêm lý do / VOC')}</summary><form data-erp-note="${i}"><textarea name="reason" aria-label="Lý do đổi giá" placeholder="Lý do tăng / giảm giá">${esc(note?.reason||'')}</textarea><input name="voc_code" aria-label="Mã VOC" placeholder="Mã VOC" value="${esc(note?.voc_code||'')}"><input name="voc_url" type="url" aria-label="Liên kết VOC" placeholder="https://… tài liệu VOC" value="${esc(note?.voc_url||'')}"><button class="btn" type="submit">Lưu lý do / VOC</button><span role="status"></span></form></details></td></tr>`;
   }).join('')+'</tbody></table></div>';
   host.querySelectorAll('[data-erp-note]').forEach(form=>form.onsubmit=async event=>{
    event.preventDefault();
@@ -170,20 +191,21 @@ async function loadErpModelSummary(){
  const host=$('stErpModelSummary');
  host.textContent='Đang tổng hợp lịch sử Model…';
  try{
-  const rows=[];
-  for(let offset=0;;offset+=500){
-   const data=(await rpc('get_st_erp_periods')).slice(offset,offset+500);
-   if(!Array.isArray(data))throw Error('Phản hồi tổng hợp không hợp lệ');
-   rows.push(...data);if(data.length<500)break;
-  }
+  const rows=await rpc('get_st_erp_periods');
+  const coverage=await supabaseRequest('/rest/v1/st_erp_days?select=rd_date&order=rd_date.asc&limit=1000');
+  const coveredDates=coverage.data||[];
+  const expectedDays=coveredDates.length?1+Math.round((Date.parse(todayIso())-Date.parse(coveredDates[0].rd_date))/86400000):0;
+  const coverageText=expectedDays?`Dữ liệu đã kiểm tra ${coveredDates.length}/${expectedDays} ngày (${coveredDates[0].rd_date} – ${todayIso()}). ${expectedDays>coveredDates.length?'Còn '+(expectedDays-coveredDates.length)+' ngày chưa hoàn tất; tổng hợp dưới đây chưa đủ toàn kỳ.':'Đã đủ ngày trong kỳ.'}`:'Chưa có dữ liệu đồng bộ.';
+  if(!Array.isArray(rows))throw Error('Phản hồi tổng hợp không hợp lệ');
   const models=new Map();
   for(const row of rows){
-   const m=models.get(row.model_name)||{codes:new Set(),qty:0,gap:0,start:row.start_date,end:row.end_date,mixed:0};
-   m.codes.add(row.parent_code);m.qty+=Number(row.plan_qty);m.gap+=Number(row.gap_value||0);m.mixed+=row.mixed?1:0;
+   const modelName=row.model_name||'Chưa đối chiếu Model';
+   const m=models.get(modelName)||{codes:new Set(),qty:0,gap:0,up:0,down:0,value:0,start:row.start_date,end:row.end_date,mixed:0};
+   m.codes.add(row.parent_code);m.qty+=Number(row.plan_qty);m.gap+=Number(row.gap_value||0);m.up+=Math.max(0,Number(row.gap_value||0));m.down+=Math.min(0,Number(row.gap_value||0));m.value+=Number(row.net_price)*Number(row.plan_qty);m.mixed+=row.mixed?1:0;
    if(row.start_date<m.start)m.start=row.start_date;if(row.end_date>m.end)m.end=row.end_date;
-   models.set(row.model_name,m);
+   models.set(modelName,m);
   }
-  host.innerHTML='<div style="overflow:auto"><table><thead><tr><th>Model</th><th>Parent Code</th><th>Từ ngày</th><th>Đến ngày</th><th>Plan Q’ty</th><th>GAP tiền (VND)</th><th>Cần rà soát</th></tr></thead><tbody>'+[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<tr><td><button type="button" class="btn" data-erp-model="${esc(name)}">${esc(name)}</button></td><td>${m.codes.size}</td><td>${esc(m.start)}</td><td>${esc(m.end)}</td><td>${money.format(m.qty)}</td><td>${money.format(m.gap)}</td><td>${m.mixed}</td></tr>`).join('')+'</tbody></table></div>';
+  host.innerHTML='<p role="status">'+esc(coverageText)+'</p><div style="overflow:auto"><table><thead><tr><th>Model</th><th>Parent Code</th><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Plan Q’ty</th><th>Giá trị theo Plan</th><th>GAP tăng</th><th>GAP giảm</th><th>GAP ròng</th><th>Cần rà soát</th></tr></thead><tbody>'+[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<tr><td><button type="button" class="btn" data-erp-model="${esc(name)}">${esc(name)}</button></td><td>${m.codes.size}</td><td>${esc(m.start)}</td><td>${esc(m.end)}</td><td>${1+Math.round((Date.parse(m.end)-Date.parse(m.start))/86400000)}</td><td>${money.format(m.qty)}</td><td>${money.format(m.value)}</td><td style="color:#087a48">+${money.format(m.up)}</td><td style="color:#bc3340">${money.format(m.down)}</td><td>${money.format(m.gap)}</td><td>${m.mixed}</td></tr>`).join('')+'</tbody></table></div>';
   host.querySelectorAll('[data-erp-model]').forEach(button=>button.onclick=()=>{
    const select=$('stErpTimelineCode'),model=button.dataset.erpModel;
    select.innerHTML='<option value="">Chọn Parent Code</option>'+catalog.filter(row=>row.model_name===model).map(row=>`<option value="${esc(row.product_code)}">${esc(row.model_name)} · ${esc(row.product_code)}</option>`).join('');
@@ -198,12 +220,12 @@ async function importErpVoc(file){
   const book=XLSX.read(await file.arrayBuffer(),{type:'array'});
   const rows=XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{defval:'',raw:false});
   const notes=rows.map(row=>({parent_code:String(row['Parent Code']||'').trim().toUpperCase(),change_date:String(row['Ngày đổi giá']||'').trim(),net_price:Number(String(row['Giá mới']||'').replace(/,/g,'')),reason:String(row['Lý do']||''),voc_code:String(row['VOC']||''),voc_url:String(row['Link VOC']||'')}));
-  if(!notes.length||notes.some(n=>!/^GH96-[A-Z0-9]+$/.test(n.parent_code)||!/^2026-\d{2}-\d{2}$/.test(n.change_date)||!(n.net_price>0)||(n.voc_url&&!/^https?:\/\//i.test(n.voc_url))))throw Error('Cột bắt buộc: Parent Code, Ngày đổi giá (YYYY-MM-DD), Giá mới dạng số. Cột bổ sung: Lý do, VOC, Link VOC.');
+  if(!notes.length||notes.some(n=>!/^GH96-[A-Z0-9]+$/.test(n.parent_code)||!/^202[56]-\d{2}-\d{2}$/.test(n.change_date)||!(n.net_price>0)||(n.voc_url&&!/^https?:\/\//i.test(n.voc_url))))throw Error('Cột bắt buộc: Parent Code, Ngày đổi giá (YYYY-MM-DD), Giá mới dạng số. Cột bổ sung: Lý do, VOC, Link VOC.');
+  const validPeriods=await rpc('get_st_erp_periods');
   const seen=new Set();
   for(const n of notes){
    const key=n.parent_code+'|'+n.change_date+'|'+n.net_price;if(seen.has(key))throw Error('Trùng mốc giá trong Excel');seen.add(key);
-   const {data}=await supabaseRequest('/rest/v1/st_erp_periods?select=parent_code&parent_code=eq.'+encodeURIComponent(n.parent_code)+'&start_date=eq.'+n.change_date+'&net_price=eq.'+n.net_price+'&limit=1');
-   if(!data?.length)throw Error('Chưa khớp mốc ERP: '+key);
+   if(!validPeriods.some(p=>p.parent_code===n.parent_code&&p.start_date===n.change_date&&Number(p.net_price)===n.net_price))throw Error('Chưa khớp mốc ERP: '+key);
   }
   if(!confirm('Lưu lý do/VOC cho '+notes.length+' mốc giá ERP?'))return;
   await supabaseRequest('/rest/v1/st_erp_price_notes?on_conflict=parent_code,change_date,net_price',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},body:notes});
