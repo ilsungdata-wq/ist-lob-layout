@@ -116,31 +116,29 @@ async function renderErpTimeline(code){
 
  }catch(error){if($('stErpTimelineCode').value===code)host.textContent=error.message}
 }
-function previewErp(){
- const dialog=$('stErpDailyDialog'), input=$('stErpDailyDate'), result=$('stErpDailyResult');
- if(!input.value) input.value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format();
- dialog.showModal();
- $('stErpDailyForm').onsubmit=async event=>{
-  event.preventDefault();
-  if(!canImport())return;
-  const button=$('stErpDailyFetch'),date=input.value;
-  button.disabled=true;result.textContent='Đang đọc đơn gia công từ Next ERP…';
-  try{
-   if(!await auth.restore())throw new Error('Vui lòng đăng nhập lại.');
+async function previewErp(){
+ const button=$('stErpPreviewBtn'),original=button.textContent;
+ if(button.disabled)return;
+ button.disabled=true;
+ try{
+  if(!await auth.restore())throw new Error('Vui lòng đăng nhập lại.');
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format();
+  let orders=0,qty=0,completed=0;
+  for(let offset=3;offset>=0;offset--){
+   const date=new Date(Date.parse(today+'T00:00:00Z')-offset*86400000).toISOString().slice(0,10);
+   button.textContent='Đang cập nhật ERP '+(completed+1)+'/4…';
    const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:true}});
-   if(data?.saved){
-    const selected=$('stErpTimelineCode').value;
-    historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);
-    await loadCatalog({fresh:true});await loadSyncStatus();
-    if(selected&&[...$('stErpTimelineCode').options].some(option=>option.value===selected)){$('stErpTimelineCode').value=selected;await renderErpTimeline(selected)}
-   }
-   if(!Array.isArray(data?.groups))throw new Error('Phản hồi ERP không hợp lệ.');
-   const groups=[...data.groups].sort((a,b)=>a.parent_code.localeCompare(b.parent_code)||a.net_price-b.net_price);
-   result.innerHTML=`<p>${esc(date)} · ${data.saved?'Đã lưu · ':''}${Number(data.order_count)} đơn · ${money.format(Number(data.plan_qty))} EA · ${Number(data.skipped_lines)} dòng bỏ qua</p><div style="max-height:55vh;overflow:auto"><table><thead><tr><th>Parent Code</th><th>Net Price gốc (VND/EA)</th><th>Plan Q’ty (EA)</th></tr></thead><tbody>${groups.map(row=>`<tr><td>${esc(row.parent_code)}</td><td>${money.format(row.net_price)}</td><td>${money.format(row.plan_qty)}</td></tr>`).join('')}</tbody></table></div>`;
-  }catch(error){
-   result.textContent='Cập nhật ERP thất bại: '+(error.details?.error||error.message);
-  }finally{button.disabled=false}
- };
+   if(data?.saved!==true)throw Error(data?.error||'ERP chưa xác nhận lưu '+date);
+   orders+=Number(data.order_count||0);qty+=Number(data.plan_qty||0);completed++;
+  }
+  const selected=$('stErpTimelineCode').value;
+  historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);
+  await loadCatalog({fresh:true});await loadSyncStatus();
+  if(selected&&[...$('stErpTimelineCode').options].some(option=>option.value===selected)){$('stErpTimelineCode').value=selected;await renderErpTimeline(selected)}
+  toastMessage('Đã cập nhật ERP mới nhất: '+orders+' đơn · '+money.format(qty)+' EA (hôm nay và 3 ngày gần nhất).');
+ }catch(error){
+  toastMessage('Cập nhật ERP chưa hoàn tất: '+(error.details?.error||error.message)+'. Có thể bấm lại để thử tiếp.');
+ }finally{button.disabled=false;button.textContent=original}
 }
 function syncRowsTable(rows){return rows.length?`<table><thead><tr><th>Thay đổi</th><th>GH96</th><th>Model</th><th>Net Price</th><th>S/T cũ → mới</th><th>Ngày ghi nhận</th></tr></thead><tbody>${rows.slice(0,100).map(r=>{const [direction,label]=syncDirection(r);return`<tr><td><span class="st-sync-direction ${direction}">${esc(label)}</span></td><td>${esc(r.product_code)}</td><td>${esc(r.model_name)}</td><td>${r.old_price==null?'—':money.format(r.old_price)+' → '}${money.format(r.net_price)} ₫</td><td>${r.old_st==null?'— → ':decimal.format(r.old_st)+' → '}${decimal.format(r.new_st)}<small>${r.gap_st==null?'Mốc đầu tiên':deltaLabel(r.gap_st)}</small></td><td>${dateLabel(r.effective_date)}</td></tr>`}).join('')}</tbody></table>`:'<div class="st-loading">Không có thay đổi giá hoặc S/T trong lần đồng bộ này.</div>'}
 function renderSheetSyncPreview(p){const c=sheetSyncRows.reduce((a,r)=>(a[r.status]++,a),{new:0,price:0,mapping:0,unchanged:0}),changes=sheetSyncRows.filter(r=>r.status!=='unchanged');$('stSheetSyncEyebrow').textContent='GOOGLE SHEET · XEM TRƯỚC';$('stSheetSyncTitle').textContent='Đồng bộ danh mục S/T';$('stSheetSyncSummary').textContent=`Đã đọc ${Number(p.stats?.erp_rows||0).toLocaleString('vi-VN')} dòng ERP; phát hiện ${Number(p.stats?.history_points||0).toLocaleString('vi-VN')} mốc R/D date.`;$('stSheetSyncStats').innerHTML=[['Mã mới',c.new],['Tăng S/T',changes.filter(r=>Number(r.gap_st)>0).length],['Giảm S/T',changes.filter(r=>Number(r.gap_st)<0).length],['Không đổi',c.unchanged]].map(([l,v])=>`<article><span>${l}</span><b>${v.toLocaleString('vi-VN')}</b></article>`).join('');$('stSheetSyncPreview').classList.remove('st-sync-complete');$('stSheetSyncPreview').innerHTML=syncRowsTable(changes);$('stSheetSyncNote').textContent='Ngày ghi nhận lấy từ R/D date của ERP; các mốc này được dùng trong biểu đồ xu hướng theo tháng.';$('stSheetSyncCancelBtn').textContent='Hủy';$('stSheetSyncConfirmBtn').hidden=false;$('stSheetSyncConfirmBtn').disabled=!sheetSyncRows.length;$('stSheetSyncDialog').showModal()}
