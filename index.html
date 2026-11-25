@@ -101,6 +101,13 @@
 #stInfoView .st-compact-model-table td{font-variant-numeric:tabular-nums}
 #stErpHistoryPanel .erp-change-window{display:grid;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid #e0e8f2;font-size:11px;color:#4c6884}
 #stErpHistoryPanel .erp-window-note{font-size:11px;color:#637b91;line-height:1.6;margin:8px 0 12px}
+#stErpHistoryPanel .erp-full-summary-table{max-height:none!important;overflow-x:auto}
+#stErpHistoryPanel .erp-full-summary-table table{min-width:2600px;font-size:13px}
+#stErpHistoryPanel .erp-full-summary-table th{font-size:12px}
+#stErpHistoryPanel .erp-full-summary-table th,#stErpHistoryPanel .erp-full-summary-table td{padding:15px 14px;white-space:nowrap}
+#stErpHistoryPanel .erp-full-summary-table th:first-child,#stErpHistoryPanel .erp-full-summary-table td:first-child{position:sticky;left:0;background:#f4f8fd;z-index:2}
+#stErpHistoryPanel .erp-full-summary-table thead th:first-child{z-index:3}
+#stErpHistoryPanel .erp-price-pair{min-height:25px;line-height:25px}
 </style></head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -340,7 +347,7 @@
 @media(max-width:600px){#stErpDailyDialog{padding:12px}#stErpDailyDialog table{font-size:12px}}
 </style>
 
-  <script type="module" src="./st-info.js?v=20261125-erp-change-window"></script>
+  <script type="module" src="./st-info.js?v=20261125-erp-full-price-table"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
