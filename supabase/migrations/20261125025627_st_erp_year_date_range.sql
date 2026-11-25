@@ -1,0 +1,2 @@
+alter table public.st_erp_daily_prices drop constraint st_erp_daily_prices_rd_date_check;
+alter table public.st_erp_daily_prices add constraint st_erp_daily_prices_rd_date_check check(rd_date>=date '2025-11-25');
