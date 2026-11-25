@@ -130,6 +130,8 @@
 #stInfoView .erp-operations-collapse{margin-top:16px;border:1px solid #dce5f0;border-radius:10px;padding:14px;background:white}
 #stInfoView .erp-operations-collapse>summary{cursor:pointer;color:#244b75;font-weight:700}
 @media(max-width:900px){#stErpHistoryPanel .erp-journey-grid{grid-template-columns:1fr}#stErpHistoryPanel .erp-journey-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#stErpHistoryPanel .erp-code-collapse>summary{max-width:none;font-size:14px;font-weight:700;color:#234f80;cursor:pointer}
+#stErpHistoryPanel .erp-code-collapse[open]>summary{margin-bottom:18px}
 </style></head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -279,25 +281,23 @@
     <div class="st-toolbar"><label class="st-search"><span>⌕</span><input id="stSearch" title="Nhập Model hoặc Parent Code rồi nhấn Enter" type="search" placeholder="Tìm Code hoặc Model…" autocomplete="off"></label><label class="st-model-picker-label">Model<details id="stModelPicker" class="st-model-picker"><summary id="stModelFilterLabel">Tất cả model</summary><div class="st-model-options"><label><input id="stModelAll" type="checkbox" checked> Tất cả model</label><div id="stModelOptions"></div><button id="stSaveModelDefaultsBtn" class="st-save-model-defaults" type="button" hidden>Lưu mặc định</button></div></details></label><label>Loại<select id="stTypeFilter"><option value="">Tất cả</option><option value="Smart">Smart</option><option value="Tab">Tab</option><option value="Block">Block</option></select></label><label>Thay đổi<select id="stChangeFilter"><option value="">Tất cả</option><option value="changed">Đã thay đổi</option><option value="baseline">Chưa thay đổi</option><option value="new-latest">Mã mới - đồng bộ gần nhất</option></select></label><label>Từ ngày<input id="stDateFrom" type="date"></label><label>Đến ngày<input id="stDateTo" type="date"></label><label>Kỳ biểu đồ<select id="stPeriodFilter"><option value="month">Theo tháng</option><option value="quarter">Theo quý</option><option value="year">Theo năm</option></select></label><span id="stResultCount" class="st-result-count"></span></div>
 
     <nav class="st-report-tabs" role="tablist" aria-label="Báo cáo S/T">
-<button role="tab" type="button" data-st-report-tab="overview" aria-selected="true">Tổng quan quản lý</button>
-
-<button role="tab" type="button" data-st-report-tab="detail" aria-selected="false">Hành trình giá</button>
-
+<button role="tab" type="button" data-st-report-tab="detail" aria-selected="true">Hành trình giá</button>
+<button role="tab" type="button" data-st-report-tab="overview" aria-selected="false">Detail</button>
 </nav><section id="stErpHistoryPanel" class="erp-report">
-      <div class="erp-report-section" data-st-report-panel="overview">
+      <div class="erp-report-section" data-st-report-panel="overview" hidden>
         <div class="erp-section-heading"><div><span class="erp-step">01 · TỔNG QUAN</span><h2>Giá & sản lượng theo Model</h2><p>Cùng phạm vi Model đã chọn ở bộ lọc phía trên.</p></div><button id="stErpExportHistoryBtn" class="btn" type="button">Xuất lịch sử Model đã chọn (Excel)</button></div>
         <div id="stErpModelSummary"></div>
       </div>
-      <div class="erp-report-section" data-st-report-panel="timeline" hidden>
+      <div class="erp-report-section" data-st-report-panel="timeline">
         <div class="erp-section-heading"><div><span class="erp-step">02 · HÀNH TRÌNH GIÁ</span><h2>Timeline theo Model</h2><p>So sánh thời gian áp dụng giá giữa các Parent Code. Ngày mới nhất nằm bên phải.</p></div><label class="erp-field">Model đang xem<select id="stErpModelTimelineSelect" aria-label="Timeline theo Model"></select></label></div>
         <div id="stErpModelTimeline" class="erp-timeline-surface"></div>
       </div>
-      <div class="erp-report-section" data-st-report-panel="detail" hidden>
+      <details class="erp-report-section erp-code-collapse" data-st-report-panel="detail"><summary>Chi tiết đơn giá, Plan & GAP từng Parent Code</summary>
         <div class="erp-section-heading"><div><span class="erp-step">03 · CHI TIẾT PARENT CODE</span><h2>Đơn giá, Plan & GAP từng giai đoạn</h2></div><label class="erp-field">Parent Code<select id="stErpTimelineCode" aria-label="Model và Parent Code"></select></label></div>
         <div class="erp-detail-toolbar"><div class="erp-view-tabs" role="group" aria-label="Chế độ xem lịch sử"><button id="stErpChartMode" class="btn" type="button" aria-pressed="true">Biểu đồ giá</button><button id="stErpTableMode" class="btn" type="button" aria-pressed="false">Bảng giai đoạn & VOC</button></div><details class="erp-voc-import"><summary>Nhập lý do / VOC từ Excel</summary><label>Chọn file Excel <input id="stErpVocFile" type="file" accept=".xlsx,.xls"></label><p id="stErpVocStatus" role="status"></p></details></div>
         <div id="stErpTimelineChart" hidden class="erp-timeline-surface"></div><div id="stErpTimelineResult" aria-live="polite"></div>
         <p class="erp-formula">GAP theo Plan = (giá giai đoạn − giá trước đó) × Plan Q’ty trong giai đoạn. Mốc giá đầu là mốc gốc; nhiều giá trong cùng ngày được đánh dấu cần rà soát.</p>
-      </div>
+      </details>
     </section>
     <details class="erp-operations-collapse" data-st-report-panel="operations" hidden><summary>Chỉ số vận hành · S/T · LOB · MP SX + QC · Set/Person · UPH</summary><div class="erp-operations-heading"><span class="erp-step">04 · CHỈ SỐ VẬN HÀNH</span><h2>S/T & hiệu suất theo Model</h2><p>Net Price · S/T · LOB · MP SX + QC · Set / Person · UPH</p></div>
     <div class="st-workspace">
@@ -369,7 +369,7 @@
 @media(max-width:600px){#stErpDailyDialog{padding:12px}#stErpDailyDialog table{font-size:12px}}
 </style>
 
-  <script type="module" src="./st-info.js?v=20261125-erp-search-plan-v4"></script>
+  <script type="module" src="./st-info.js?v=20261125-erp-model-first-v5"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
