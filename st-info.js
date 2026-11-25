@@ -120,9 +120,6 @@ function previewErp(){
  const dialog=$('stErpDailyDialog'), input=$('stErpDailyDate'), result=$('stErpDailyResult');
  if(!input.value) input.value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format();
  dialog.showModal();
- const code=$('stErpTimelineCode');
- code.innerHTML='<option value="">Chọn Model / Parent Code</option>'+catalog.map(row=>`<option value="${esc(row.product_code)}">${esc(row.model_name)} · ${esc(row.product_code)}</option>`).join('');
- code.onchange=()=>renderErpTimeline(code.value);
  $('stErpDailyForm').onsubmit=async event=>{
   event.preventDefault();
   if(!canImport())return;
@@ -130,13 +127,18 @@ function previewErp(){
   button.disabled=true;result.textContent='Đang đọc đơn gia công từ Next ERP…';
   try{
    if(!await auth.restore())throw new Error('Vui lòng đăng nhập lại.');
-   const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:event.submitter?.value==='save'}});
-   if(data?.saved)void loadSyncStatus();
+   const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:true}});
+   if(data?.saved){
+    const selected=$('stErpTimelineCode').value;
+    historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);
+    await loadCatalog({fresh:true});await loadSyncStatus();
+    if(selected&&[...$('stErpTimelineCode').options].some(option=>option.value===selected)){$('stErpTimelineCode').value=selected;await renderErpTimeline(selected)}
+   }
    if(!Array.isArray(data?.groups))throw new Error('Phản hồi ERP không hợp lệ.');
    const groups=[...data.groups].sort((a,b)=>a.parent_code.localeCompare(b.parent_code)||a.net_price-b.net_price);
    result.innerHTML=`<p>${esc(date)} · ${data.saved?'Đã lưu · ':''}${Number(data.order_count)} đơn · ${money.format(Number(data.plan_qty))} EA · ${Number(data.skipped_lines)} dòng bỏ qua</p><div style="max-height:55vh;overflow:auto"><table><thead><tr><th>Parent Code</th><th>Net Price gốc (VND/EA)</th><th>Plan Q’ty (EA)</th></tr></thead><tbody>${groups.map(row=>`<tr><td>${esc(row.parent_code)}</td><td>${money.format(row.net_price)}</td><td>${money.format(row.plan_qty)}</td></tr>`).join('')}</tbody></table></div>`;
   }catch(error){
-   result.textContent='Kiểm tra ERP thất bại: '+(error.details?.error||error.message);
+   result.textContent='Cập nhật ERP thất bại: '+(error.details?.error||error.message);
   }finally{button.disabled=false}
  };
 }
@@ -200,6 +202,7 @@ async function importErpVoc(file){
  }catch(error){status.textContent=error.message}
 }
 function initInlineErpHistory(){
+ $('stErpTimelineResult').hidden=true;$('stErpTimelineChart').hidden=false;
  void loadErpModelSummary();
  $('stErpVocFile').onchange=event=>{void importErpVoc(event.target.files?.[0]);event.target.value=''};
 
@@ -208,6 +211,7 @@ function initInlineErpHistory(){
  code.onchange=()=>renderErpTimeline(code.value);
  $('stErpTableMode').onclick=()=>{$('stErpTimelineResult').hidden=false;$('stErpTimelineChart').hidden=true};
  $('stErpChartMode').onclick=()=>{$('stErpTimelineResult').hidden=true;$('stErpTimelineChart').hidden=false};
+ if(catalog.length){code.value=selectedCode&&catalog.some(row=>row.product_code===selectedCode)?selectedCode:catalog[0].product_code;void renderErpTimeline(code.value)}
 }
 function activate(){const admin=canImport();$('stVocImportBtn').hidden=!admin;$('stErpPreviewBtn').hidden=!admin;$('stLaborCostBtn').hidden=!admin;$('stManualPriceBtn').hidden=!admin;if(!canView()){openGate();return}void loadSyncStatus();if(!loaded&&!loading)loadCatalog()}
 async function renderHomeDashboard(modelNames=[]){const host=$('stHomeDashboard'),body=$('stHomeDashboardBody');if(!host||!body)return;const historyLimit=matchMedia('(max-width:768px)').matches?2:6,names=[...new Set(modelNames.filter(Boolean))],key=`${historyLimit}:${names.join('|')}`;if(key===homeDashboardKey)return;homeDashboardKey=key;try{if(!catalog.length){const saved=JSON.parse(sessionStorage.getItem(CACHE_KEY)||'null');catalog=saved?.rows?.length?saved.rows:await rpc('get_st_erp_catalog');sessionStorage.setItem(CACHE_KEY,JSON.stringify({savedAt:Date.now(),rows:catalog}))}const items=names.map(name=>[name,catalog.filter(r=>r.model_name===name)]).filter(([,rows])=>rows.length),chartItems=items.slice(0,historyLimit),allRows=items.flatMap(([,rows])=>rows),avg=key=>allRows.length?allRows.reduce((sum,row)=>sum+Number(row[key]||0),0)/allRows.length:NaN;globalThis.updateLobStKpis?.({price:avg('current_price'),st:avg('current_st')});if(!items.length){host.hidden=true;return}host.hidden=false;$('stHomeDashboardNote').textContent=`${items.length} Model đang chọn · Giá, S/T hiện hành và biến động 3 tháng gần nhất`;body.innerHTML=`<div class="st-home-overview">${items.map(([name,rows])=>`<article><b>${esc(name)}</b><span>${money.format(rows.reduce((sum,row)=>sum+Number(row.current_price||0),0)/rows.length)} ₫</span><span>${decimal.format(rows.reduce((sum,row)=>sum+Number(row.current_st||0),0)/rows.length)} phút</span></article>`).join('')}</div>${chartItems.map(([name,rows])=>`<article class="st-home-chart-card"><h3>${esc(name)}</h3><p>${rows.length} Parent Code · 3 tháng gần nhất</p><div class="st-home-metrics"><b>Giá <strong>${money.format(rows.reduce((sum,row)=>sum+Number(row.current_price||0),0)/rows.length)} ₫</strong></b><b>S/T <strong>${decimal.format(rows.reduce((sum,row)=>sum+Number(row.current_st||0),0)/rows.length)} phút</strong></b></div><div class="st-home-chart">${chartHtml([],rows)}</div></article>`).join('')}`;for(const [name,rows] of chartItems){let history=modelHistoryCache.get(name);if(!history){history=await rpc('get_st_model_history',{p_model_name:name});modelHistoryCache.set(name,history)}const card=[...body.querySelectorAll('.st-home-chart-card')].find(x=>x.querySelector('h3')?.textContent===name);if(card){card.querySelector('.st-home-chart').innerHTML=chartHtml(history,rows);bindChartTooltip(card)}}}catch(error){homeDashboardKey='';host.hidden=false;body.innerHTML=`<p class="st-muted">Không thể tải dashboard S/T: ${esc(error.message)}</p>`}}
