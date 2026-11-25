@@ -84,47 +84,41 @@ async function renderErpTimeline(code){
     last.qty+=Number(items[0].plan_qty);last.planDays++;last.lastPlan=date;
    }else for(const item of items)periods.push({date,lastPlan:date,price:Number(item.net_price),qty:Number(item.plan_qty),planDays:1,mixed});
   }
-  const ms=86400000;
-  const max=Math.max(...periods.map(p=>p.price)),min=Math.min(...periods.map(p=>p.price));
-  const x=p=>110+(Date.parse(p.date)-Date.parse(periods[0].date))/Math.max(1,Date.parse(todayIso())-Date.parse(periods[0].date))*590;
-  const labelLanes=[],priceLabels=periods.map(p=>{
-   const xx=Math.min(670,Math.max(135,x(p)));let lane=0;
-   while(lane<labelLanes.length&&xx-labelLanes[lane]<64)lane++;
-   labelLanes[lane]=xx;return{x:xx,lane};
-  });
-  const plotTop=36+labelLanes.length*18,plotBottom=plotTop+110,chartHeight=plotBottom+48;
-  const y=p=>plotBottom-(p.price-min)/Math.max(1,max-min)*110;
-  const chart=$('stErpTimelineChart');
-  const selectedRow=catalog.find(row=>row.product_code===code);
-  const totalQty=periods.reduce((sum,p)=>sum+p.qty,0);
-  const changes=periods.slice(1).filter((p,i)=>!p.mixed&&!periods[i].mixed).map((p)=>{const i=periods.indexOf(p);return(p.price-periods[i-1].price)*p.qty});
-  chart.innerHTML=`<div style="padding:16px"><h3>${esc(selectedRow?.model_name||'')} · ${esc(code)}</h3><p>Mốc đầu trong dữ liệu ERP: ${dateLabel(periods[0].date)} · Tổng Plan Q’ty: ${money.format(totalQty)} EA · GAP ròng: ${money.format(changes.reduce((sum,value)=>sum+value,0))} VND</p><p>Bấm một mốc giá để xem thời gian áp dụng, sản lượng và GAP.</p></div>`+
-   `<svg viewBox="0 0 740 ${chartHeight}" width="100%" role="img" aria-label="Lịch sử giá Parent Code: quá khứ trái, hiện tại phải">`+
-   [0,1,2,3].map(i=>{const value=min+(max-min)*i/3,yy=plotBottom-i*110/3;return `<line x1="110" y1="${yy}" x2="710" y2="${yy}" stroke="#d8e1ef"/><text x="96" y="${yy+4}" text-anchor="end" font-size="10" fill="#53677f">${money.format(value)} đ</text>`}).join('')+
-   '<polyline fill="none" stroke="#315bd8" stroke-width="3" points="'+periods.map(p=>x(p)+','+y(p)).concat(['700,'+y(periods.at(-1))]).join(' ')+'"/>'+
-   periods.map((p,i)=>`<g><line x1="${priceLabels[i].x}" y1="${24+priceLabels[i].lane*18}" x2="${x(p)}" y2="${y(p)-8}" stroke="#afc1dd" stroke-width="0.7"/><text x="${priceLabels[i].x}" y="${18+priceLabels[i].lane*18}" text-anchor="middle" font-size="11" font-weight="700" fill="#163f70" stroke="#f8fbff" stroke-width="3" paint-order="stroke" pointer-events="none">${money.format(p.price)}</text><circle data-erp-point="${i}" tabindex="0" role="button" aria-label="${esc(p.date)} · ${money.format(p.price)} VND" cx="${x(p)}" cy="${y(p)}" r="6" fill="#315bd8" style="cursor:pointer"><title>${esc(p.date)} · ${money.format(p.price)} VND · ${money.format(p.qty)} EA</title></circle></g>`).join('')+
-   `<text x="110" y="${chartHeight-18}" font-size="11">${esc(periods[0].date)}</text><text x="700" y="${chartHeight-18}" text-anchor="end" font-size="11">${esc(todayIso())}</text></svg><div id="stErpPeriodInfo" style="padding:16px;background:#edf4ff"></div>`;
-  const showPeriod=index=>{
-   const p=periods[index],previous=periods[index-1],next=periods[index+1];
-   const end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):todayIso();
-   const gap=previous&&!p.mixed&&!previous.mixed?(p.price-previous.price)*p.qty:null;
-   $('stErpPeriodInfo').innerHTML=`<b>${dateLabel(p.date)} – ${dateLabel(end)}</b> · ${1+Math.round((Date.parse(end)-Date.parse(p.date))/ms)} ngày áp dụng · ${p.planDays} ngày có Plan · <b>${money.format(p.qty)} EA</b><br>Giá ${money.format(p.price)} VND/EA · GAP đơn giá ${previous&&!p.mixed&&!previous.mixed?money.format(p.price-previous.price):'—'} VND/EA · <b>GAP tiền ${gap==null?'Mốc gốc / cần rà soát':money.format(gap)+' VND'}</b>`;
-  };
-  chart.querySelectorAll('[data-erp-point]').forEach(point=>{
-   point.onclick=()=>showPeriod(Number(point.dataset.erpPoint));
-   point.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();point.onclick()}};
-  });
-  showPeriod(periods.length-1);
 
-
-  host.innerHTML='<p>Lịch sử ERP đã lưu · '+esc(code)+' · đến '+esc(dates.data?.[0]?.rd_date||'—')+'</p><div style="max-height:45vh;overflow:auto"><table><thead><tr><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Ngày có Plan</th><th>Plan Q’ty</th><th>Giá (VND/EA)</th><th>GAP đơn giá</th><th>GAP theo Plan (VND)</th><th>Lý do / VOC</th></tr></thead><tbody>'+periods.map((p,i)=>{
+  const ms=86400000,today=todayIso(),base=periods[0].mixed?null:periods[0].price;
+  let cumulative=0;
+  periods.forEach((p,i)=>{
    const previous=periods[i-1],next=periods[i+1];
-   const end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):todayIso();
-   const duration=1+(Date.parse(end)-Date.parse(p.date))/ms;
-   const note=notes.data?.find(row=>row.change_date===p.date&&Number(row.net_price)===p.price)||(history||[]).find(row=>row.change_date===p.date&&Number(row.new_price)===p.price);
-   const gap=previous&&!p.mixed&&!previous.mixed?money.format((p.price-previous.price)*p.qty):'—';
-   return `<tr><td>${esc(p.date)}</td><td>${esc(end)}</td><td>${duration}</td><td>${p.planDays}</td><td>${money.format(p.qty)}</td><td>${money.format(p.price)}</td><td>${previous&&!p.mixed&&!previous.mixed?money.format(p.price-previous.price):'—'}</td><td style="color:${previous&&p.price<previous.price?'#bc3340':'#087a48'}">${gap}</td><td>${p.mixed?'<p>Nhiều mức giá trong ngày</p>':''}<details><summary>${esc(note?.voc_code||note?.reason||'Thêm lý do / VOC')}</summary><form data-erp-note="${i}"><textarea name="reason" aria-label="Lý do đổi giá" placeholder="Lý do tăng / giảm giá">${esc(note?.reason||'')}</textarea><input name="voc_code" aria-label="Mã VOC" placeholder="Mã VOC" value="${esc(note?.voc_code||'')}"><input name="voc_url" type="url" aria-label="Liên kết VOC" placeholder="https://… tài liệu VOC" value="${esc(note?.voc_url||'')}"><button class="btn" type="submit">Lưu lý do / VOC</button><span role="status"></span></form></details></td></tr>`;
-  }).join('')+'</tbody></table></div>';
+   p.end=p.mixed?p.date:next?new Date(Date.parse(next.date)-ms).toISOString().slice(0,10):today;
+   p.duration=1+Math.round((Date.parse(p.end)-Date.parse(p.date))/ms);
+   p.value=p.price*p.qty;p.stepGap=previous&&!p.mixed&&!previous.mixed?(p.price-previous.price)*p.qty:null;
+   p.baseGap=base!=null&&!p.mixed?(p.price-base)*p.qty:null;
+   cumulative+=p.baseGap||0;p.cumulative=cumulative;
+   p.note=notes.data?.find(n=>n.change_date===p.date&&Number(n.net_price)===p.price);
+  });
+  const totalQty=periods.reduce((n,p)=>n+p.qty,0),totalValue=periods.reduce((n,p)=>n+p.value,0),stepTotal=periods.reduce((n,p)=>n+(p.stepGap||0),0);
+  const ambiguous=periods.some(p=>p.mixed),moneyValue=v=>v==null?'—':money.format(v)+' đ',sign=v=>v==null?'—':(v>0?'+':'')+money.format(v)+' đ';
+  const row=catalog.find(r=>r.product_code===code),chart=$('stErpTimelineChart');
+  const min=Math.min(...periods.map(p=>p.price)),max=Math.max(...periods.map(p=>p.price)),span=Math.max(ms,Date.parse(today)-Date.parse(periods[0].date)+ms);
+  const x=date=>80+(Date.parse(date)-Date.parse(periods[0].date))/span*800,y=price=>180-(price-min)/Math.max(1,max-min)*100;
+  const maxQty=Math.max(1,...periods.map(p=>p.qty));
+  const lanes=[],labels=periods.map(p=>{const xx=Math.max(110,Math.min(840,x(p.date)+15));let lane=0;while(lane<lanes.length&&xx-lanes[lane]<80)lane++;lanes[lane]=xx;return{xx,lane}});
+  const labelHeight=lanes.length*17,offset=Math.max(0,labelHeight-40),yy=price=>y(price)+offset,h=330+offset;
+  const path=periods.map((p,i)=>(i?' L '+x(p.date)+' '+yy(periods[i-1].price)+' L ':'M ')+x(p.date)+' '+yy(p.price)+' L '+(p.mixed?x(p.date)+3:Math.min(880,x(p.end)+800*ms/span))+' '+yy(p.price)).join('');
+  chart.innerHTML=`<div class="erp-journey-summary"><div><span>Giá đầu → hiện tại</span><b>${moneyValue(base)} → ${moneyValue(periods.at(-1).price)}</b></div><div><span>Tổng Plan</span><b>${money.format(totalQty)} EA</b></div><div><span>Giá trị theo Plan</span><b>${moneyValue(totalValue)}</b></div><div><span>GAP so giá gốc</span><b class="${cumulative<0?'erp-negative':'erp-positive'}">${sign(base==null?null:cumulative)}</b></div></div>
+   <div class="erp-journey-grid"><div><h3>Hành trình giá · ${esc(row?.model_name||'')} · ${esc(code)}</h3><p class="erp-window-note">Quá khứ (trái) → Hôm nay (phải) · Bấm mốc để xem giai đoạn${ambiguous?' · Có ngày nhiều giá: GAP chưa xác định được để trống.':''}</p>
+   <div style="overflow:auto"><svg viewBox="0 0 940 ${h}" style="min-width:700px;width:100%" role="img" aria-label="Timeline giá bậc thang và Plan theo từng giai đoạn">
+   ${[0,1,2,3].map(i=>{const v=min+(max-min)*i/3,cy=yy(v);return `<line x1="80" y1="${cy}" x2="880" y2="${cy}" stroke="#dce5f0"/><text x="67" y="${cy+4}" text-anchor="end" font-size="11" fill="#526c86">${money.format(v)}</text>`}).join('')}
+   <path d="${path}" fill="none" stroke="#2863d4" stroke-width="3"/>
+   ${periods.map((p,i)=>`<g><line x1="${labels[i].xx}" y1="${24+labels[i].lane*17}" x2="${x(p.date)}" y2="${yy(p.price)-7}" stroke="#b4c6df"/><text x="${labels[i].xx}" y="${18+labels[i].lane*17}" text-anchor="middle" font-size="11" font-weight="700" fill="#153f70">${money.format(p.price)}</text><circle role="button" tabindex="0" data-erp-point="${i}" aria-label="${esc(p.date)} · ${money.format(p.price)} VND" cx="${x(p.date)}" cy="${yy(p.price)}" r="5" fill="#2863d4"><title>${esc(p.date)} · ${money.format(p.price)} đ · ${money.format(p.qty)} EA · GAP gốc ${sign(p.baseGap)}${p.note?' · '+esc(p.note.voc_code||'VOC'):''}</title></circle>
+   <rect x="${x(p.date)}" y="${250+offset-p.qty/maxQty*32}" width="${Math.max(4,Math.min(880,x(p.end)+800*ms/span)-x(p.date)-2)}" height="${p.qty/maxQty*32}" fill="#bce5cc" rx="3"/><text x="${labels[i].xx}" y="${270+offset+labels[i].lane*13}" font-size="10" text-anchor="middle" fill="#245f43">${money.format(p.qty)} EA</text></g>`).join('')}
+   <text x="16" y="${240+offset}" font-size="11">Plan</text><text x="80" y="${h-12}" font-size="11">${esc(periods[0].date)}</text><text x="880" y="${h-12}" font-size="11" text-anchor="end">${esc(today)} · Hôm nay</text></svg></div></div>
+   <aside><h4>Giai đoạn đang xem</h4><div id="stErpPeriodInfo"></div><div id="stErpModelImpact"></div></aside></div>`;
+  const showPeriod=i=>{
+   const p=periods[i];$('stErpPeriodInfo').innerHTML=`<b>${dateLabel(p.date)} → ${dateLabel(p.end)}</b><p>${p.duration} ngày · ${p.planDays} ngày có Plan</p><dl><dt>Đơn giá</dt><dd>${moneyValue(p.price)}/EA</dd><dt>Plan</dt><dd>${money.format(p.qty)} EA</dd><dt>Giá trị Plan</dt><dd>${moneyValue(p.value)}</dd><dt>GAP lần đổi</dt><dd>${sign(p.stepGap)}</dd><dt>GAP so giá gốc</dt><dd>${sign(p.baseGap)}</dd><dt>GAP gốc lũy kế</dt><dd>${sign(base==null?null:p.cumulative)}</dd></dl>`;
+  };
+  chart.querySelectorAll('[data-erp-point]').forEach(point=>{point.onclick=()=>showPeriod(Number(point.dataset.erpPoint));point.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();point.onclick()}}});showPeriod(periods.length-1);
+  host.innerHTML=`<h3>Đối chiếu từng giai đoạn</h3><p class="erp-window-note">Dữ liệu ERP đến ${esc(dates.data?.[0]?.rd_date||'—')} · GAP gốc = (giá áp dụng − giá đầu) × Plan. GAP lần đổi = (giá áp dụng − giá trước) × Plan. Không cộng hai loại GAP với nhau.</p><div style="overflow:auto;max-height:430px"><table><thead><tr><th>Từ ngày → đến ngày</th><th>Số ngày</th><th>Giá trước → áp dụng (đ/EA)</th><th>Plan (EA)</th><th>Giá trị Plan (đ)</th><th>GAP lần đổi (đ)</th><th>GAP so giá gốc (đ)</th><th>GAP gốc lũy kế (đ)</th><th>Lý do / VOC</th></tr></thead><tbody>${periods.map((p,i)=>`<tr><td>${esc(p.date)} → ${esc(p.end)}</td><td>${p.duration}</td><td>${i?money.format(periods[i-1].price)+' → ':''}${money.format(p.price)}</td><td>${money.format(p.qty)}</td><td>${money.format(p.value)}</td><td>${sign(p.stepGap)}</td><td class="${p.baseGap<0?'erp-negative':'erp-positive'}">${sign(p.baseGap)}</td><td>${sign(base==null?null:p.cumulative)}</td><td>${p.mixed?'Nhiều giá trong ngày · ':''}<details><summary>${esc(p.note?.voc_code||p.note?.reason||'Thêm lý do / VOC')}</summary><form data-erp-note="${i}"><textarea name="reason" aria-label="Lý do đổi giá" placeholder="Lý do tăng / giảm giá">${esc(p.note?.reason||'')}</textarea><input name="voc_code" placeholder="Mã VOC" value="${esc(p.note?.voc_code||'')}"><input name="voc_url" type="url" placeholder="https://… tài liệu VOC" value="${esc(p.note?.voc_url||'')}"><button type="submit" class="btn">Lưu lý do / VOC</button><span role="status"></span></form></details></td></tr>`).join('')}</tbody><tfoot><tr><th>Tổng đến ${esc(today)}</th><th></th><th>Hiện tại: ${money.format(periods.at(-1).price)}</th><th>${money.format(totalQty)}</th><th>${money.format(totalValue)}</th><th>${sign(stepTotal)}</th><th>${sign(base==null?null:cumulative)}</th><th>Không cộng cột lũy kế</th><th>${ambiguous?'GAP chưa đầy đủ':''}</th></tr></tfoot></table></div>`;
   host.querySelectorAll('[data-erp-note]').forEach(form=>form.onsubmit=async event=>{
    event.preventDefault();
    const p=periods[Number(form.dataset.erpNote)],button=form.querySelector('button'),status=form.querySelector('[role=status]');
@@ -136,7 +130,7 @@ async function renderErpTimeline(code){
      method:'POST',headers:{Prefer:'resolution=merge-duplicates'},
      body:{parent_code:code,change_date:p.date,net_price:p.price,reason:String(fields.get('reason')||''),voc_code:String(fields.get('voc_code')||''),voc_url:url,updated_at:new Date().toISOString()}
     });
-    status.textContent='Đã lưu';
+    status.textContent='Đã lưu';void renderErpTimeline(code);
    }catch(error){status.textContent='Lưu thất bại: '+error.message}
    finally{button.disabled=false}
   });
@@ -194,8 +188,9 @@ async function applyLaborCost(event){event.preventDefault();const cost=Number($(
 function updateManualPriceSelection(){const row=bomPriceEntries.find(item=>item.product_code===$('stManualPriceCode').value);$('stManualPriceModel').value=row?.model_name||'';$('stManualPriceType').value=row?.product_type||'';if(row?.current_price!=null)$('stManualPriceValue').value=String(Math.round(Number(row.current_price)));}
 async function applyManualPrice(event){event.preventDefault();const code=$('stManualPriceCode').value,price=Number($('stManualPriceValue').value),date=$('stManualPriceDate').value,reason=$('stManualPriceReason').value.trim(),status=$('stManualPriceStatus'),button=$('stManualPriceConfirmBtn');if(!code||!Number.isFinite(price)||price<=1000||!date)return;button.disabled=true;button.textContent='Đang lưu…';try{const result=await rpc('apply_st_manual_price',{p_product_code:code,p_net_price:price,p_effective_date:date,p_reason:reason||null});$('stManualPriceDialog').close();historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);catalog=[];await loadCatalog({fresh:true});toastMessage(`Đã lưu ${result.product_code}: ${decimal.format(result.current_st)} phút.`)}catch(error){status.textContent='Không thể lưu: '+error.message}finally{button.disabled=false;button.textContent='Lưu giá & S/T'}}function bind(){['stSearch','stTypeFilter','stChangeFilter'].forEach(id=>$(id).addEventListener(id==='stSearch'?'input':'change',()=>{page=1;applyFilters();if(hasSpecificModels())showModelOverview()}));['stDateFrom','stDateTo','stPeriodFilter'].forEach(id=>$(id).addEventListener('change',refreshSelectedChart));$('stRefreshBtn').onclick=()=>{sessionStorage.removeItem(CACHE_KEY);catalog=[];modelMetricRows=[];modelReportMetricRows=[];historyCache.clear();modelHistoryCache.clear();loadCatalog({fresh:true})};$('stExportModelBtn').onclick=exportModel;$('stReportBtn').onclick=openStSummaryReport;$('stReportCloseBtn').onclick=()=>$('stReportDialog').close();$('stLaborCostBtn').onclick=openLaborCostDialog;$('stManualPriceBtn').onclick=openManualPriceDialog;$('stManualPriceForm').onsubmit=applyManualPrice;$('stManualPriceCloseBtn').onclick=$('stManualPriceCancelBtn').onclick=()=>$('stManualPriceDialog').close();$('stManualPriceCode').onchange=updateManualPriceSelection;$('stLaborCostForm').onsubmit=applyLaborCost;$('stLaborCostCloseBtn').onclick=$('stLaborCostCancelBtn').onclick=()=>$('stLaborCostDialog').close();$('stErpPreviewBtn').onclick=previewErp;$('stSheetSyncForm').onsubmit=applySheetSync;$('stSheetSyncCloseBtn').onclick=$('stSheetSyncCancelBtn').onclick=()=>$('stSheetSyncDialog').close();$('stVocImportBtn').onclick=()=>$('stVocFile').click();$('stVocFile').onchange=e=>{const f=e.target.files[0];if(f)readVocFile(f).catch(x=>toastMessage(x.message));e.target.value=''};$('stVocPreviewForm').onsubmit=applyVoc;$('stVocCloseBtn').onclick=$('stVocCancelBtn').onclick=()=>$('stVocPreviewDialog').close();$('stViewerPasswordForm').onsubmit=verifyViewerPassword;$('stViewerPasswordManageForm').onsubmit=saveViewerPassword;$('stViewerPasswordManageClose').onclick=$('stViewerPasswordManageCancel').onclick=()=>$('stViewerPasswordManageDialog').close();$('stViewerPasswordCancel').onclick=()=>{$('stViewerPasswordDialog').close();globalThis.switchView?.('lob-summary')}}
 
-function erpPeriodExportRows(rows){
- return rows.map(p=>({
+function erpPeriodExportRows(rows){ const bases=new Map(),totals=new Map();
+ for(const p of [...rows].sort((a,b)=>a.start_date.localeCompare(b.start_date))){if(!bases.has(p.parent_code))bases.set(p.parent_code,p.mixed?null:Number(p.net_price))}
+ return [...rows].sort((a,b)=>a.parent_code.localeCompare(b.parent_code)||a.start_date.localeCompare(b.start_date)).map(p=>{const base=bases.get(p.parent_code),gap=base!=null&&!p.mixed?(Number(p.net_price)-base)*Number(p.plan_qty):null,total=(totals.get(p.parent_code)||0)+(gap||0);totals.set(p.parent_code,total);return({
  'Model':p.model_name||'Chưa đối chiếu Model','Parent Code':p.parent_code,
  'Từ ngày':p.start_date,'Đến ngày':p.end_date,
  'Số ngày áp dụng':1+Math.round((Date.parse(p.end_date)-Date.parse(p.start_date))/86400000),
@@ -205,8 +200,9 @@ function erpPeriodExportRows(rows){
  'GAP đơn giá (VND/EA)':p.gap_value==null?null:Number(p.net_price)-Number(p.old_price),
  'GAP sau thay đổi (VND)':p.gap_value==null?null:Number(p.gap_value),
  'Trạng thái':p.mixed||p.old_mixed?'Cần rà soát nhiều giá trong ngày':p.old_price==null?'Mốc gốc':'Đã đối chiếu',
+ 'Giá gốc (VND/EA)':bases.get(p.parent_code),'GAP so giá gốc (VND)':gap,'GAP gốc lũy kế (VND)':base==null?null:total,
  'Lý do':p.reason||'','Mã VOC':p.voc_code||'','Link VOC':p.voc_url||''
- }));
+ });});
 }
 function appendErpPeriodSheet(wb,rows){
  const sheet=XLSX.utils.json_to_sheet(erpPeriodExportRows(rows));
@@ -285,8 +281,12 @@ async function loadErpModelSummary(){
    const gap=p.old_price==null?0:(Number(p.net_price)-Number(p.old_price))*qty;
    m.recentUp+=Math.max(0,gap);m.recentDown+=Math.min(0,gap);
   }
-  const cards=[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<button type="button" class="erp-model-card" data-erp-model="${esc(name)}"><header><strong>${esc(name)}</strong><small>${m.codes.size} Parent Code</small></header><div class="erp-model-values"><div><span>Plan Q’ty</span><b>${money.format(m.qty)} EA</b></div><div><span>GAP ròng theo Plan</span><b style="color:${m.gap<0?'#bc3340':'#087a48'}">${m.gap>0?'+':''}${money.format(m.gap)} đ</b></div></div><div class="erp-change-window"><span>Đổi gần nhất: <b style="display:inline;font-size:11px">${m.lastChange?dateLabel(m.lastChange):'Chưa có'}</b> · ${m.lastChange?1+Math.round((Date.parse(todayIso())-Date.parse(m.lastChange))/86400000):'—'} ngày đến hiện tại</span><span>Plan từ mốc đổi: <b style="display:inline;font-size:12px">${m.lastChange?money.format(m.recentQty)+' EA':'—'}</b> · GAP tăng: <b style="display:inline;font-size:12px;color:#087a48">${m.lastChange?'+'+money.format(m.recentUp)+' đ':'—'}</b></span></div><footer>${dateLabel(m.start)} → ${dateLabel(m.end)} · Giá trị Plan: ${money.format(m.value)} đ${m.mixed?' · '+m.mixed+' mốc cần rà soát':''}</footer></button>`).join('');
-  host.innerHTML='<p class="erp-coverage" role="status">'+esc(coverageText)+'</p><p class="erp-window-note">Mốc đổi gần nhất là lần đổi giá mới nhất của một Parent Code trong Model. Plan và GAP từ mốc đổi chỉ tính từ ngày đó đến hiện tại; số ngày tính cả hai đầu. GAP tăng/giảm so với giá trước của từng Parent Code, không coi Plan chưa rõ giá là GAP bằng 0.</p><div class="erp-model-cards">'+cards+'</div><details class="erp-summary-detail" open><summary>Bảng tổng hợp đầy đủ theo Model</summary><p class="erp-window-note">Plan/GAP toàn kỳ và Plan/GAP từ lần đổi gần nhất là hai khoảng khác nhau. Model có nhiều giá cùng ngày được đánh dấu trên thẻ tổng quan; GAP chưa xác định không được cộng vào tổng.</p><div class="erp-full-summary-table" style="overflow:auto"><table><thead><tr><th>Model</th><th>Parent Code</th><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Plan Q’ty</th><th>Giá trị theo Plan</th><th>GAP tăng</th><th>GAP giảm</th><th>GAP ròng</th><th>Đổi giá gần nhất</th><th>Parent Code tại mốc đổi</th><th>Giá trước (đ/EA)</th><th>Giá tại mốc đổi (đ/EA)</th><th>Ngày đến hiện tại</th><th>Plan từ mốc đổi (EA)</th><th>GAP tăng từ mốc đổi (đ)</th><th>GAP giảm từ mốc đổi (đ)</th></tr></thead><tbody>'+[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<tr><td><button type="button" class="btn" data-erp-model="${esc(name)}">${esc(name)}</button></td><td>${m.codes.size}</td><td>${esc(m.start)}</td><td>${esc(m.end)}</td><td>${1+Math.round((Date.parse(m.end)-Date.parse(m.start))/86400000)}</td><td>${money.format(m.qty)}</td><td>${money.format(m.value)}</td><td style="color:#087a48">+${money.format(m.up)}</td><td style="color:#bc3340">${money.format(m.down)}</td><td>${money.format(m.gap)}</td><td>${m.lastChange?dateLabel(m.lastChange):'—'}</td><td>${m.latestChanges.length?m.latestChanges.map(p=>'<div class="erp-price-pair">'+esc(p.parent_code)+'</div>').join(''):'—'}</td><td>${m.latestChanges.length?m.latestChanges.map(p=>'<div class="erp-price-pair">'+money.format(p.old_price)+'</div>').join(''):'—'}</td><td>${m.latestChanges.length?m.latestChanges.map(p=>'<div class="erp-price-pair">'+money.format(p.net_price)+'</div>').join(''):'—'}</td><td>${m.lastChange?1+Math.round((Date.parse(todayIso())-Date.parse(m.lastChange))/86400000):'—'}</td><td>${m.lastChange?money.format(m.recentQty):'—'}</td><td style="color:#087a48">${m.lastChange?'+'+money.format(m.recentUp):'—'}</td><td style="color:#bc3340">${m.lastChange?money.format(m.recentDown):'—'}</td></tr>`).join('')+'</tbody></table></div></details>';
+  const basePrices=new Map();
+  for(const p of [...rows].sort((a,b)=>a.start_date.localeCompare(b.start_date)))if(!basePrices.has(p.parent_code))basePrices.set(p.parent_code,p.mixed?null:Number(p.net_price));
+  for(const m of models.values()){m.baseGap=0;m.baseUnknown=0}
+  for(const p of rows){const m=models.get(p.model_name||'Chưa đối chiếu Model'),base=basePrices.get(p.parent_code);if(base==null||p.mixed){m.baseUnknown++;continue}m.baseGap+=(Number(p.net_price)-base)*Number(p.plan_qty)}
+  const cards=[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<button type="button" class="erp-model-card" data-erp-model="${esc(name)}"><header><strong>${esc(name)}</strong><small>${m.codes.size} Parent Code</small></header><div class="erp-model-values"><div><span>Plan Q’ty</span><b>${money.format(m.qty)} EA</b></div><div><span>GAP so giá gốc</span><b style="color:${m.baseGap<0?'#bc3340':'#087a48'}">${m.baseGap>0?'+':''}${money.format(m.baseGap)} đ</b></div></div><div class="erp-change-window"><span>Đổi gần nhất: <b style="display:inline;font-size:11px">${m.lastChange?dateLabel(m.lastChange):'Chưa có'}</b> · ${m.lastChange?1+Math.round((Date.parse(todayIso())-Date.parse(m.lastChange))/86400000):'—'} ngày đến hiện tại</span><span>Plan từ mốc đổi: <b style="display:inline;font-size:12px">${m.lastChange?money.format(m.recentQty)+' EA':'—'}</b> · GAP tăng: <b style="display:inline;font-size:12px;color:#087a48">${m.lastChange?'+'+money.format(m.recentUp)+' đ':'—'}</b></span></div><footer>${dateLabel(m.start)} → ${dateLabel(m.end)} · Giá trị Plan: ${money.format(m.value)} đ${m.mixed?' · '+m.mixed+' mốc cần rà soát':''}</footer></button>`).join('');
+  host.innerHTML='<p class="erp-coverage" role="status">'+esc(coverageText)+'</p><p class="erp-window-note">Mốc đổi gần nhất là lần đổi giá mới nhất của một Parent Code trong Model. Plan và GAP từ mốc đổi chỉ tính từ ngày đó đến hiện tại; số ngày tính cả hai đầu. GAP tăng/giảm so với giá trước của từng Parent Code, không coi Plan chưa rõ giá là GAP bằng 0.</p><div class="erp-model-cards">'+cards+'</div><details class="erp-summary-detail" open><summary>Bảng tổng hợp đầy đủ theo Model</summary><p class="erp-window-note">Plan/GAP toàn kỳ và Plan/GAP từ lần đổi gần nhất là hai khoảng khác nhau. Model có nhiều giá cùng ngày được đánh dấu trên thẻ tổng quan; GAP chưa xác định không được cộng vào tổng.</p><div class="erp-full-summary-table" style="overflow:auto"><table><thead><tr><th>Model</th><th>Parent Code</th><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Plan Q’ty</th><th>Giá trị theo Plan</th><th>GAP tăng</th><th>GAP giảm</th><th>GAP lần đổi (tổng)</th><th>GAP so giá gốc</th><th>Đổi giá gần nhất</th><th>Parent Code tại mốc đổi</th><th>Giá trước (đ/EA)</th><th>Giá tại mốc đổi (đ/EA)</th><th>Ngày đến hiện tại</th><th>Plan từ mốc đổi (EA)</th><th>GAP tăng từ mốc đổi (đ)</th><th>GAP giảm từ mốc đổi (đ)</th></tr></thead><tbody>'+[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<tr><td><button type="button" class="btn" data-erp-model="${esc(name)}">${esc(name)}</button></td><td>${m.codes.size}</td><td>${esc(m.start)}</td><td>${esc(m.end)}</td><td>${1+Math.round((Date.parse(m.end)-Date.parse(m.start))/86400000)}</td><td>${money.format(m.qty)}</td><td>${money.format(m.value)}</td><td style="color:#087a48">+${money.format(m.up)}</td><td style="color:#bc3340">${money.format(m.down)}</td><td>${money.format(m.gap)}</td><td>${money.format(m.baseGap)}${m.baseUnknown?' *':''}</td><td>${m.lastChange?dateLabel(m.lastChange):'—'}</td><td>${m.latestChanges.length?m.latestChanges.map(p=>'<div class="erp-price-pair">'+esc(p.parent_code)+'</div>').join(''):'—'}</td><td>${m.latestChanges.length?m.latestChanges.map(p=>'<div class="erp-price-pair">'+money.format(p.old_price)+'</div>').join(''):'—'}</td><td>${m.latestChanges.length?m.latestChanges.map(p=>'<div class="erp-price-pair">'+money.format(p.net_price)+'</div>').join(''):'—'}</td><td>${m.lastChange?1+Math.round((Date.parse(todayIso())-Date.parse(m.lastChange))/86400000):'—'}</td><td>${m.lastChange?money.format(m.recentQty):'—'}</td><td style="color:#087a48">${m.lastChange?'+'+money.format(m.recentUp):'—'}</td><td style="color:#bc3340">${m.lastChange?money.format(m.recentDown):'—'}</td></tr>`).join('')+'</tbody></table></div></details>';
   const modelSelect=$('stErpModelTimelineSelect');
   const currentModel=modelSelect.value;
   modelSelect.innerHTML=[...models.keys()].sort().map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
@@ -327,13 +327,14 @@ async function importErpVoc(file){
  }catch(error){status.textContent=error.message}
 }
 function setStReportTab(name){
- document.querySelectorAll('[data-st-report-panel]').forEach(panel=>panel.hidden=panel.dataset.stReportPanel!==name);
+ if(name==='timeline'||name==='operations')name='detail';
+ document.querySelectorAll('[data-st-report-panel]').forEach(panel=>panel.hidden=panel.dataset.stReportPanel!==name&&!(name==='detail'&&panel.dataset.stReportPanel==='operations'));
  document.querySelectorAll('[data-st-report-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.stReportTab===name)));
 }
 function initInlineErpHistory(){
  document.querySelectorAll('[data-st-report-tab]').forEach(button=>button.onclick=()=>setStReportTab(button.dataset.stReportTab));
  erpHistoryReady=true;erpHistoryFilterKey=selectedModels().join('|');
- $('stErpTimelineResult').hidden=true;$('stErpTimelineChart').hidden=false;
+ $('stErpTimelineResult').hidden=false;$('stErpTimelineChart').hidden=false;
  void loadErpModelSummary();
  $('stErpVocFile').onchange=event=>{void importErpVoc(event.target.files?.[0]);event.target.value=''};
 
