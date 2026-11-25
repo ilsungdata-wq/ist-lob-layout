@@ -89,7 +89,7 @@ Deno.serve(async request => {
       });
       if (!stored.ok) return json({ error: "erp_snapshot_write_failed" }, 502);
     }
-    return json({ date, saved: save === true, order_count: orders.length, plan_qty: qty, skipped_lines: skipped, groups: [...groups.values()] });
+    return json({ date, saved: save === true, order_count: orders.length, plan_qty: qty, skipped_lines: skipped, groups: scheduled === true ? undefined : [...groups.values()] });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     return json({ error: /^erp_http_\d{3}$/.test(message) ? message : "erp_preview_failed" }, 502);
