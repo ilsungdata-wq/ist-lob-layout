@@ -257,17 +257,8 @@
 #stErpDailyDialog [role=status]{font-size:12px}
 @media(max-width:600px){#stErpDailyDialog{padding:12px}#stErpDailyDialog table{font-size:12px}}
 </style>
-<dialog id="stErpDailyDialog" aria-labelledby="stErpDailyTitle">
-    <h2 id="stErpDailyTitle">Cập nhật ERP thủ công</h2>
-    <form id="stErpDailyForm">
-      <label for="stErpDailyDate">R/D Date</label>
-      <input id="stErpDailyDate" type="date" min="2026-01-01" max="2026-12-31" required>
-      <button id="stErpDailyFetch" type="submit" class="btn primary">Cập nhật ngày đã chọn</button>
-      <button type="button" class="btn" onclick="this.closest('dialog').close()">Đóng</button>
-    </form>
-    <div id="stErpDailyResult" aria-live="polite"></div>
-  </dialog>
-  <script type="module" src="./st-info.js?v=20261125-manual-update-line-history"></script>
+
+  <script type="module" src="./st-info.js?v=20261125-erp-latest-year"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
