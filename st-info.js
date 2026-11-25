@@ -234,7 +234,7 @@ function renderErpModelTimeline(rows,model){
  return '<g data-model-period="'+i+'" role="button" tabindex="0" aria-label="'+esc(p.parent_code+' từ '+p.start_date+' giá '+p.net_price)+'" style="cursor:pointer"><title>'+esc(p.parent_code+' · '+p.start_date+' – '+p.end_date+' · '+money.format(p.net_price)+' VND/EA · '+money.format(p.plan_qty)+' EA · GAP '+(gap==null?'—':money.format(gap)+' VND'))+'</title><rect x="'+x+'" y="'+y+'" width="'+width+'" height="28" rx="4" fill="'+color+'"/>'+(width>60?'<text x="'+(x+width/2)+'" y="'+(y+19)+'" fill="white" text-anchor="middle" font-size="11">'+money.format(p.net_price)+'</text>':'')+'</g>';
  }).join('')+'</svg></div>';
  host.querySelectorAll('[data-model-period]').forEach(point=>{
- const open=()=>{setStReportTab('detail');const p=items[Number(point.dataset.modelPeriod)],select=$('stErpTimelineCode');if(![...select.options].some(o=>o.value===p.parent_code))select.add(new Option(model+' · '+p.parent_code,p.parent_code));select.value=p.parent_code;void renderErpTimeline(p.parent_code);};
+ const open=()=>{setStReportTab('detail');const detail=document.querySelector('[data-st-report-panel="detail"]');if(detail?.tagName==='DETAILS')detail.open=true;const p=items[Number(point.dataset.modelPeriod)],select=$('stErpTimelineCode');if(![...select.options].some(o=>o.value===p.parent_code))select.add(new Option(model+' · '+p.parent_code,p.parent_code));select.value=p.parent_code;void renderErpTimeline(p.parent_code);};
  point.onclick=open;point.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}};
  });
 }
@@ -340,10 +340,11 @@ async function importErpVoc(file){
 }
 function setStReportTab(name){
  if(name==='timeline'||name==='operations')name='detail';
- document.querySelectorAll('[data-st-report-panel]').forEach(panel=>panel.hidden=panel.dataset.stReportPanel!==name&&!(name==='detail'&&panel.dataset.stReportPanel==='operations'));
+ document.querySelectorAll('[data-st-report-panel]').forEach(panel=>panel.hidden=panel.dataset.stReportPanel!==name&&!(name==='detail'&&['timeline','operations'].includes(panel.dataset.stReportPanel)));
  document.querySelectorAll('[data-st-report-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.stReportTab===name)));
 }
 function initInlineErpHistory(){
+ setStReportTab(document.querySelector('[data-st-report-tab][aria-selected="true"]')?.dataset.stReportTab||'detail');
  document.querySelectorAll('[data-st-report-tab]').forEach(button=>button.onclick=()=>setStReportTab(button.dataset.stReportTab));
  erpHistoryReady=true;erpHistoryFilterKey=selectedModels().join('|');
  $('stErpTimelineResult').hidden=false;$('stErpTimelineChart').hidden=false;
