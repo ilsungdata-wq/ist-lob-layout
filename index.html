@@ -186,7 +186,7 @@
       <section class="st-list-panel" aria-label="Danh sách Prod. Material"><div id="stTableHost" class="st-table-host"></div><nav id="stPager" class="st-pager" aria-label="Phân trang S/T"></nav></section>
       <aside id="stDetailPanel" class="st-detail-panel" aria-live="polite"><div class="st-empty-detail"><b>Chọn Parent Code hoặc Model</b><span>Giá bình quân, S/T và lịch sử biến động sẽ tự hiển thị tại đây.</span></div></aside>
     </div><section id="stErpHistoryPanel" style="margin-top:20px;padding:16px;border:1px solid #d5e2ef;border-radius:10px;background:white">
-    <h3>Lịch sử theo Model và Parent Code</h3><div id="stErpModelSummary"></div><label>Nhập lý do/VOC từ Excel <input id="stErpVocFile" type="file" accept=".xlsx,.xls"></label><p id="stErpVocStatus" role="status"></p>
+    <h3>Dashboard lịch sử giá ERP theo Model và Parent Code</h3><p>Chọn Model trong bảng tổng hợp, sau đó chọn Parent Code để xem từng giai đoạn giá. GAP theo Plan = (giá giai đoạn − giá giai đoạn trước) × Plan Q’ty của giai đoạn. Mốc giá đầu tiên là mốc gốc; các ngày có nhiều giá cần rà soát riêng.</p><div id="stErpModelSummary"></div><label>Nhập lý do/VOC từ Excel <input id="stErpVocFile" type="file" accept=".xlsx,.xls"></label><p id="stErpVocStatus" role="status"></p>
     <select id="stErpTimelineCode" aria-label="Model và Parent Code"></select>
     <div style="display:flex;gap:8px;margin:12px 0"><button id="stErpTableMode" class="btn" type="button">Bảng lịch sử</button><button id="stErpChartMode" class="btn" type="button">Timeline giá</button></div><div id="stErpTimelineResult" aria-live="polite"></div>
 
@@ -258,7 +258,7 @@
 @media(max-width:600px){#stErpDailyDialog{padding:12px}#stErpDailyDialog table{font-size:12px}}
 </style>
 
-  <script type="module" src="./st-info.js?v=20261125-erp-new-dates"></script>
+  <script type="module" src="./st-info.js?v=20261125-erp-price-dashboard"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
