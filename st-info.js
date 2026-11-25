@@ -240,7 +240,7 @@ function renderErpModelTimeline(rows,model){
 }
 
 let erpHistoryReady=false,erpHistoryFilterKey='',erpHistoryRequest=0;
-function filterErpSelectedModels(rows){const codes=new Set(filtered.map(r=>r.product_code));return rows.filter(p=>codes.has(p.parent_code))}
+function filterErpSelectedModels(rows){const codes=new Map(filtered.map(r=>[r.product_code,r]));return rows.filter(p=>codes.has(p.parent_code)).map(p=>({...p,model_name:p.model_name||codes.get(p.parent_code).model_name}))}
 async function loadErpModelSummary(){
  const request=++erpHistoryRequest;
  const host=$('stErpModelSummary');
@@ -303,6 +303,7 @@ async function loadErpModelSummary(){
   const currentModel=modelSelect.value;
   modelSelect.innerHTML=[...models.keys()].sort().map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
   if(models.has(currentModel))modelSelect.value=currentModel;
+  else if(stCommittedSearch){const match=[...models.keys()].find(name=>name.toLowerCase()===stCommittedSearch)||[...models.keys()].find(name=>name.toLowerCase().includes(stCommittedSearch));if(match)modelSelect.value=match}
   modelSelect.onchange=()=>renderErpModelTimeline(rows,modelSelect.value);
   renderErpModelTimeline(rows,modelSelect.value);
   $('stErpExportHistoryBtn').onclick=async()=>{
