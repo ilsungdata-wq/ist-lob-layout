@@ -123,19 +123,30 @@ async function previewErp(){
  try{
   if(!await auth.restore())throw new Error('Vui lòng đăng nhập lại.');
   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format();
-  let orders=0,qty=0,completed=0;
-  for(let offset=3;offset>=0;offset--){
-   const date=new Date(Date.parse(today+'T00:00:00Z')-offset*86400000).toISOString().slice(0,10);
-   button.textContent='Đang cập nhật ERP '+(completed+1)+'/4…';
-   const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:true}});
-   if(data?.saved!==true)throw Error(data?.error||'ERP chưa xác nhận lưu '+date);
-   orders+=Number(data.order_count||0);qty+=Number(data.plan_qty||0);completed++;
+  const latest=await supabaseRequest('/rest/v1/st_erp_days?select=rd_date&order=rd_date.desc&limit=1');
+  const lastDate=latest.data?.[0]?.rd_date;
+  if(!lastDate)throw Error('Cần hoàn tất lần nạp lịch sử đầu tiên.');
+  const dates=[];
+  for(let ms=Date.parse(lastDate+'T00:00:00Z')+86400000;ms<=Date.parse(today+'T00:00:00Z');ms+=86400000)dates.push(new Date(ms).toISOString().slice(0,10));
+  if(!dates.length){toastMessage('Chưa có ngày mới. Dữ liệu đã cập nhật đến '+dateLabel(lastDate)+'.');return}
+  let orders=0,qty=0,completed=0,addedDays=0;
+  for(const date of dates){
+   button.textContent='Đang kiểm tra ngày mới '+(completed+1)+'/'+dates.length+'…';
+   const preview=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:false}});
+   if(!Array.isArray(preview.data?.groups))throw Error('Phản hồi ERP không hợp lệ: '+date);
+   if(Number(preview.data.order_count)>0){
+    const {data}=await supabaseRequest('/functions/v1/st-erp-preview',{method:'POST',body:{date,save:true}});
+    if(data?.saved!==true)throw Error(data?.error||'ERP chưa xác nhận lưu '+date);
+    orders+=Number(data.order_count||0);qty+=Number(data.plan_qty||0);addedDays++;
+   }
+   completed++;
   }
+  if(!addedDays){toastMessage('ERP chưa có dữ liệu cho ngày mới sau '+dateLabel(lastDate)+'.');return}
   const selected=$('stErpTimelineCode').value;
   historyCache.clear();modelHistoryCache.clear();sessionStorage.removeItem(CACHE_KEY);
   await loadCatalog({fresh:true});await loadSyncStatus();
   if(selected&&[...$('stErpTimelineCode').options].some(option=>option.value===selected)){$('stErpTimelineCode').value=selected;await renderErpTimeline(selected)}
-  toastMessage('Đã cập nhật ERP mới nhất: '+orders+' đơn · '+money.format(qty)+' EA (hôm nay và 3 ngày gần nhất).');
+  toastMessage('Đã bổ sung '+addedDays+' ngày mới · '+orders+' đơn · '+money.format(qty)+' EA.');
  }catch(error){
   toastMessage('Cập nhật ERP chưa hoàn tất: '+(error.details?.error||error.message)+'. Có thể bấm lại để thử tiếp.');
  }finally{button.disabled=false;button.textContent=original}
