@@ -35,6 +35,48 @@
 #stErpModelSummary{margin-bottom:18px}
 #stErpHistoryPanel summary{color:#1d57a0;cursor:pointer;max-width:260px;white-space:normal}
 @media(max-width:700px){#stErpHistoryPanel{padding:12px!important}#stInfoView .st-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ERP report layout: scoped below existing S/T header and filters. */
+#stErpHistoryPanel.erp-report{margin-top:20px;display:grid;gap:20px}
+#stErpHistoryPanel .erp-report-section{padding:24px;background:#fff;border:1px solid #dce5f0;border-radius:14px;min-width:0}
+#stErpHistoryPanel .erp-section-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:20px}
+#stErpHistoryPanel h2,.erp-operations-heading h2{font-size:21px;color:#103866;margin:5px 0 6px}
+#stErpHistoryPanel .erp-section-heading p,.erp-operations-heading p{margin:0;color:#698096;font-size:13px}
+.erp-step{font-size:10px;font-weight:800;letter-spacing:1.3px;color:#557391}
+#stErpHistoryPanel .erp-field{display:grid;gap:6px;font-size:11px;font-weight:700;color:#45617d;min-width:260px}
+#stErpHistoryPanel .erp-field select{width:100%;min-height:40px;background:white}
+#stErpHistoryPanel .erp-coverage{padding:10px 14px;border:1px solid #e3dfbf;background:#fffcf0;border-radius:8px;font-size:12px;color:#6a5c2f;margin:0 0 16px}
+#stErpHistoryPanel .erp-model-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-height:390px;overflow:auto;padding:1px 4px 6px 1px}
+#stErpHistoryPanel .erp-model-card{display:block;text-align:left;width:100%;background:#f8fbff;border:1px solid #dce6f1;border-radius:10px;padding:16px;cursor:pointer;font:inherit;color:#24415e}
+#stErpHistoryPanel .erp-model-card:hover,#stErpHistoryPanel .erp-model-card:focus-visible{border-color:#2d6fc5;box-shadow:0 2px 10px #1c529018}
+#stErpHistoryPanel .erp-model-card>header{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+#stErpHistoryPanel .erp-model-card strong{font-size:16px;color:#123e70}
+#stErpHistoryPanel .erp-model-card small{font-size:11px;color:#658099}
+#stErpHistoryPanel .erp-model-card .erp-model-values{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#stErpHistoryPanel .erp-model-card .erp-model-values span{font-size:11px;display:block;color:#648099}
+#stErpHistoryPanel .erp-model-card b{display:block;font-size:16px;margin-top:4px}
+#stErpHistoryPanel .erp-model-card footer{font-size:11px;color:#6c8094;margin-top:12px;padding-top:10px;border-top:1px solid #e1e9f2}
+#stErpHistoryPanel .erp-summary-detail{margin-top:12px}
+#stErpHistoryPanel .erp-summary-detail>summary{padding:10px 0;max-width:none;font-size:12px}
+#stErpHistoryPanel table{width:100%;border-collapse:collapse;font-size:12px}
+#stErpHistoryPanel th{position:sticky;top:0;background:#edf3fa;color:#244665;font-size:11px;white-space:nowrap;padding:12px;text-align:left;z-index:1}
+#stErpHistoryPanel td{padding:12px;border-bottom:1px solid #e6edf5;vertical-align:top}
+#stErpHistoryPanel tbody tr:hover{background:#f6faff}
+#stErpHistoryPanel .erp-timeline-surface{background:#f8fbff;border:1px solid #e0e8f2;border-radius:10px;overflow:auto}
+#stErpModelTimeline h4{margin:16px 18px 8px;color:#163f6b}
+#stErpModelTimeline p{margin:0 18px 12px;font-size:12px;color:#637d96;line-height:1.6}
+#stErpHistoryPanel .erp-detail-toolbar{display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+#stErpHistoryPanel .erp-view-tabs{display:flex;padding:4px;background:#eef3f9;border-radius:8px;gap:4px}
+#stErpHistoryPanel .erp-view-tabs .btn{background:transparent;border-color:transparent}
+#stErpHistoryPanel .erp-view-tabs .btn[aria-pressed="true"]{background:#fff;border-color:#dae4ef;color:#123f74;box-shadow:0 1px 4px #16365d12}
+#stErpHistoryPanel .erp-voc-import{font-size:12px;padding:8px 0}
+#stErpHistoryPanel .erp-voc-import summary{max-width:none}
+#stErpHistoryPanel .erp-formula{color:#6d7e90;font-size:11px;line-height:1.7;margin:14px 0 0}
+#stErpHistoryPanel #stErpPeriodInfo{line-height:1.9;border-top:1px solid #dce7f5}
+.erp-operations-heading{margin:30px 0 16px}
+@media(max-width:1000px){#stErpHistoryPanel .erp-model-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){#stErpHistoryPanel .erp-report-section{padding:16px}#stErpHistoryPanel .erp-section-heading{align-items:stretch;flex-direction:column;gap:12px}#stErpHistoryPanel .erp-model-cards{grid-template-columns:1fr;max-height:420px}#stErpHistoryPanel .erp-field{min-width:0}#stErpHistoryPanel h2{font-size:18px}}
+
 </style></head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -182,17 +224,28 @@
     <header class="st-page-head"><div><span class="eyebrow">STANDARD TIME</span><h1>Thông tin S/T</h1><p id="stSyncStatus" class="st-sync-status" aria-live="polite">Đang tải trạng thái Next ERP…</p></div><div class="st-head-actions"><button id="stRefreshBtn" class="btn" type="button">Tải lại</button><button id="stExportModelBtn" class="btn" type="button">Xuất Excel</button><button id="stReportBtn" class="btn" type="button">Xem tổng hợp</button><button id="stLaborCostBtn" class="btn" type="button" hidden>Cập nhật Labor cost</button><button id="stManualPriceBtn" class="btn" type="button" hidden>Nhập giá Parent Code</button><button id="stErpPreviewBtn" class="btn" type="button" hidden>Cập nhật ERP thủ công</button><button id="stVocImportBtn" class="btn" type="button" hidden>Nhập VOC Excel</button><input id="stVocFile" type="file" accept=".xlsx,.xlsm,.xls" hidden></div></header>
     <div id="stKpis" class="st-kpis" aria-label="Tổng hợp S/T"></div><section id="stModelSummary" class="st-model-summary" aria-label="Tổng hợp Set và Person theo Model"></section>
     <div class="st-toolbar"><label class="st-search"><span>⌕</span><input id="stSearch" type="search" placeholder="Tìm Code hoặc Model…" autocomplete="off"></label><label class="st-model-picker-label">Model<details id="stModelPicker" class="st-model-picker"><summary id="stModelFilterLabel">Tất cả model</summary><div class="st-model-options"><label><input id="stModelAll" type="checkbox" checked> Tất cả model</label><div id="stModelOptions"></div><button id="stSaveModelDefaultsBtn" class="st-save-model-defaults" type="button" hidden>Lưu mặc định</button></div></details></label><label>Loại<select id="stTypeFilter"><option value="">Tất cả</option><option value="Smart">Smart</option><option value="Tab">Tab</option><option value="Block">Block</option></select></label><label>Thay đổi<select id="stChangeFilter"><option value="">Tất cả</option><option value="changed">Đã thay đổi</option><option value="baseline">Chưa thay đổi</option><option value="new-latest">Mã mới - đồng bộ gần nhất</option></select></label><label>Từ ngày<input id="stDateFrom" type="date"></label><label>Đến ngày<input id="stDateTo" type="date"></label><label>Kỳ biểu đồ<select id="stPeriodFilter"><option value="month">Theo tháng</option><option value="quarter">Theo quý</option><option value="year">Theo năm</option></select></label><span id="stResultCount" class="st-result-count"></span></div>
+
+    <section id="stErpHistoryPanel" class="erp-report">
+      <div class="erp-report-section">
+        <div class="erp-section-heading"><div><span class="erp-step">01 · TỔNG QUAN</span><h2>Giá & sản lượng theo Model</h2><p>Cùng phạm vi Model đã chọn ở bộ lọc phía trên.</p></div><button id="stErpExportHistoryBtn" class="btn" type="button">Xuất lịch sử Model đã chọn (Excel)</button></div>
+        <div id="stErpModelSummary"></div>
+      </div>
+      <div class="erp-report-section">
+        <div class="erp-section-heading"><div><span class="erp-step">02 · HÀNH TRÌNH GIÁ</span><h2>Timeline theo Model</h2><p>So sánh thời gian áp dụng giá giữa các Parent Code. Ngày mới nhất nằm bên phải.</p></div><label class="erp-field">Model đang xem<select id="stErpModelTimelineSelect" aria-label="Timeline theo Model"></select></label></div>
+        <div id="stErpModelTimeline" class="erp-timeline-surface"></div>
+      </div>
+      <div class="erp-report-section">
+        <div class="erp-section-heading"><div><span class="erp-step">03 · CHI TIẾT PARENT CODE</span><h2>Biến động giá & tác động GAP</h2></div><label class="erp-field">Parent Code<select id="stErpTimelineCode" aria-label="Model và Parent Code"></select></label></div>
+        <div class="erp-detail-toolbar"><div class="erp-view-tabs" role="group" aria-label="Chế độ xem lịch sử"><button id="stErpChartMode" class="btn" type="button" aria-pressed="true">Biểu đồ giá</button><button id="stErpTableMode" class="btn" type="button" aria-pressed="false">Bảng giai đoạn & VOC</button></div><details class="erp-voc-import"><summary>Nhập lý do / VOC từ Excel</summary><label>Chọn file Excel <input id="stErpVocFile" type="file" accept=".xlsx,.xls"></label><p id="stErpVocStatus" role="status"></p></details></div>
+        <div id="stErpTimelineChart" hidden class="erp-timeline-surface"></div><div id="stErpTimelineResult" aria-live="polite"></div>
+        <p class="erp-formula">GAP theo Plan = (giá giai đoạn − giá trước đó) × Plan Q’ty trong giai đoạn. Mốc giá đầu là mốc gốc; nhiều giá trong cùng ngày được đánh dấu cần rà soát.</p>
+      </div>
+    </section>
+    <div class="erp-operations-heading"><span class="erp-step">04 · CHỈ SỐ VẬN HÀNH</span><h2>S/T & hiệu suất theo Model</h2><p>Net Price · S/T · LOB · MP SX + QC · Set / Person · UPH</p></div>
     <div class="st-workspace">
       <section class="st-list-panel" aria-label="Danh sách Prod. Material"><div id="stTableHost" class="st-table-host"></div><nav id="stPager" class="st-pager" aria-label="Phân trang S/T"></nav></section>
       <aside id="stDetailPanel" class="st-detail-panel" aria-live="polite"><div class="st-empty-detail"><b>Chọn Parent Code hoặc Model</b><span>Giá bình quân, S/T và lịch sử biến động sẽ tự hiển thị tại đây.</span></div></aside>
-    </div><section id="stErpHistoryPanel" style="margin-top:20px;padding:16px;border:1px solid #d5e2ef;border-radius:10px;background:white">
-    <h3>Dashboard lịch sử giá ERP theo Model và Parent Code</h3><p>Chọn Model trong bảng tổng hợp, sau đó chọn Parent Code để xem từng giai đoạn giá. GAP theo Plan = (giá giai đoạn − giá giai đoạn trước) × Plan Q’ty của giai đoạn. Mốc giá đầu tiên là mốc gốc; các ngày có nhiều giá cần rà soát riêng.</p><div id="stErpModelSummary"></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0"><label>Timeline theo Model đã chọn <select id="stErpModelTimelineSelect" aria-label="Timeline theo Model"></select></label><button id="stErpExportHistoryBtn" class="btn" type="button">Xuất lịch sử Model đã chọn (Excel)</button></div><div id="stErpModelTimeline" style="padding:16px;background:#f6f9ff;border:1px solid #dbe4f0;border-radius:8px;margin-bottom:20px"></div><label>Nhập lý do/VOC từ Excel <input id="stErpVocFile" type="file" accept=".xlsx,.xls"></label><p id="stErpVocStatus" role="status"></p>
-    <select id="stErpTimelineCode" aria-label="Model và Parent Code"></select>
-    <div style="display:flex;gap:8px;margin:12px 0"><button id="stErpTableMode" class="btn" type="button">Bảng lịch sử</button><button id="stErpChartMode" class="btn" type="button">Timeline giá</button></div><div id="stErpTimelineResult" aria-live="polite"></div>
-
-
-<div id="stErpTimelineChart" hidden style="overflow:auto"></div>
-</section>
+    </div>
   </section>
   <dialog id="lobSummaryDetail"><div class="lob-summary-detail"><button id="lobSummaryClose" class="dialog-close" type="button">×</button><span class="eyebrow">CHI TIẾT MODEL</span><h2 id="lobSummaryDetailTitle"></h2><div id="lobSummaryDetailMetrics" class="lob-summary-detail-metrics"></div><div class="dialog-actions"><button id="lobSummaryEdit" class="btn primary" type="button">Mở để chỉnh sửa LOB</button></div></div></dialog>
   <dialog id="excelReferenceDialog" class="excel-reference-dialog"><div class="excel-reference-dialog-shell"><header><div><span class="eyebrow">EXCEL STANDARD REFERENCE</span><h2>File Excel gốc · Layout + LOB + Nhân lực</h2><small id="excelReferenceName"></small></div><div class="excel-reference-dialog-actions"><button id="downloadExcelReferenceBtn" class="btn" type="button" hidden>Mở file gốc</button><button id="excelReferenceZoomOut" class="btn" type="button">− Thu nhỏ</button><button id="excelReferenceFit" class="btn" type="button">Vừa màn hình</button><button id="excelReferenceZoomIn" class="btn" type="button">＋ Phóng to</button><button id="replaceReferenceBtn" class="btn" type="button">Sửa ảnh / PDF</button><button id="closeExcelReferenceBtn" class="btn primary" type="button">Đóng</button></div></header><input id="referenceImageFile" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" hidden><div id="excelLayoutReference" class="excel-reference-stage"><img id="excelReferenceImage" alt="Bản Excel layout, LOB và nhân lực gốc"></div></div></dialog>
@@ -258,7 +311,7 @@
 @media(max-width:600px){#stErpDailyDialog{padding:12px}#stErpDailyDialog table{font-size:12px}}
 </style>
 
-  <script type="module" src="./st-info.js?v=20261125-erp-selected-models"></script>
+  <script type="module" src="./st-info.js?v=20261125-erp-report-redesign"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
