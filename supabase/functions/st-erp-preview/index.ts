@@ -23,9 +23,10 @@ Deno.serve(async request => {
     const key = Deno.env.get("ERP_API_KEY");
     const secret = Deno.env.get("ERP_API_SECRET");
     if (!key || !secret) return json({ error: "erp_secrets_missing" }, 503);
-    if (typeof date !== "string" || !/^2026-\d{2}-\d{2}$/.test(date) ||
+    if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        date < '2025-11-25' ||
         !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) {
-      return json({ error: "valid_2026_date_required" }, 400);
+      return json({ error: "valid_history_date_required" }, 400);
     }
 
     const signal = AbortSignal.timeout(45000);
