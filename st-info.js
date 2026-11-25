@@ -252,8 +252,34 @@ async function loadErpModelSummary(){
    if(row.start_date<m.start)m.start=row.start_date;if(row.end_date>m.end)m.end=row.end_date;
    models.set(modelName,m);
   }
-  const cards=[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<button type="button" class="erp-model-card" data-erp-model="${esc(name)}"><header><strong>${esc(name)}</strong><small>${m.codes.size} Parent Code</small></header><div class="erp-model-values"><div><span>Plan Q’ty</span><b>${money.format(m.qty)} EA</b></div><div><span>GAP ròng theo Plan</span><b style="color:${m.gap<0?'#bc3340':'#087a48'}">${m.gap>0?'+':''}${money.format(m.gap)} đ</b></div></div><footer>${dateLabel(m.start)} → ${dateLabel(m.end)} · Giá trị Plan: ${money.format(m.value)} đ${m.mixed?' · '+m.mixed+' mốc cần rà soát':''}</footer></button>`).join('');
-  host.innerHTML='<p class="erp-coverage" role="status">'+esc(coverageText)+'</p><div class="erp-model-cards">'+cards+'</div><details class="erp-summary-detail"><summary>Xem bảng tổng hợp đầy đủ theo Model</summary><div style="overflow:auto;max-height:350px"><table><thead><tr><th>Model</th><th>Parent Code</th><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Plan Q’ty</th><th>Giá trị theo Plan</th><th>GAP tăng</th><th>GAP giảm</th><th>GAP ròng</th><th>Cần rà soát</th></tr></thead><tbody>'+[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<tr><td><button type="button" class="btn" data-erp-model="${esc(name)}">${esc(name)}</button></td><td>${m.codes.size}</td><td>${esc(m.start)}</td><td>${esc(m.end)}</td><td>${1+Math.round((Date.parse(m.end)-Date.parse(m.start))/86400000)}</td><td>${money.format(m.qty)}</td><td>${money.format(m.value)}</td><td style="color:#087a48">+${money.format(m.up)}</td><td style="color:#bc3340">${money.format(m.down)}</td><td>${money.format(m.gap)}</td><td>${m.mixed}</td></tr>`).join('')+'</tbody></table></div></details>';
+
+  for(const [name,m] of models){
+   const changed=rows.filter(p=>(p.model_name||'Chưa đối chiếu Model')===name&&!p.mixed&&!p.old_mixed&&p.old_price!=null&&Number(p.net_price)!==Number(p.old_price));
+   m.lastChange=changed.reduce((latest,p)=>p.start_date>latest?p.start_date:latest,'');
+   m.recentQty=0;m.recentUp=0;m.recentDown=0;m.recentUnknown=0;
+  }
+  const starts=[...models.values()].map(m=>m.lastChange).filter(Boolean).sort(),daily=[];
+  if(starts.length)for(let offset=0;;offset+=1000){
+   const result=await supabaseRequest('/rest/v1/st_erp_daily_prices?select=rd_date,parent_code,net_price,plan_qty&rd_date=gte.'+starts[0]+'&rd_date=lte.'+todayIso()+'&order=rd_date.asc,parent_code.asc,net_price.asc&limit=1000&offset='+offset);
+   if(!Array.isArray(result.data))throw Error('Không đọc được Plan từ mốc đổi giá.');
+   daily.push(...result.data);if(result.data.length<1000)break;
+  }
+  if(request!==erpHistoryRequest)return;
+  const periodByCode=new Map();
+  for(const p of rows){if(!periodByCode.has(p.parent_code))periodByCode.set(p.parent_code,[]);periodByCode.get(p.parent_code).push(p)}
+  for(const d of daily){
+   const periods=periodByCode.get(d.parent_code)||[];
+   const p=periods.find(p=>Number(p.net_price)===Number(d.net_price)&&p.start_date<=d.rd_date&&p.end_date>=d.rd_date);
+   if(!p)continue;
+   const m=models.get(p.model_name||'Chưa đối chiếu Model');
+   if(!m?.lastChange||d.rd_date<m.lastChange)continue;
+   const qty=Number(d.plan_qty);m.recentQty+=qty;
+   if(p.mixed||p.old_mixed){m.recentUnknown+=qty;continue}
+   const gap=p.old_price==null?0:(Number(p.net_price)-Number(p.old_price))*qty;
+   m.recentUp+=Math.max(0,gap);m.recentDown+=Math.min(0,gap);
+  }
+  const cards=[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<button type="button" class="erp-model-card" data-erp-model="${esc(name)}"><header><strong>${esc(name)}</strong><small>${m.codes.size} Parent Code</small></header><div class="erp-model-values"><div><span>Plan Q’ty</span><b>${money.format(m.qty)} EA</b></div><div><span>GAP ròng theo Plan</span><b style="color:${m.gap<0?'#bc3340':'#087a48'}">${m.gap>0?'+':''}${money.format(m.gap)} đ</b></div></div><div class="erp-change-window"><span>Đổi gần nhất: <b style="display:inline;font-size:11px">${m.lastChange?dateLabel(m.lastChange):'Chưa có'}</b> · ${m.lastChange?1+Math.round((Date.parse(todayIso())-Date.parse(m.lastChange))/86400000):'—'} ngày đến hiện tại</span><span>Plan từ mốc đổi: <b style="display:inline;font-size:12px">${m.lastChange?money.format(m.recentQty)+' EA':'—'}</b> · GAP tăng: <b style="display:inline;font-size:12px;color:#087a48">${m.lastChange?'+'+money.format(m.recentUp)+' đ':'—'}</b></span></div><footer>${dateLabel(m.start)} → ${dateLabel(m.end)} · Giá trị Plan: ${money.format(m.value)} đ${m.mixed?' · '+m.mixed+' mốc cần rà soát':''}</footer></button>`).join('');
+  host.innerHTML='<p class="erp-coverage" role="status">'+esc(coverageText)+'</p><p class="erp-window-note">Mốc đổi gần nhất là lần đổi giá mới nhất của một Parent Code trong Model. Plan và GAP từ mốc đổi chỉ tính từ ngày đó đến hiện tại; số ngày tính cả hai đầu. GAP tăng/giảm so với giá trước của từng Parent Code, không coi Plan chưa rõ giá là GAP bằng 0.</p><div class="erp-model-cards">'+cards+'</div><details class="erp-summary-detail"><summary>Xem bảng tổng hợp đầy đủ theo Model</summary><div style="overflow:auto;max-height:350px"><table><thead><tr><th>Model</th><th>Parent Code</th><th>Từ ngày</th><th>Đến ngày</th><th>Số ngày</th><th>Plan Q’ty</th><th>Giá trị theo Plan</th><th>GAP tăng</th><th>GAP giảm</th><th>GAP ròng</th><th>Đổi giá gần nhất</th><th>Ngày đến hiện tại</th><th>Plan từ mốc đổi (EA)</th><th>GAP tăng từ mốc đổi (đ)</th><th>GAP giảm từ mốc đổi (đ)</th><th>Plan cần rà soát (EA)</th><th>Cần rà soát</th></tr></thead><tbody>'+[...models].sort(([a],[b])=>a.localeCompare(b)).map(([name,m])=>`<tr><td><button type="button" class="btn" data-erp-model="${esc(name)}">${esc(name)}</button></td><td>${m.codes.size}</td><td>${esc(m.start)}</td><td>${esc(m.end)}</td><td>${1+Math.round((Date.parse(m.end)-Date.parse(m.start))/86400000)}</td><td>${money.format(m.qty)}</td><td>${money.format(m.value)}</td><td style="color:#087a48">+${money.format(m.up)}</td><td style="color:#bc3340">${money.format(m.down)}</td><td>${money.format(m.gap)}</td><td>${m.lastChange?dateLabel(m.lastChange):'—'}</td><td>${m.lastChange?1+Math.round((Date.parse(todayIso())-Date.parse(m.lastChange))/86400000):'—'}</td><td>${m.lastChange?money.format(m.recentQty):'—'}</td><td style="color:#087a48">${m.lastChange?'+'+money.format(m.recentUp):'—'}</td><td style="color:#bc3340">${m.lastChange?money.format(m.recentDown):'—'}</td><td>${money.format(m.recentUnknown)}</td><td>${m.mixed}</td></tr>`).join('')+'</tbody></table></div></details>';
   const modelSelect=$('stErpModelTimelineSelect');
   const currentModel=modelSelect.value;
   modelSelect.innerHTML=[...models.keys()].sort().map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
