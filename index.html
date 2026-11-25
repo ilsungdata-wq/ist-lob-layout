@@ -92,6 +92,13 @@
 #stInfoView .st-compact-model-table thead th{position:sticky;top:0;background:#edf3fa}
 #stInfoView .st-model-history .st-chart-svg{max-height:300px}
 #stInfoView .erp-operations-heading{margin:14px 0 10px}
+
+#stInfoView .st-report-tabs button{color:#244a70!important}
+#stInfoView .st-report-tabs button[aria-selected="true"]{color:#fff!important;background:#123e70!important}
+#stInfoView select,#stInfoView select option,#stInfoView input,#stInfoView .st-model-filter,#stInfoView .st-model-filter button{color:#173e66!important;background-color:#fff}
+#stInfoView input::placeholder{color:#60798f;opacity:1}
+#stInfoView #stErpTimelineChart svg{max-height:340px;min-height:230px}
+#stInfoView .st-compact-model-table td{font-variant-numeric:tabular-nums}
 </style></head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -331,7 +338,7 @@
 @media(max-width:600px){#stErpDailyDialog{padding:12px}#stErpDailyDialog table{font-size:12px}}
 </style>
 
-  <script type="module" src="./st-info.js?v=20261125-erp-compact-tabs"></script>
+  <script type="module" src="./st-info.js?v=20261125-erp-readable-metrics"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
 </body>
