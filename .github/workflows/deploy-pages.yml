@@ -151,6 +151,9 @@ jobs:
           path: _site
 
   deploy:
+    concurrency:
+      group: github-pages-publish
+      cancel-in-progress: false
     name: Deploy GitHub Pages
     permissions:
       contents: read
@@ -162,7 +165,22 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Check latest main revision
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')
+          if [ "$latest_sha" = "$GITHUB_SHA" ]; then
+            echo "is_latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_latest=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping outdated frontend deployment."
+          fi
       - name: Deploy to GitHub Pages
+        if: steps.latest.outputs.is_latest == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
 
