@@ -57,10 +57,10 @@ test('Viewer can download equipment template and open Process Map without write 
  assert.match(source,/template\.onclick=downloadEquipmentTemplate/);
  assert.match(source,/processUpload\.onclick=\(\)=>processFile\.click\(\)/);
  assert.match(source,/const button=\$id\('wiSpecApply'\)/);
- assert.match(source,/button\.disabled=!\(mayApply\(\)&&pending\.items\.some/);
- assert.match(source,/if\(!mayApply\(\)\)\{alert/);
+ assert.match(source,/mayApply\(\)\|\|mayStartEditing\(\)/);
+ assert.match(source,/needsEditMode&&!mayStartEditing\(\)/);
  assert.match(source,/return typeof canEditEquipment==='function'&&canEditEquipment\(\)/);
- assert.doesNotMatch(source,/enterEditMode\('equipment'\)/);
+ assert.match(source,/if\(needsEditMode\)\{enterEditMode\('equipment'\)/);
 });
 
 test('press-force Korean label supports symmetric, fixed and one-sided values without changing meaning',()=>{
@@ -82,4 +82,20 @@ test('unique matched station without Jig proposes source Jig name, duplicate tar
  const api=parser(),stations=[{id:'a',name:'METAL SHEET (16,17,18,19)',jigs:[]}],row={sheet:'active',row:7,stationName:'SIDE S METAL SHEET ATTACH 4P (16,17,18,19)',spec:'Áp lực: 5,5 ± 0,5 kgf/㎠'};
  const one=api.proposals([row],stations);assert.equal(one[0].status,'ready');assert.equal(one[0].newJig,row.stationName);assert.equal(stations[0].jigs.length,0);
  const duplicate=api.proposals([row,{...row,row:8}],stations);assert.equal(duplicate[0].status,'duplicate');assert.equal(duplicate[1].status,'duplicate');
+});
+
+test('confirmation can start equipment editing only with version edit permission',()=>{
+ function allowed(editable,granted){const ctx={document:{readyState:'loading',addEventListener(){}},editableVersion:()=>editable,can:cap=>granted.includes(cap),canEditEquipment:()=>false};ctx.globalThis=ctx;vm.runInNewContext(source,ctx);return ctx.ISTWiSpecSync.mayStartEditing()}
+ assert.equal(allowed(true,['equipment.edit']),true);
+ assert.equal(allowed(true,['jig.edit']),true);
+ assert.equal(allowed(true,[]),false);
+ assert.equal(allowed(false,['equipment.edit']),false);
+});
+test('original workbook is private and scoped to the exact Model/Version',()=>{
+ const api=parser();assert.equal(api.processMapPrefix({_remote:{modelId:'model-a',versionId:'version-1'}}),'model-a/process-map/version-1/');
+ assert.notEqual(api.processMapPrefix({_remote:{modelId:'model-a',versionId:'version-1'}}),api.processMapPrefix({_remote:{modelId:'model-a',versionId:'version-2'}}));
+ assert.throws(()=>api.processMapPrefix({}));
+ assert.match(html,/id="processMapOriginalDownloadBtn"/);
+ assert.match(source,/persistenceBridge\.uploadAsset/);
+ assert.match(source,/persistenceBridge\.getAssetUrl/);
 });
