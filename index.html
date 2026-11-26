@@ -132,6 +132,8 @@
 @media(max-width:900px){#stErpHistoryPanel .erp-journey-grid{grid-template-columns:1fr}#stErpHistoryPanel .erp-journey-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #stErpHistoryPanel .erp-code-collapse>summary{max-width:none;font-size:14px;font-weight:700;color:#234f80;cursor:pointer}
 #stErpHistoryPanel .erp-code-collapse[open]>summary{margin-bottom:18px}
+#processView .process-head-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+#processView #lobOriginalExcelBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:110px;color:#173e68;background:#fff;border:1px solid #c9d8e8}
 </style></head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -257,7 +259,7 @@
   <section class="process-view" id="processView" hidden>
     <div class="process-view-head">
       <div><span class="eyebrow">TAB 2 · THÔNG TIN LOB</span><h1 id="processViewTitle">Thông tin LOB</h1><p>Bảng phân tích dữ liệu LOB của từng công đoạn.</p></div>
-      <div class="process-head-actions"><div class="process-summary" id="processSummary"></div></div>
+      <div class="process-head-actions"><button id="lobOriginalExcelBtn" class="btn" type="button" title="Tải nguyên file Excel đã import của Model/Version đang chọn">Export Excel</button><div class="process-summary" id="processSummary"></div></div>
     </div>
     <div class="lob-model-controls" aria-label="Chọn Model và phiên bản LOB"><label>Model<select id="lobModelSelect"></select></label><label>Phiên bản<select id="lobVersionSelect"></select></label></div>
     <div class="tab-file-actions"><b>Dữ liệu LOB · <span id="lobDataModel"></span></b><div id="lobWorkforceSummary" class="lob-workforce-summary" aria-label="Tổng hợp nhân lực"></div><button id="lobXlsxTemplateBtn" class="btn" type="button">Tải mẫu Excel LOB</button><button id="lobXlsxImportBtn" class="btn" type="button">Nhập Excel LOB</button><button id="lobSaveBtn" class="btn primary" type="button">Lưu LOB</button><label id="lobPublishWrap" class="publish-toggle"><input id="lobPublishToggle" type="checkbox"> Phát hành LOB</label><button id="lobEditLockBtn" class="btn" type="button">🔒 Khóa chỉnh sửa</button><input id="lobXlsxFile" type="file" accept=".xlsx,.xlsm" hidden></div>
@@ -348,7 +350,7 @@
   <script src="./services/excel-import-utils.js?v=20261009-load-v8"></script>
   <script src="./services/excel-reference.js?v=20261013-layout-v22"></script>
   <script src="./services/reference-editor.js?v=20261013-layout-v22"></script>
-  <script src="./app.js?v=20261112-print-contrast-v4"></script>
+  <script src="./app.js?v=20261126-lob-original-export"></script>
   <script src="./mobile-ux.js?v=20261117-mobile-fit-content-v1"></script>
   <script src="./viewer-print-ux.js?v=20261118-two-print-sources-v3"></script>
   <script src="./wi-spec-sync.js?v=20261126-process-map-original-v3"></script>
