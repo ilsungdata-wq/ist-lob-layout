@@ -77,3 +77,9 @@ test('prefer applied Jig column over Korean process text and exclude hidden shee
  assert.ok(parser().scoreMatch('SIDE S METAL SHEET ATTACH 4P (16,17,18,19)','METAL SHEET (16,17,18,19)')>=85);
  assert.equal(parser().scoreMatch('SIDE S METAL SHEET ATTACH 4P (16,17,18,19)','METAL SHEET (1,2,3)'),0);
 });
+
+test('unique matched station without Jig proposes source Jig name, duplicate targets still require review',()=>{
+ const api=parser(),stations=[{id:'a',name:'METAL SHEET (16,17,18,19)',jigs:[]}],row={sheet:'active',row:7,stationName:'SIDE S METAL SHEET ATTACH 4P (16,17,18,19)',spec:'Áp lực: 5,5 ± 0,5 kgf/㎠'};
+ const one=api.proposals([row],stations);assert.equal(one[0].status,'ready');assert.equal(one[0].newJig,row.stationName);assert.equal(stations[0].jigs.length,0);
+ const duplicate=api.proposals([row,{...row,row:8}],stations);assert.equal(duplicate[0].status,'duplicate');assert.equal(duplicate[1].status,'duplicate');
+});
