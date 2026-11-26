@@ -62,3 +62,18 @@ test('Viewer can download equipment template and open Process Map without write 
  assert.match(source,/return typeof canEditEquipment==='function'&&canEditEquipment\(\)/);
  assert.doesNotMatch(source,/enterEditMode\('equipment'\)/);
 });
+
+test('press-force Korean label supports symmetric, fixed and one-sided values without changing meaning',()=>{
+ const p=parser().pressure;
+ assert.equal(p('■ 압착력 : 5.5±0.5 Kgf/㎠\n■ 오버랩양 : 1 ± 0.2mm'),'Áp lực: 5,5 ± 0,5 kgf/㎠');
+ assert.equal(p('■ 압착력 : 3 Kgf/㎠'),'Áp lực: 3 kgf/㎠');
+ assert.equal(p('■ 압착력 : 3.0+0.5 Kgf/㎠'),'Áp lực: 3,0 + 0,5 kgf/㎠');
+ assert.equal(p('■ 순수 압착시간 : 5초\n■ 오버랩양 : 1 ± 0.2mm'),'');
+});
+test('prefer applied Jig column over Korean process text and exclude hidden sheets',()=>{
+ const sheet={rows:[['공정명','적용 지그','비고'],['측면 METAL SHEET 부착','SIDE S METAL SHEET ATTACH 4P (16,17,18,19)','■ 압착력 : 5.5±0.5 Kgf/㎠']]};
+ const found=parser().extract({SheetNames:['active','hidden'],Sheets:{active:sheet,hidden:sheet},Workbook:{Sheets:[{name:'active',Hidden:0},{name:'hidden',Hidden:1}]}});
+ assert.equal(found.length,1);assert.equal(found[0].stationName,'SIDE S METAL SHEET ATTACH 4P (16,17,18,19)');
+ assert.ok(parser().scoreMatch('SIDE S METAL SHEET ATTACH 4P (16,17,18,19)','METAL SHEET (16,17,18,19)')>=85);
+ assert.equal(parser().scoreMatch('SIDE S METAL SHEET ATTACH 4P (16,17,18,19)','METAL SHEET (1,2,3)'),0);
+});
