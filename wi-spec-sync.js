@@ -61,10 +61,10 @@ function proposals(rows,stations){
  const list=[];
  for(const item of rows){
   const hits=stations.map(station=>({station,score:scoreMatch(item.stationName,station.name)})).filter(x=>x.score>=85).sort((a,b)=>b.score-a.score);
-  let status='unmatched',station=null,jig=null;
-  if(hits.length===1||(hits.length&&hits[0].score>hits[1]?.score)){station=hits[0].station;const jigs=getJigs(station).filter(Boolean);if(jigs.length===1){status='ready';jig=jigs[0]}else if(jigs.length>1){status='select-jig'}else status='no-jig'}
+  let status='unmatched',station=null,jig=null,newJig;
+  if(hits.length===1||(hits.length&&hits[0].score>hits[1]?.score)){station=hits[0].station;const jigs=getJigs(station).filter(Boolean);if(jigs.length===1){status='ready';jig=jigs[0]}else if(jigs.length>1){status='select-jig'}else {status='ready';newJig=item.stationName}}
   else if(hits.length)status='ambiguous';
-  list.push({...item,status,station,jig,candidates:hits.map(x=>x.station)});
+  list.push({...item,status,station,jig,...(newJig?{newJig}:{}),candidates:hits.map(x=>x.station)});
  }
  const duplicates=new Map();for(const p of list)if(p.station){const key=p.station.id;duplicates.set(key,(duplicates.get(key)||0)+1)}
  for(const p of list)if(p.station&&duplicates.get(p.station.id)>1){p.status='duplicate';p.jig=null}
@@ -95,7 +95,8 @@ function renderPreview(){
   delete p.newJig;
   const jigs=p.station?getJigs(p.station):[];
   p.jig=jigs.length===1?jigs[0]:null;
-  p.status=!p.station?'unmatched':p.jig?'ready':jigs.length?'select-jig':'no-jig';
+  if(p.station&&!jigs.length)p.newJig=p.stationName;
+  p.status=!p.station?'unmatched':p.jig||p.newJig?'ready':jigs.length?'select-jig':'no-jig';
   renderPreview();
  });
  box.querySelectorAll('[data-jig-choice]').forEach(select=>select.onchange=()=>{
