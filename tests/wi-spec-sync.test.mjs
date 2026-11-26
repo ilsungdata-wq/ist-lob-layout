@@ -99,3 +99,14 @@ test('original workbook is private and scoped to the exact Model/Version',()=>{
  assert.match(source,/persistenceBridge\.uploadAsset/);
  assert.match(source,/persistenceBridge\.getAssetUrl/);
 });
+
+test('confirming ready Jig from Viewer enters edit mode and applies once when authorized',async()=>{
+ const station={id:'s1',name:'PRESS',jigs:[]},current={name:'S958',version:'Ver 1',processes:[station]};
+ const pending={key:'S958::Ver 1',items:[{status:'ready',station,newJig:'PRESS JIG',spec:'Áp lực: 5,5 ± 0,5 kgf/㎠'}]};
+ let editing=false,saved=0,snapshots=0,closed=0;
+ const ctx={testPending:pending,document:{readyState:'loading',addEventListener(){},getElementById(){return{close(){closed++}}}},model:()=>current,getJigs:s=>s.jigs,canEditEquipment:()=>editing,editableVersion:()=>true,can:c=>c==='equipment.edit',enterEditMode:()=>{editing=true},confirm:()=>true,alert(){},snapshot(){snapshots++},renderAll(){},scheduleSave(){saved++}};
+ ctx.globalThis=ctx;
+ vm.runInNewContext(source.replace('let pending=null;','let pending=globalThis.testPending;').replace('globalThis.ISTWiSpecSync={','globalThis.ISTWiSpecSync={apply,'),ctx);
+ await ctx.ISTWiSpecSync.apply();
+ assert.equal(editing,true);assert.equal(station.jigs.length,1);assert.equal(station.jigs[0].name,'PRESS JIG');assert.equal(saved,1);assert.equal(snapshots,1);assert.equal(closed,1);
+});
