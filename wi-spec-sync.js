@@ -2,17 +2,17 @@
 (function(){
 'use strict';
 const $id=id=>document.getElementById(id);
-const norm=value=>String(value??'').normalize('NFKC').toUpperCase().replace(/\([^)]*\)/g,' ').replace(/\b(?:S|SIDE)\s+(?=METAL\s+SHEET)/g,'').replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+const norm=value=>String(value??'').normalize('NFKC').toUpperCase().replace(/\([^)]*\)/g,' ').replace(/\b(?:S|SIDE)\s+(?=METAL\s+SHEET)/g,'').replace(/\b\d+\s*P\b/g,'').replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 const numbers=value=>{const m=String(value??'').match(/\(([^)]*)\)/);return m?(m[1].match(/\d+/g)||[]).sort((a,b)=>+a-+b).join(','):''};
 const pressure=value=>{
  const lines=String(value??'').split(/\n|\r|(?=■)/).map(v=>v.trim());
  for(const line of lines){
-  if(!/(?:입력\s*공압|공압|PRESSURE|ÁP\s*LỰC|AP\s*LUC)/i.test(line))continue;
-  const m=line.match(/(\d+(?:[.,]\d+)?)\s*(?:±|\+\s*\/\s*-|\+\s*-|\+\s*−)\s*(\d+(?:[.,]\d+)?)/);
+  if(!/(?:입력\s*공압|공압|압착력|압력|PRESSURE|ÁP\s*LỰC|AP\s*LUC)/i.test(line))continue;
+  const m=line.match(/(\d+(?:[.,]\d+)?)\s*(?:(±|\+\s*\/\s*-|\+\s*-|\+\s*−|\+)\s*(\d+(?:[.,]\d+)?))?\s*(kgf\s*(?:\/|／)\s*(?:㎠|cm\s*(?:\^?2|²))|MPa\b|bar\b)/i);
   if(!m)continue;
-  const unit=/kgf\s*(?:\/|／)\s*(?:㎠|cm\s*(?:\^?2|²))/i.test(line)?'kgf/㎠':/\bMPa\b/i.test(line)?'MPa':/\bbar\b/i.test(line)?'bar':null;
-  if(!unit)continue;
-  return 'Áp lực: '+m[1].replace('.',',')+' ± '+m[2].replace('.',',')+' '+unit;
+  const unit=/^kgf/i.test(m[4])?'kgf/㎠':/^mpa/i.test(m[4])?'MPa':'bar';
+  const tolerance=m[2]?' '+(m[2].trim()==='+'?'+':'±')+' '+m[3].replace('.',','):'';
+  return 'Áp lực: '+m[1].replace('.',',')+tolerance+' '+unit;
  }
  return '';
 };
@@ -34,18 +34,19 @@ const isNoteHeader=t=>/^(?:비고|REMARK|NOTE|GHI\s*CHÚ|SPECIFICATION|THÔNG\s*
 function extract(workbook){
  const out=[];
  for(const name of workbook.SheetNames){
+  if(workbook.Workbook?.Sheets?.find(s=>s.name===name)?.Hidden)continue;
   const sheet=workbook.Sheets[name];if(!sheet)continue;
   const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:false});
-  let titleRow=-1,stageColumn=-1,noteColumn=-1;
+  let titleRow=-1,stageColumn=-1,noteColumn=-1,jigColumn=-1;
   for(let i=0;i<Math.min(rows.length,35);i++){
    const values=rows[i]||[];const a=values.findIndex(v=>isStageHeader(cell(v))),b=values.findIndex(v=>isNoteHeader(cell(v)));
-   if(a>=0&&b>=0){titleRow=i;stageColumn=a;noteColumn=b;break}
+   if(a>=0&&b>=0){titleRow=i;stageColumn=a;noteColumn=b;jigColumn=values.findIndex(v=>/^(?:APPLY\s*JIG|JIG\s*NAME|적용\s*지그)/i.test(cell(v)));break}
   }
   for(let i=Math.max(0,titleRow+1);i<rows.length;i++){
    const row=rows[i]||[];const indexed=titleRow>=0?pressure(row[noteColumn]):'';
    const found=indexed||row.map(pressure).find(Boolean);
    if(!found)continue;
-   let stationName=titleRow>=0?cell(row[stageColumn]):'';
+   let stationName=titleRow>=0?(jigColumn>=0?cell(row[jigColumn]):'')||cell(row[stageColumn]):'';
    if(!stationName){
     const strings=row.map(cell).filter(v=>/[A-Z]{3}/i.test(v)&&!/\bKgf\b|공압|PRESSURE/i.test(v));
     stationName=strings.find(v=>/SHEET|ATTACH|WELD|PRESS|JIG|ASSY|LASER|TEST|DINO|VISION/i.test(v))||'';
