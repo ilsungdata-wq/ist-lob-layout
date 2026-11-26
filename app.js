@@ -1,3 +1,22 @@
+
+async function downloadLobOriginalExcel(){
+ const button=$('lobOriginalExcelBtn'),current=model();if(!current)return;
+ button.disabled=true;button.textContent='Đang tải…';
+ try{
+  if(current._remote&&persistenceBridge?.ensureLoaded)await persistenceBridge.ensureLoaded(current);
+  const candidates=[current.sourceExcelAsset,current.referenceSourceAsset];
+  const asset=candidates.find(x=>x?.path&&(/\.(xlsx|xlsm|xls)$/i.test(x.name||x.path)||/spreadsheetml|ms-excel/i.test(x.mimeType||'')));
+  if(!asset)throw new Error('Model/Version này chưa lưu file Excel gốc. Hãy import lại file gốc một lần để người dùng có thể tải xuống.');
+  if(!persistenceBridge?.getAssetUrl)throw new Error('Chưa kết nối kho file Supabase.');
+  const signed=await persistenceBridge.getAssetUrl(asset.path,3600),url=signed?.signedURL||signed?.signedUrl;
+  if(!url)throw new Error('Không nhận được đường dẫn file Excel gốc.');
+  const response=await fetch(url);if(!response.ok)throw new Error('Không tải được Excel gốc ('+response.status+').');
+  const blob=await response.blob(),objectUrl=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=objectUrl;link.download=asset.name||asset.path.split('/').pop()||'LOB-goc.xlsx';link.click();
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
+ }catch(error){toast(error.message)}
+ finally{button.disabled=false;button.textContent='Export Excel'}
+}
 const LINE={productionLength:33,length:27,tableLength:.8,tableWidth:.5,gap:.5,pxPerMeter:60};
 const p=(id,name,time,mp=1,category='DÁN & ÉP',auto=false)=>({id,name,time,mp,category,auto,jigs:[],critical:false,skill25:false,skill40:false,x:0,y:0});
 const s948Names=[['LASER WELDING',14.94,'HÀN LASER'],['C-CLIP',12.41,'C-CLIP'],['ATTACH SHEET GASKET (21, 22, 23 P)',15.96,'METAL SHEET'],['ATTACH SHEET GASKET (19, 20, 24, 25 P)',14.96,'METAL SHEET'],['TAPE SPONGE SENSOR FA, TAPE C-CLIP FIX',15.13],['ATTACH METAL SHEET (7, 8, 11 P)',13.92,'METAL SHEET'],['ATTACH METAL SHEET (3, 4, 5, 12, 14 P)',15.38,'METAL SHEET'],['ATTACH METAL SHEET (1, 2, 9, 10, 13 P)',14.83,'METAL SHEET'],['ATTACH METAL SHEET (16, 18 P)',12.93,'METAL SHEET'],['ATTACH METAL SHEET (15, 17 P)',13.04,'METAL SHEET'],['TAPE VC TOP, SPONGE BIT, SPONGE FOD / PRESS',16.16],['MIC HOLD DINO CHECK',12.92,'TEST/KIỂM TRA'],['PROTECT VINYL REAR TOP/BTM',15.42,'DÁN VINYL BẢO VỆ'],['CLEANING',15.88,'LÀM SẠCH'],['IQC',13.70,'KIỂM TRA ĐẦU VÀO'],['VISION LASER CHECK',15.29,'TEST/KIỂM TRA'],['TAPE VC BTM, SPONGE DDI',14.58],['VAPOR CHAMBER ATTACH',14.72,'GẮN TAY'],['TAPE ABSORBER FOD MMP / PRESS',15.73],['TAPE FRONT MID ATTACH / PRESS',12.90],['SPONGE BIT UPPER + TAPE FRONT GR',14.95],['SPONGE TELE CAM CONN ATTACH / PRESS',15.15],['RUBBER UW CAM + WIDE CAM / PRESS',14.73],['SIDE KEY FPCB_BRK ASSY',11.09,'GẮN MẠCH'],['SIDE KEY ATTACH',14.65,'GẮN TAY'],['LOCKER S PEN, WATER SOAK / PRESS',14.48],['GẮN PHÍM + ROLLING',13.78,'ROLLING'],['EJECTOR PIN + RUBBER HOLDER',12.28,'GẮN TAY'],['S PEN COVER + MIC 2 / PRESS',15.50],['SPONGE VT CAM + MIC 1',14.32],['AIR VENT ASSY / PRESS',14.72,'AIRVENT'],['SPONGE UW CAM CONN + WIDE CAM',15.15],['AGING',10.25,'AGING'],['WPT TEST',15.55,'TEST TÍNH NĂNG'],['S-PEN COVER CHECK',10.50,'TEST/KIỂM TRA'],['WLT TEST',15.59,'TEST TÍNH NĂNG'],['VSWR TEST + CHECK VISION',16.06,'TEST TÍNH NĂNG'],['OQC',15.85,'KIỂM TRA ĐẦU RA']];
@@ -201,7 +220,7 @@ $('resetBtn').onclick=()=>{if(!canEdit())return;state=structuredClone(seed);curr
     printAction.style.setProperty('opacity','1','important');
     printAction.style.setProperty('font-weight','700','important');
   }$('pushlistBtn').onclick=async()=>{if(!can('version.publish'))return;if(!persistenceBridge?.publish)return toast('Chưa cấu hình Supabase để Pushlist.');try{await persistenceBridge.publish(model());toast('Đã Pushlist phiên bản đang chọn')}catch(error){toast(error.message)}};$('closeInspector').onclick=()=>{document.body.classList.add('inspector-collapsed');$('inspector').classList.remove('open');selectedId=null;renderInspector();renderCanvas();renderList()};
-$('templateBtn').onclick=downloadTemplate;$('importBtn').onclick=()=>$('fileInput').click();$('fileInput').onchange=e=>{const file=e.target.files[0];if(file)(/\.(xlsx|xlsm)$/i.test(file.name)?importExcelWorkbook(file):Promise.reject(new Error('Chỉ hỗ trợ file XLSX hoặc XLSM.'))).catch(err=>toast(err.message));e.target.value=''};
+if($('lobOriginalExcelBtn'))$('lobOriginalExcelBtn').onclick=downloadLobOriginalExcel;$('templateBtn').onclick=downloadTemplate;$('importBtn').onclick=()=>$('fileInput').click();$('fileInput').onchange=e=>{const file=e.target.files[0];if(file)(/\.(xlsx|xlsm)$/i.test(file.name)?importExcelWorkbook(file):Promise.reject(new Error('Chỉ hỗ trợ file XLSX hoặc XLSM.'))).catch(err=>toast(err.message));e.target.value=''};
 $('saveVersionBtn').onclick=()=>{if(!canCreateVersion())return;$('versionName').value=model()?._remote?nextVersionName(model().version):model().version;$('versionNote').value='';$('versionDialog').showModal()};
 $('saveDraftBtn').onclick=()=>saveCurrent('LAYOUT').catch(()=>{});
 $('versionForm').addEventListener('submit',async e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();snapshot();const source=model(),copy=structuredClone(source);copy.version=$('versionName').value.trim()||copy.version;copy.note=$('versionNote').value.trim();copy.published=false;copy.lobPublished=false;const id=`${copy.name}::${copy.version}`;state.models[id]=copy;currentKey=id;recordAudit('Lưu phiên bản mới',copy.version,source.version,copy.version);$('versionDialog').close();await saveCurrent(activeView==='processes'?'LOB':activeView==='jigs'?'EQUIPMENT':'LAYOUT');renderAll();toast('Đã lưu phiên bản mới nhất')});
