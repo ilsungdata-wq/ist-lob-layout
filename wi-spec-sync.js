@@ -72,6 +72,7 @@ function proposals(rows,stations){
 }
 function enc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 let pending=null;
+function mayStartEditing(){return typeof editableVersion==='function'&&editableVersion()&&typeof can==='function'&&(can('equipment.edit')||can('jig.edit'))}
 function mayApply(){
  return typeof canEditEquipment==='function'&&canEditEquipment();
 }
@@ -115,8 +116,8 @@ function renderPreview(){
 }
 function updateApply(){
  const button=$id('wiSpecApply');
- button.disabled=!(mayApply()&&pending.items.some(p=>p.status==='ready'));
- button.title=!mayApply()?'Hãy chuyển sang Sửa Thiết bị & Jig.':button.disabled?'Chọn công đoạn và Jig hoặc nhập tên Jig mới.':'';
+ button.disabled=!((mayApply()||mayStartEditing())&&pending.items.some(p=>p.status==='ready'));
+ button.title=!(mayApply()||mayStartEditing())?'Bạn chưa có quyền sửa Thiết bị & Jig trên Version này.':button.disabled?'Chọn công đoạn và Jig hoặc nhập tên Jig mới.':!mayApply()?'Xác nhận để chuyển sang chế độ Sửa Thiết bị & Jig và cập nhật.':'';
 
 }
 async function chooseExcel(file){
@@ -128,15 +129,16 @@ async function chooseExcel(file){
   const extracted=extract(workbook);
   if(!extracted.length){alert('Đã đọc Process Map nhưng chưa tìm thấy thông số áp lực gắn với công đoạn.');return}
   const items=proposals(extracted,current.processes||[]);
-  pending={key,filename:file.name,items,stations:current.processes||[]};
+  pending={key,filename:file.name,file,items,stations:current.processes||[]};
   renderPreview();$id('wiSpecPreviewDialog').showModal();
  }catch(error){alert('Không đọc được Excel W.I: '+error.message)}
 }
-function apply(){
+async function apply(){
  if(!pending)return;
  const current=model(),key=current._remote?.versionId||current.name+'::'+current.version;
  if(key!==pending.key){alert('Model/Version đã thay đổi. Hãy tải lại W.I.');return}
- if(!mayApply()){alert('Chỉ chế độ Sửa Thiết bị & Jig mới được xác nhận cập nhật. Viewer có thể tải Process Map lên để xem và đối chiếu.');return}
+ const needsEditMode=!mayApply();
+ if(needsEditMode&&!mayStartEditing()){alert('Bạn chưa có quyền sửa Thiết bị & Jig trên Version này. Hãy nhờ Admin cấp quyền equipment.edit hoặc jig.edit.');return}
  const ready=pending.items.filter(p=>p.status==='ready'&&p.station&&(p.jig||p.newJig?.trim()));
  if(!ready.length)return;
  const targets=new Map();
@@ -147,8 +149,10 @@ function apply(){
   targets.set(key,p);
  }
  const count=ready.filter(p=>p.jig?.spec!==p.spec).length;
- if(!count){$id('wiSpecPreviewDialog').close();return}
+ if(!count){if(pending.file)await saveProcessMapOriginal(current,pending.file);$id('wiSpecPreviewDialog').close();return}
  if(!confirm(`Cập nhật thông số áp lực cho ${count} Jig trên ${current.name} · ${current.version}? Thông số cũ của những Jig này sẽ được thay thế.`))return;
+ if(needsEditMode){enterEditMode('equipment');if(!mayApply())throw Error('Không chuyển được sang chế độ sửa Thiết bị & Jig.');}
+ if(pending.file)await saveProcessMapOriginal(current,pending.file);
  snapshot();
  for(const p of ready){
   if(p.jig)p.jig.spec=p.spec;
@@ -158,6 +162,39 @@ function apply(){
  $id('wiSpecPreviewDialog').close();pending=null;
  alert('Đã cập nhật '+count+' thông số Jig. Hãy kiểm tra cột Thông số setup và nhấn Lưu thiết bị để xác nhận.');
 }
+
+async function processMapApi(){
+ return import('./services/supabase/client.js?v=20261016-cache-v2');
+}
+function processMapPrefix(current){
+ const remote=current?._remote;
+ if(!remote?.modelId||!remote?.versionId)throw Error('Model/Version chưa được lưu trên Supabase.');
+ return remote.modelId+'/process-map/'+remote.versionId+'/';
+}
+async function saveProcessMapOriginal(current,file){
+ const prefix=processMapPrefix(current);
+ if(!persistenceBridge?.uploadAsset)throw Error('Chưa kết nối kho file Supabase.');
+ const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))].map(v=>v.toString(16).padStart(2,'0')).join('');
+ const ext=/\.xlsm$/i.test(file.name)?'.xlsm':/\.xlsx$/i.test(file.name)?'.xlsx':null;
+ if(!ext)throw Error('Lưu file gốc hiện hỗ trợ .xlsx hoặc .xlsm. Hãy lưu lại file Excel theo một trong hai định dạng này.');
+ const api=await processMapApi();
+ const found=await api.supabaseRequest('/rest/v1/assets?select=storage_path&model_id=eq.'+current._remote.modelId+'&storage_path=like.'+encodeURIComponent(prefix+'*')+'&order=created_at.desc&limit=1');
+ if(found.data?.[0]?.storage_path.endsWith(digest+ext))return;
+ const path=prefix+Date.now()+'-'+digest+ext;
+ const mime=ext==='.xlsm'?'application/vnd.ms-excel.sheet.macroEnabled.12':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+ const original=new File([file],file.name,{type:mime});
+ await persistenceBridge.uploadAsset(current._remote.modelId,original,{path:path.slice(current._remote.modelId.length+1)});
+}
+async function downloadProcessMapOriginal(){
+ const current=model(),prefix=processMapPrefix(current),api=await processMapApi();
+ const rows=await api.supabaseRequest('/rest/v1/assets?select=storage_path,file_name&model_id=eq.'+current._remote.modelId+'&storage_path=like.'+encodeURIComponent(prefix+'*')+'&order=created_at.desc&limit=1');
+ const file=rows.data?.[0];if(!file)throw Error('Version này chưa lưu Process Map gốc. Hãy import và xác nhận cập nhật một lần.');
+ const signed=await persistenceBridge.getAssetUrl(file.storage_path),url=signed.signedURL||signed.signedUrl;
+ const response=await fetch(url);if(!response.ok)throw Error('Không tải được file gốc ('+response.status+').');
+ const blob=await response.blob(),objectUrl=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=objectUrl;a.download=file.file_name;a.click();setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
+}
+
 function downloadEquipmentTemplate(){
  if(!window.XLSX){alert('Chưa tải được bộ đọc Excel.');return}
  const data=[['Tên công đoạn','Loại thiết bị','Tên thiết bị','Thông số setup','Version','Setup (phút)','Ghi chú'],['METAL SHEET (15,16,17,18)','ATTACH','SIDE METAL SHEET ATTACH','Áp lực: 5,5 ± 0,5 kgf/㎠','','','']];
@@ -173,12 +210,14 @@ function init(){
  file.onchange=()=>{const f=file.files?.[0];file.value='';chooseExcel(f)};
  const template=$id('jigXlsxTemplateBtn'),processUpload=$id('jigXlsxImportBtn'),processFile=$id('jigXlsxFile');
  if(template)template.onclick=downloadEquipmentTemplate;
+ const originalButton=$id('processMapOriginalDownloadBtn');
+ if(originalButton)originalButton.onclick=async()=>{originalButton.disabled=true;try{await downloadProcessMapOriginal()}catch(error){alert(error.message)}finally{originalButton.disabled=false}};
  if(processUpload&&processFile){
   processUpload.onclick=()=>processFile.click();
   processFile.onchange=()=>{const f=processFile.files?.[0];processFile.value='';chooseExcel(f)};
  }
  $id('wiSpecCancel').onclick=()=>dlg.close();
- $id('wiSpecApply').onclick=apply;
+ $id('wiSpecApply').onclick=()=>apply().catch(error=>alert('Chưa cập nhật Process Map: '+error.message));
  const sync=()=>{
   const allowed=typeof canEditEquipment==='function'&&canEditEquipment();
   btn.hidden=!allowed;
@@ -186,5 +225,5 @@ function init(){
  sync();new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class']});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-globalThis.ISTWiSpecSync={extract,pressure,scoreMatch,proposals};
+globalThis.ISTWiSpecSync={extract,pressure,scoreMatch,proposals,mayStartEditing,processMapPrefix};
 })();
