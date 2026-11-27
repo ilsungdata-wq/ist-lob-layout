@@ -21,6 +21,30 @@
  const norm=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/Đ/g,'D').trim();
  const cell=(XLSX,ws,r,c)=>ws[XLSX.utils.encode_cell({r,c})]?.v;
  const number=value=>{if(value===null||value===undefined||String(value).trim()===''||typeof value==='boolean')return null;const parsed=typeof value==='number'?value:Number(String(value).replace(',','.'));return Number.isFinite(parsed)?parsed:null};
+
+ function parseWorkforce(XLSX,ws,modelName){
+  const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),key=v=>norm(v).replace(/[^A-Z0-9]/g,'');
+  for(let r=range.s.r;r<=range.e.r;r++){
+   const cols={};for(let c=range.s.c;c<=range.e.c;c++){const k=key(cell(XLSX,ws,r,c));if(['MODEL','LEADER','DKN','SUPPORT','MP','TOTAL'].includes(k))cols[k]=c}
+   if(cols.MODEL===undefined||cols.MP===undefined||cols.LEADER===undefined||cols.SUPPORT===undefined)continue;
+   let dataRow=-1;
+   for(let d=r+1;d<=Math.min(r+5,range.e.r);d++)if(normalizeModelName(cell(XLSX,ws,d,cols.MODEL)).toUpperCase()===normalizeModelName(modelName).toUpperCase()){dataRow=d;break}
+   if(dataRow<0)continue;
+   const out={};
+   for(const [k,c] of Object.entries(cols)){const v=number(cell(XLSX,ws,dataRow,c));if(v!==null&&v>=0)out[{LEADER:'leader',DKN:'dkn',SUPPORT:'support',MP:'mp',TOTAL:'sourceTotal'}[k]||k.toLowerCase()]=v}
+   for(let h=r;h<dataRow;h++)for(let c=range.s.c;c<=range.e.c;c++){
+    const name=key(cell(XLSX,ws,h,c)),k={IQC:'iqc',OQC:'oqc',PQC:'pqc',VISIONLASER:'visionLaser',VISIONEND:'visionEnd'}[name];
+    if(k){const v=number(cell(XLSX,ws,dataRow,c));if(v!==null&&v>=0)out[k]=v}
+   }
+   if(out.mp===undefined)continue;
+   for(const k of ['leader','dkn','support','iqc','oqc','pqc','visionLaser','visionEnd'])out[k]??=0;
+   out.qc=out.iqc+out.oqc+out.visionLaser+out.visionEnd;
+   out.total=out.leader+out.support+out.mp+out.qc+out.pqc;
+   out.sourceRow=dataRow+1;return out;
+  }
+  return null;
+ }
+
  function parseLayoutWorksheet(XLSX,ws,sheetName){
   const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1'),blocks=[],ignored=new Set(['MODEL','TYPE','LINE','LEADER','DKN','SUPPORT','TOTAL MP','TOTAL','PROCESS','TT AVG','MP','NHAN VIEN']);
   const rowLabel=(r,label)=>{for(let c=range.s.c;c<=range.e.c;c++){const value=norm(cell(XLSX,ws,r,c));if(value===label||value.replace(/\s/g,'')===label.replace(/\s/g,''))return true}return false};
@@ -38,8 +62,8 @@
     if(value!==undefined)lobSummary[key]=key==='lob'||key==='rate'?(value>1?value/100:value):value;
    }
   }
-  return{modelName,line,type,items,lobSummary};
+  return{modelName,line,type,items,lobSummary,workforce:parseWorkforce(XLSX,ws,modelName)};
  }
- const api={normalizeModelName,isLayoutCandidate,stableProcessId,sortVersionsNewest,nextVersionNumber,previewSummary,parseLayoutWorksheet};
+ const api={normalizeModelName,isLayoutCandidate,stableProcessId,sortVersionsNewest,nextVersionNumber,previewSummary,parseLayoutWorksheet,parseWorkforce};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;root.ISTExcelImport=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
