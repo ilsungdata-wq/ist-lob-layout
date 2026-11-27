@@ -134,6 +134,19 @@
 #stErpHistoryPanel .erp-code-collapse[open]>summary{margin-bottom:18px}
 #processView .process-head-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
 #processView #lobOriginalExcelBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:110px;color:#173e68;background:#fff;border:1px solid #c9d8e8}
+
+.model-search{position:relative;display:inline-block;min-width:180px;width:280px;max-width:100%;vertical-align:middle}
+.model-search .model-search-native{display:none!important}
+.model-search .model-search-trigger{width:100%;min-height:36px;text-align:left;padding:8px 12px;border:1px solid #cbdbe8;border-radius:6px;background:#fff;color:#173e66;font:inherit;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-search .model-search-popup{position:absolute;top:calc(100% + 5px);left:0;width:100%;min-width:240px;padding:8px;border:1px solid #cbdbe8;border-radius:8px;background:#fff;box-shadow:0 8px 28px #14325326;z-index:1200;box-sizing:border-box}
+.model-search .model-search-popup[hidden]{display:none!important}
+.model-search .model-search-popup input{width:100%;height:36px;box-sizing:border-box;padding:7px 10px;margin-bottom:6px;border:1px solid #a8c2dc;border-radius:5px;font:inherit;color:#173e66;background:#fff}
+.model-search .model-search-options{max-height:260px;overflow:auto}
+.model-search .model-search-option{display:block;width:100%;text-align:left;border:0;padding:9px 10px;border-radius:4px;background:white;color:#173e66;font:inherit;cursor:pointer}
+.model-search .model-search-option[aria-selected="true"]{font-weight:700;color:#124f91;background:#edf5ff}
+.model-search .model-search-option:hover,.model-search .model-search-option.keyboard-active{background:#dfeeff;color:#123f70}
+.model-search .model-search-status{padding:6px 8px 0;color:#6b8194;font-size:11px}
+@media(max-width:650px){.model-search{width:100%;min-width:0}.model-search .model-search-popup{min-width:210px}}
 </style></head>
 <body class="inspector-collapsed workspace-loading" data-view="lob-summary">
   <div id="workspaceLoading" class="workspace-loading-screen" role="status" aria-live="polite"><span></span>Đang tải layout…</div>
@@ -374,6 +387,7 @@
   <script type="module" src="./st-info.js?v=20261125-erp-model-first-v6"></script>
   <script type="module" src="./supabase-integration.js?v=20261028-import-reuse-model-v1"></script>
   <dialog id="mobileObjectSheet" class="mobile-bottom-sheet"><div id="mobileObjectSheetBody"></div><button type="button" data-mobile-sheet-close>Đóng</button></dialog>
+<script src="./model-search.js?v=20261127-searchable-models-v1"></script>
 </body>
 </html>
 
