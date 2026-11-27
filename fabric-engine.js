@@ -63,7 +63,7 @@ function resolvedLayoutSummaryCounts(auto,manual={}){
   const valid=Object.prototype.hasOwnProperty.call(manual,key)&&override!==null&&override!==''&&Number.isInteger(numeric)&&numeric>=0;
   if(key!=='total')effective[key]=valid?numeric:auto[key]||0;
  }
- effective.qc=Object.prototype.hasOwnProperty.call(manual,'qc')&&manual.qc!==null&&manual.qc!==''&&Number.isSafeInteger(Number(manual.qc))&&Number(manual.qc)>=0?Number(manual.qc):effective.iqc+effective.oqc;
+ effective.qc=Object.prototype.hasOwnProperty.call(manual,'qc')&&manual.qc!==null&&manual.qc!==''&&Number.isSafeInteger(Number(manual.qc))&&Number(manual.qc)>=0?Number(manual.qc):effective.iqc+effective.oqc+(Number(auto.visionLaser)||0)+(Number(auto.visionEnd)||0);
  const calculated=effective.leader+effective.support+effective.mp+effective.qc+effective.pqc;
  const raw=manual.total,number=Number(raw);
  effective.total=Object.prototype.hasOwnProperty.call(manual,'total')&&raw!==null&&raw!==''&&Number.isInteger(number)&&number>=0?number:calculated;
@@ -99,11 +99,18 @@ function bindLayoutSummaryCards(){
  });
 }
 renderShapeSummary=function(items){
- const auto=fabricTypeCounts(items),manual=model().layoutSummaryManual||{};
+ const current=model();if(typeof ensureSourceWorkforce==='function')ensureSourceWorkforce(current);
+ const observed=fabricTypeCounts(items),source=current.sourceWorkforce,auto={...observed,...(source||{})},manual=current.layoutSummaryManual||{};
  const counts=resolvedLayoutSummaryCounts(auto,manual);
- const qcInput=$('shapeQcCount');if(qcInput){qcInput.title='QC = IQC ('+counts.iqc+') + OQC ('+counts.oqc+'). Có thể sửa số tổng hợp, không đổi dữ liệu nhân lực LOB.';}
+ const qcInput=$('shapeQcCount');if(qcInput){qcInput.title='QC = IQC ('+counts.iqc+') + Vision Laser ('+(auto.visionLaser||0)+') + OQC ('+counts.oqc+'). Có thể sửa số tổng hợp, không đổi dữ liệu nhân lực LOB.';}
  const calculated=counts.leader+counts.support+counts.mp+counts.qc+counts.pqc;
  bindLayoutSummaryCards();
+ let note=$('layoutWorkforceSourceNote');
+ if(!note){note=document.createElement('p');note.id='layoutWorkforceSourceNote';$('shapeSummaryCards').after(note)}
+ const diff=source?observed.mp-source.mp:0;
+ note.textContent=source?'Nhân lực theo Excel gốc · dòng '+source.sourceRow+(diff?' · MP công đoạn '+observed.mp+' khác MP nguồn '+source.mp+' ('+(diff>0?'+':'')+diff+'). Cần đối chiếu phân bổ công đoạn.':' · MP đã khớp.')+(source.sourceTotal!==undefined&&source.sourceTotal!==counts.total?' · Total nguồn '+source.sourceTotal+' khác tổng thành phần '+counts.total+'.':''):current.sourceWorkforceError||'Đang đối chiếu bảng nhân lực Excel gốc…';
+ note.style.cssText='margin:0;padding:6px 12px;font-size:11px;color:'+(diff?'#9a650a':'#55748c');
+
  for(const key of layoutSummaryKeys){
   const input=document.querySelector('[data-layout-summary="'+key+'"]');
   const button=document.querySelector('[data-summary-auto="'+key+'"]');
@@ -111,7 +118,7 @@ renderShapeSummary=function(items){
   if(input){
    if(document.activeElement!==input)input.value=counts[key];
    input.disabled=!canEditLayout();
-   input.title=(isManual?'Đã chỉnh tay. ':'Tự đếm. ')+(key==='total'?'Total = Leader + Support + MP + IQC + OQC + PQC; ĐKN không cộng vào Total.':key==='mp'?'MP sản xuất; QC và Leader/Support tính riêng.':'Dữ liệu từ LOB/đối tượng Layout.');
+   input.title=(isManual?'Đã chỉnh tay. ':source?'Từ bảng nhân lực Excel gốc. ':'Tự đếm từ công đoạn/Layout. ')+(key==='total'?'Total = Leader + Support + MP + IQC + OQC + PQC; ĐKN không cộng vào Total.':key==='mp'?'MP sản xuất; QC và Leader/Support tính riêng.':'Dữ liệu từ LOB/đối tượng Layout.');
    input.classList.toggle('summary-manual',isManual);
    input.classList.toggle('summary-mismatch',key==='total'&&isManual&&counts.total!==calculated);
   }
