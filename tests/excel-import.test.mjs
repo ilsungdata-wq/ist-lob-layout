@@ -31,3 +31,14 @@ test('preserves numbered WLT with both T/T and MP absent without inventing value
  const p=x.parseLayoutWorksheet(XLSX,ws,'Layout S958');const w=p.items.find(i=>i.name==='WLT');
  assert.ok(w);assert.equal(w.time,null);assert.equal(w.mp,null);assert.equal(p.items.length,4);
 });
+
+test('reads two-level source workforce with Vision Laser and excludes DKN from headcount',()=>{
+ const ws=XLSX.utils.aoa_to_sheet([['Model','Type','Line','Leader','ĐKN','Support','MP','QC','','','','Total'],['','','','','','','','IQC','Vision Laser','OQC','PQC',''],['S958','Normal',6,1,9,1,31,1,1,2,1,38]]);
+ const w=x.parseWorkforce(XLSX,ws,'S958');
+ assert.equal(w.mp,31);assert.equal(w.qc,4);assert.equal(w.leader,1);assert.equal(w.support,1);assert.equal(w.pqc,1);assert.equal(w.dkn,9);assert.equal(w.total,38);assert.equal(w.sourceTotal,38);
+ assert.equal(x.parseWorkforce(XLSX,ws,'S741'),null);
+});
+test('absent source workforce stays unavailable instead of reporting zero',()=>{
+ const ws=XLSX.utils.aoa_to_sheet([[1,2,3],['IQC','PRESS','OQC'],[12,13,14],[1,1,2]]);
+ assert.equal(x.parseWorkforce(XLSX,ws,'S958'),null);
+});
