@@ -48,7 +48,7 @@ function enhance(select){
  select.addEventListener('change',sync);
  new MutationObserver(sync).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','selected']});sync();
 }
-function init(){['modelSelect','lobModelSelect','jigModelSelect'].forEach(id=>enhance(document.getElementById(id)))}
+function init(){['lobModelSelect','jigModelSelect'].forEach(id=>enhance(document.getElementById(id)))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 globalThis.ISTModelSearch={normalize,filterOptions,enhance};
 })();
