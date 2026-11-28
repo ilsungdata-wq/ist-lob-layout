@@ -1,19 +1,7 @@
 name: Deploy UI-only changes to GitHub Pages
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'tests/**'
-      - 'index.html'
-      - 'styles.css'
-      - 'overrides.css'
-      - 'app.js'
-      - 'studio.js'
-      - 'wi-spec-sync.js'
-      - 'inline-layout-reference.js'
-      - 'mobile-ux.js'
-      - '.github/workflows/deploy-ui-hotfix.yml'
+  # Main pushes use the production workflow; this is an explicit UI-only fallback.
   workflow_dispatch:
 
 permissions:
@@ -62,11 +50,7 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
           node scripts/generate-supabase-config.mjs
-          mkdir -p _site
-          cp index.html *.js *.css *.png *.LICENSE _site/
-          cp -R assets vendor layout-reference services oauth _site/
-          touch _site/.nojekyll
-          mv supabase-config.js _site/supabase-config.js
+          node scripts/build-site.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
@@ -100,26 +84,14 @@ jobs:
         if: steps.latest.outputs.is_latest == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify published Equipment and Jig UI
+      - uses: actions/checkout@v4
         if: steps.latest.outputs.is_latest == 'true'
-        shell: bash
+      - uses: actions/setup-node@v4
+        if: steps.latest.outputs.is_latest == 'true'
+        with:
+          node-version: '24'
+      - name: Verify published release and assets
+        if: steps.latest.outputs.is_latest == 'true'
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 12); do
-            curl --fail --silent --show-error --location \
-              -H "Cache-Control: no-cache" \
-              "${PAGE_URL%/}/?verify=${GITHUB_SHA}-${attempt}" -o /tmp/published-index.html
-            if grep -q 'Tải Process Map lên' /tmp/published-index.html \
-              && grep -q '<th>Thông số setup</th>' /tmp/published-index.html \
-              && grep -q 'id="lobOriginalExcelBtn"' /tmp/published-index.html \
-              && ! grep -q '<th>Vendor</th>' /tmp/published-index.html; then
-              echo "Verified: public GitHub Pages HTML contains the new Equipment/Jig UI."
-              exit 0
-            fi
-            echo "Attempt ${attempt}: public HTML does not yet contain the expected UI; retrying."
-            sleep 5
-          done
-          echo "::error::Public GitHub Pages HTML still differs from the deployed commit."
-          exit 1
+        run: node scripts/verify-release.mjs

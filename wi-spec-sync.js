@@ -122,8 +122,8 @@ function updateApply(){
 }
 async function chooseExcel(file){
  if(!file)return;
- if(!window.XLSX){alert('Chưa tải được bộ đọc Excel.');return}
  try{
+  await globalThis.ISTAssets?.excel();
   const current=model(),key=(current._remote?.versionId||current.name+'::'+current.version);
   const workbook=XLSX.read(await file.arrayBuffer(),{type:'array'});
   const extracted=extract(workbook);
@@ -195,7 +195,8 @@ async function downloadProcessMapOriginal(){
  a.href=objectUrl;a.download=file.file_name;a.click();setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
 }
 
-function downloadEquipmentTemplate(){
+async function downloadEquipmentTemplate(){
+ try{await globalThis.ISTAssets?.excel()}catch(error){alert(error.message);return}
  if(!window.XLSX){alert('Chưa tải được bộ đọc Excel.');return}
  const data=[['Tên công đoạn','Loại thiết bị','Tên thiết bị','Thông số setup','Version','Setup (phút)','Ghi chú'],['METAL SHEET (15,16,17,18)','ATTACH','SIDE METAL SHEET ATTACH','Áp lực: 5,5 ± 0,5 kgf/㎠','','','']];
  const book=XLSX.utils.book_new(),sheet=XLSX.utils.aoa_to_sheet(data);

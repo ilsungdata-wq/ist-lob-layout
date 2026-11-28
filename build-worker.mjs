@@ -1,41 +1,11 @@
 import fs from "node:fs";
-
-const readText = path => fs.readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
-const html = readText("dist/index.html");
-const css = readText("dist/styles.css");
-const overrides = readText("dist/overrides.css");
-const catalog = readText("dist/catalog.js");
-const app = readText("dist/app.js");
-const studio = readText("dist/studio.js");
-const fabricEngine = readText("dist/fabric-engine.js");
-const professionalEditor = readText("dist/professional-editor.js");
-const officePageEditor = readText("dist/office-page-editor.js");
-const mobileUx = readText("dist/mobile-ux.js");
-const viewerPrintUx = readText("dist/viewer-print-ux.js");
-const supabaseIntegration = readText("dist/supabase-integration.js");
-const serviceFiles = Object.fromEntries([
-  "capabilities.js",
-  "excel-import-utils.js",
-  "excel-reference.js",
-  "editor-geometry.js",
-  "i18n.js",
-  "layout-service.js",
-  "reference-editor.js",
-  "supabase/auth.js",
-  "supabase/client.js",
-  "supabase/history.js",
-  "supabase/models.js",
-  "supabase/permissions.js",
-  "supabase/profiles.js",
-  "supabase/storage.js",
-  "supabase/versions.js",
-].map(name => [`/services/${name}`, readText(`dist/services/${name}`)]));
-const fabricLib = readText("dist/vendor/fabric.min.js");
-const xlsx = readText("dist/xlsx.full.min.js");
-const xlsxLicense = readText("dist/xlsx.LICENSE");
-const layoutImages = Object.fromEntries([["/logo.png",fs.readFileSync("dist/logo.png").toString("base64")],...fs.readdirSync("dist/layout-reference").filter(name => name.endsWith(".png")).map(name => [`/layout-reference/${name}`, fs.readFileSync(`dist/layout-reference/${name}`).toString("base64")])]);
-const owner = "huyquynhtran96@gmail.com";
-
+import path from "node:path";
+import {root,siteAssets} from './scripts/site-assets.mjs';
+const files=siteAssets();
+const readText=name=>fs.readFileSync(path.join(root,name),'utf8').replace(/\r\n?/g,'\n');
+const textAssets=Object.fromEntries(files.filter(name=>/\.(js|css|html|LICENSE)$/.test(name)&&!name.startsWith('vendor/')).concat('vendor/fabric.min.js').map(name=>['/'+name,{body:readText(name),type:name.endsWith('.css')?'text/css; charset=utf-8':name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.LICENSE')?'text/plain; charset=utf-8':'text/javascript; charset=utf-8'}]));
+const layoutImages=Object.fromEntries(files.filter(name=>name==='logo.png'||name.startsWith('layout-reference/')&&name.endsWith('.png')).map(name=>['/'+name,fs.readFileSync(path.join(root,name)).toString('base64')]));
+const owner='huyquynhtran96@gmail.com';
 const runtime = String.raw`
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}});
 const asset=(value,type)=>new Response(value,{headers:{"content-type":type,"cache-control":"public, max-age=300"}});
@@ -84,10 +54,11 @@ async function api(request,env,url){
   }
   return json({error:"Không tìm thấy."},404);
 }
-export default {async fetch(request,env){try{const url=new URL(request.url);if(url.pathname.startsWith("/api/"))return await api(request,env,url);if(LAYOUT_IMAGES[url.pathname])return binaryAsset(LAYOUT_IMAGES[url.pathname],"image/png");if((url.pathname.startsWith("/layout-reference/")||url.pathname.startsWith("/assets/")||url.pathname.startsWith("/vendor/pdfjs/"))&&env.ASSETS)return env.ASSETS.fetch(request);if(url.pathname==="/styles.css")return asset(CSS,"text/css; charset=utf-8");if(url.pathname==="/overrides.css")return asset(OVERRIDES,"text/css; charset=utf-8");if(url.pathname==="/xlsx.full.min.js")return asset(XLSX_LIB,"text/javascript; charset=utf-8");if(url.pathname==="/xlsx.LICENSE")return asset(XLSX_LICENSE,"text/plain; charset=utf-8");if(url.pathname==="/catalog.js")return asset(CATALOG,"text/javascript; charset=utf-8");if(url.pathname==="/studio.js")return asset(STUDIO,"text/javascript; charset=utf-8");if(url.pathname==="/fabric-engine.js")return asset(FABRIC_ENGINE,"text/javascript; charset=utf-8");if(url.pathname==="/professional-editor.js")return asset(PROFESSIONAL_EDITOR,"text/javascript; charset=utf-8");if(url.pathname==="/office-page-editor.js")return asset(OFFICE_PAGE_EDITOR,"text/javascript; charset=utf-8");if(url.pathname==="/viewer-print-ux.js")return asset(VIEWER_PRINT_UX,"text/javascript; charset=utf-8");if(url.pathname==="/mobile-ux.js")return asset(MOBILE_UX,"text/javascript; charset=utf-8");if(url.pathname==="/supabase-integration.js")return asset(SUPABASE_INTEGRATION,"text/javascript; charset=utf-8");if(SERVICE_FILES[url.pathname])return asset(SERVICE_FILES[url.pathname],"text/javascript; charset=utf-8");if(url.pathname==="/vendor/fabric.min.js")return asset(FABRIC_LIB,"text/javascript; charset=utf-8");if(url.pathname==="/app.js")return asset(APP,"text/javascript; charset=utf-8");if(url.pathname==="/"||url.pathname==="/index.html")return asset(HTML,"text/html; charset=utf-8");return new Response("Not found",{status:404});}catch(error){console.error(error);return json({error:"Dịch vụ tạm thời không khả dụng."},500);}}};
+export default {async fetch(request,env){try{const url=new URL(request.url);if(url.pathname.startsWith("/api/"))return await api(request,env,url);const name=url.pathname==="/"?"/index.html":url.pathname;if(TEXT_ASSETS[name])return asset(TEXT_ASSETS[name].body,TEXT_ASSETS[name].type);if(LAYOUT_IMAGES[name])return binaryAsset(LAYOUT_IMAGES[name],"image/png");if(env.ASSETS)return env.ASSETS.fetch(request);return new Response("Not found",{status:404});}catch(error){console.error(error);return json({error:"Dịch vụ tạm thời không khả dụng."},500);}}};
 `;
 
-const output = `const HTML=${JSON.stringify(html)};\nconst CSS=${JSON.stringify(css)};\nconst OVERRIDES=${JSON.stringify(overrides)};\nconst XLSX_LIB=${JSON.stringify(xlsx)};\nconst XLSX_LICENSE=${JSON.stringify(xlsxLicense)};\nconst CATALOG=${JSON.stringify(catalog)};\nconst APP=${JSON.stringify(app)};\nconst STUDIO=${JSON.stringify(studio)};\nconst FABRIC_ENGINE=${JSON.stringify(fabricEngine)};\nconst PROFESSIONAL_EDITOR=${JSON.stringify(professionalEditor)};\nconst OFFICE_PAGE_EDITOR=${JSON.stringify(officePageEditor)};\nconst VIEWER_PRINT_UX=${JSON.stringify(viewerPrintUx)};\nconst MOBILE_UX=${JSON.stringify(mobileUx)};\nconst SUPABASE_INTEGRATION=${JSON.stringify(supabaseIntegration)};\nconst SERVICE_FILES=${JSON.stringify(serviceFiles)};\nconst FABRIC_LIB=${JSON.stringify(fabricLib)};\nconst LAYOUT_IMAGES=${JSON.stringify(layoutImages)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime.replace(/\r\n?/g, "\n")}`;
-fs.mkdirSync("dist/server", { recursive: true });
-fs.writeFileSync("dist/server/index.js", output);
-
+const output=`const TEXT_ASSETS=${JSON.stringify(textAssets)};\nconst LAYOUT_IMAGES=${JSON.stringify(layoutImages)};\nconst OWNER=${JSON.stringify(owner)};\n${runtime}`;
+const arg=process.argv.indexOf('--output');
+const target=path.resolve(root,arg<0?'dist/server/index.js':process.argv[arg+1]);
+fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,output);
+console.log('Built worker from current source');

@@ -4,3 +4,6 @@
 supabase-config.js
 .supabase/
 node_modules/
+
+.build/
+_site/
